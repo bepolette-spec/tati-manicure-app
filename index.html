@@ -907,3 +907,49 @@
         carregarAgendamentos();
 
         // 5.3. PREENCHER FORMULÁRIO PARA EDIÇÃO
+        function editarAgendamento(agendamento) {
+            document.getElementById('agendamento-id').value = agendamento.id;
+            document.getElementById('agenda-data').value = agendamento.data;
+            document.getElementById('agenda-hora').value = agendamento.hora;
+            document.getElementById('agenda-cliente-id').value = agendamento.clienteId;
+            document.getElementById('agenda-servico-id').value = agendamento.servicoId;
+            document.getElementById('agenda-observacoes').value = agendamento.observacoes;
+
+            btnSalvarAgendamento.innerHTML = '<span class="material-icons">update</span> Atualizar Agendamento';
+            btnSalvarAgendamento.classList.replace('btn-success', 'btn-secondary');
+
+            // Rola a página para o topo do formulário
+            document.getElementById('agenda-section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 5.4. EXCLUIR AGENDAMENTO
+        function confirmarExclusaoAgendamento(id, nomeCliente) {
+            if (confirm(`Tem certeza que deseja excluir o agendamento do cliente "${nomeCliente}"? Esta ação não pode ser desfeita.`)) {
+                remove(ref(db, `agendamentos/${id}`))
+                    .then(() => {
+                        showNotification(`Agendamento de "${nomeCliente}" excluído com sucesso.`, 'danger');
+                    })
+                    .catch(error => {
+                        showNotification('Erro ao excluir agendamento: ' + error.message, 'error');
+                    });
+            }
+        }
+        
+        // 5.5. LÓGICA DE ENVIO DE E-MAIL (REQUER BACK-END/SERVERLESS FUNCTION)
+        function sendEmailConfirmation(emailDetails) {
+            // --- IMPORTANTE: LEIA ESTA INSTRUÇÃO SOBRE ENVIO DE E-MAIL ---
+            
+            // O envio de e-mail diretamente do navegador (front-end) expõe credenciais e 
+            // é inseguro. Esta função deve ser substituída por uma chamada a um serviço 
+            // de back-end (como Firebase Cloud Functions, EmailJS, SendGrid, etc.).
+            
+            // Para manter o projeto simples e seguro (sem back-end), este código apenas 
+            // exibe a notificação de sucesso e registra a tentativa no console do navegador.
+            
+            console.warn("Tentativa de Envio de E-mail (Ação de BACK-END Requerida):", emailDetails);
+            showNotification('Agendamento salvo. E-mail de confirmação *simulado* enviado.', 'info');
+        }
+        
+    </script>
+</body>
+</html>
