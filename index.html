@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tati Manicure - Gerenciamento de Agendamentos</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        /* --- Variáveis de Cor (Tema Manicure/Beleza) --- */
+        :root {
+            --primary-color: #ff69b4; /* Rosa Choque/Hot Pink (Cor Principal) */
+            --secondary-color: #4b4b4b; /* Cinza Escuro (Texto Principal) */
+            --success-color: #28a745; 
+            --danger-color: #dc3545; 
+            --warning-color: #ffc107; 
+            --info-color: #17a2b8; 
+            --bg-color: #f8f9fa; /* Fundo Branco Suave */
+            --sidebar-bg-color: #ffffff; /* Fundo da Sidebar Branco */
+            --sidebar-text-color: #343a40; /* Texto Escuro na Sidebar */
+            --sidebar-hover-bg: #ffe0f5; /* Hover Rosa Claro */
+            --card-bg-color: #ffffff;
+            --text-color: #343a3f; 
+            --border-color: #e0e0e0; 
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.05); 
+            --input-border: #ced4da; 
+            --input-focus-border: var(--primary-color);
+        }
+
+        /* --- Estilos Gerais (Adaptados) --- */
+        body { font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; margin: 0; padding: 0; background-color: var(--bg-color); color: var(--text-color); font-size: 16px; }
+        h1, h2, h3 { color: var(--secondary-color); margin-top: 0; margin-bottom: 20px; }
+        .sidebar { width: 250px; background-color: var(--sidebar-bg-color); color: var(--sidebar-text-color); padding: 20px 0; box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05); flex-shrink: 0; transition: transform 0.3s ease-in-out; }
+        .sidebar h2 { text-align: center; color: var(--primary-color); margin-bottom: 30px; font-size: 1.8rem; border-bottom: 1px solid rgba(0, 0, 0, 0.05); padding-bottom: 20px; }
+        .sidebar ul { list-style: none; padding: 0; margin: 0; }
+        .sidebar ul li a { display: flex; align-items: center; padding: 12px 20px; color: var(--sidebar-text-color); transition: background-color 0.3s ease; font-size: 1.1rem; text-decoration: none; }
+        .sidebar ul li a .material-icons { margin-right: 10px; color: var(--primary-color); }
+        .sidebar ul li a:hover, .sidebar ul li a.active { background-color: var(--sidebar-hover-bg); border-left: 5px solid var(--primary-color); padding-left: 15px; font-weight: 600; }
+        .main-content { flex-grow: 1; padding: 30px; overflow-y: auto; }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid var(--primary-color); }
+        .card { background-color: var(--card-bg-color); border-radius: 8px; box-shadow: var(--shadow); padding: 25px; margin-bottom: 25px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; }
+        select, input, textarea { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid var(--input-border); border-radius: 6px; box-sizing: border-box; font-size: 1rem; }
+        button { padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: background-color 0.3s ease, transform 0.1s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-primary { background-color: var(--primary-color); color: white; }
+        .btn-primary:hover { background-color: #e04a99; transform: translateY(-1px); }
+        .btn-success { background-color: var(--success-color); color: white; }
+        .btn-danger { background-color: var(--danger-color); color: white; }
+        .btn-secondary { background-color: var(--secondary-color); color: white; }
+        .form-row { display: flex; gap: 15px; }
+        .form-row > div { flex: 1; }
+        #login-container { display: flex; justify-content: center; align-items: center; width: 100vw; height: 100vh; background-color: var(--sidebar-hover-bg); }
+        #login-card { width: 100%; max-width: 400px; padding: 40px; }
+        #login-card h2 { text-align: center; font-size: 2rem; color: var(--primary-color); }
+        #app-container { display: none; width: 100%; height: 100vh; }
+        .app-flex { display: flex; height: 100%; }
+        #header { display: flex; justify-content: flex-end; align-items: center; padding: 10px 30px; background-color: white; border-bottom: 1px solid var(--border-color); }
+
+        /* Estilos de Tabela */
+        .data-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .data-table th, .data-table td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .data-table th { background-color: var(--sidebar-hover-bg); color: var(--secondary-color); font-weight: 600; }
+        .data-table tr:hover { background-color: #f1f1f1; }
+        .action-buttons button { margin-right: 5px; padding: 8px 12px; font-size: 0.9rem; }
+
+        /* Notificações */
+        .notification { visibility: hidden; min-width: 250px; background-color: var(--secondary-color); color: #fff; text-align: center; border-radius: 4px; padding: 16px; position: fixed; z-index: 1000; bottom: 30px; left: 50%; transform: translateX(-50%); opacity: 0; transition: opacity 0.3s, visibility 0.3s; }
+        .notification.show { visibility: visible; opacity: 1; }
+        .notification.success { background-color: var(--success-color); }
+        .notification.error { background-color: var(--danger-color); }
+        .notification.info { background-color: var(--info-color); }
+
+    </style>
+</head>
+<body>
+
+    <div id="notification-bar" class="notification"></div>
+
+    <div id="login-container">
+        <div id="login-card" class="card">
+            <h2>Bem-vinda, Tati!</h2>
+            <p style="text-align: center; color: var(--secondary-color);">Acesse o sistema de agendamentos.</p>
+            <form id="login-form">
+                <label for="loginSenha">Senha Única:</label>
+                <input type="password" id="loginSenha" required placeholder="Digite a sua senha de acesso">
+                <button type="submit" class="btn-primary" style="width: 100%;">
+                    <span class="material-icons">lock_open</span> Entrar
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="app-container">
+        <div class="app-flex">
+            <aside id="sidebar" class="sidebar">
+                <h2>Tati Manicure</h2>
+                <nav>
+                    <ul>
+                        <li><a href="#" data-section="agenda" class="active"><span class="material-icons">calendar_today</span> Agenda</a></li>
+                        <li><a href="#" data-section="clientes"><span class="material-icons">groups</span> Clientes</a></li>
+                        <li><a href="#" data-section="servicos"><span class="material-icons">nail_polish</span> Serviços & Preços</a></li>
+                        <li><a href="#" data-section="historico"><span class="material-icons">history</span> Histórico & Lucros</a></li>
+                        <li><a href="#" data-section="admin"><span class="material-icons">settings</span> Configurações</a></li>
+                    </ul>
+                </nav>
+            </aside>
+
+            <div style="display: flex; flex-direction: column; width: 100%;">
+                <header id="header">
+                    <div style="display: flex; align-items: center;">
+                        <p id="userInfo" style="margin-right: 20px; font-weight: 500; color: var(--secondary-color);">Olá, Tati!</p>
+                        <button id="logout-button" class="btn-danger"><span class="material-icons">logout</span> Sair</button>
+                    </div>
+                </header>
+                <main class="main-content">
+                    
+                    <section id="agenda-section" class="content-section active">
+                        <div class="section-header"><h2>Agenda de Horários</h2></div>
+                        <div class="card">
+                            <p>Aqui você verá os agendamentos do dia e os horários vagos.</p>
+                            <div id="calendarioAgenda" style="min-height: 400px; text-align: center; padding: 20px; color: var(--info-color); font-weight: 500;">
+                                Conteúdo da Agenda será desenvolvido na próxima etapa...
+                            </div>
+                        </div>
+                    </section>
+                    
+                    <section id="clientes-section" class="content-section">
+                        <div class="section-header">
+                            <h2>Cadastro de Clientes</h2>
+                            <button class="btn-primary" onclick="resetClienteForm()"><span class="material-icons">person_add</span> Novo Cliente</button>
+                        </div>
+
+                        <div class="card">
+                            <form id="cliente-form">
+                                <input type="hidden" id="cliente-id">
+                                <div class="form-row">
+                                    <div>
+                                        <label for="cliente-nome">Nome Completo:</label>
+                                        <input type="text" id="cliente-nome" required>
+                                    </div>
+                                    <div>
+                                        <label for="cliente-telefone">Telefone:</label>
+                                        <input type="tel" id="cliente-telefone" placeholder="(99) 99999-9999" required>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div>
+                                        <label for="cliente-email">E-mail:</label>
+                                        <input type="email" id="cliente-email" placeholder="email@exemplo.com">
+                                    </div>
+                                    <div>
+                                        <label for="cliente-endereco">Endereço:</label>
+                                        <input type="text" id="cliente-endereco" placeholder="Rua, Número, Bairro">
+                                    </div>
+                                </div>
+                                <label for="cliente-observacoes">Observações:</label>
+                                <textarea id="cliente-observacoes" rows="3" placeholder="Alergias, preferências ou informações importantes..."></textarea>
+
+                                <button type="submit" class="btn-success" id="btn-salvar-cliente"><span class="material-icons">save</span> Salvar Cliente</button>
+                                <button type="button" class="btn-secondary" onclick="resetClienteForm()"><span class="material-icons">close</span> Cancelar</button>
+                            </form>
+                        </div>
+                        
+                        <div class="section-header" style="margin-top: 30px;">
+                            <h3>Lista de Clientes Cadastrados</h3>
+                        </div>
+
+                        <div class="card">
+                            <input type="text" id="filtro-clientes" onkeyup="filtrarClientes()" placeholder="Filtrar por nome, telefone ou email...">
+                            <div style="max-height: 500px; overflow-y: auto;">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Nome</th>
+                                            <th>Telefone</th>
+                                            <th>E-mail</th>
+                                            <th style="width: 150px;">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="lista-clientes">
+                                        </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </section>
+                    
+                    <section id="servicos-section" class="content-section">
+                        <div class="section-header"><h2>Serviços e Promoções</h2></div>
+                        <div class="card">Aguardando desenvolvimento...</div>
+                    </section>
+                    
+                    <section id="historico-section" class="content-section">
+                        <div class="section-header"><h2>Histórico de Atendimentos & Lucros</h2></div>
+                        <div class="card">Aguardando desenvolvimento...</div>
+                    </section>
+
+                    <section id="admin-section" class="content-section">
+                        <div class="section-header"><h2>Configurações do Sistema</h2></div>
+                        <div class="card">Aguardando desenvolvimento...</div>
+                    </section>
+
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // =================================================================
+        //                 1. CONFIGURAÇÃO FIREBASE
+        // =================================================================
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+        import { getDatabase, ref, onValue, push, set, update, remove } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js";
+        
+        // Sua configuração do Firebase (dados enviados por você)
+        const firebaseConfig = {
+          apiKey: "AIzaSyBatp6e1NzevurpB2yS8eGErgSYC_t2-Nc",
+          authDomain: "tati-manicure.firebaseapp.com",
+          databaseURL: "https://tati-manicure-default-rtdb.firebaseio.com",
+          projectId: "tati-manicure",
+          storageBucket: "tati-manicure.firebasestorage.app",
+          messagingSenderId: "1061777323027",
+          appId: "1:1061777323027:web:7b54e5fdbb7f06ee293be6",
+          measurementId: "G-V3J5ZJ5XBT"
+        };
+
+        // Inicialização do Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app); 
+        const clientesRef = ref(db, 'clientes');
+
+        // Senha de Acesso Única (Modelo Simples)
+        const SENHA_UNICA = "tati123"; // **ATUALIZE ESTA SENHA!**
+
+        // =================================================================
+        //                 2. LÓGICA DE LOGIN E NAVEGAÇÃO
+        // =================================================================
+        
+        const loginContainer = document.getElementById('login-container');
+        const appContainer = document.getElementById('app-container');
+        const loginForm = document.getElementById('login-form');
+        const logoutButton = document.getElementById('logout-button');
+        const navLinks = document.querySelectorAll('.sidebar ul li a');
+        const contentSections = document.querySelectorAll('.content-section');
+        const userInfoDisplay = document.getElementById('userInfo');
+
+        function showApp(userName = 'Tati') {
+            loginContainer.style.display = 'none';
+            appContainer.style.display = 'block';
+            userInfoDisplay.textContent = `Olá, ${userName}!`;
+            carregarClientes(); 
+        }
+
+        function showLogin() {
+            loginContainer.style.display = 'flex';
+            appContainer.style.display = 'none';
+        }
+
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const senha = document.getElementById('loginSenha').value;
+
+            if (senha === SENHA_UNICA) {
+                showApp();
+                showNotification(`Acesso liberado! Bem-vinda.`, 'success');
+            } else {
+                showNotification('Senha incorreta.', 'error');
+            }
+            document.getElementById('loginSenha').value = '';
+        });
+
+        logoutButton.addEventListener('click', () => {
+            showLogin();
+            showNotification('Você saiu do sistema.', 'info');
+        });
+
+        // Navegação entre Telas
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetSectionId = e.currentTarget.getAttribute('data-section');
+
+                if (targetSectionId === 'clientes') {
+                    carregarClientes();
+                }
+
+                navLinks.forEach(l => l.classList.remove('active'));
+                contentSections.forEach(s => s.classList.remove('active'));
+
+                e.currentTarget.classList.add('active');
+                document.getElementById(`${targetSectionId}-section`).classList.add('active');
+            });
+        });
+        
+        // Função de Notificação
+        function showNotification(message, type = 'success') {
+             const notificationBar = document.getElementById('notification-bar');
+             notificationBar.textContent = message;
+             notificationBar.className = `notification ${type} show`;
+             setTimeout(() => { notificationBar.classList.remove('show'); }, 3000);
+        }
+
+        // =================================================================
+        //              3. CRUD DE CLIENTES (NÓ: 'clientes')
+        // =================================================================
+
+        const clienteForm = document.getElementById('cliente-form');
+        const listaClientes = document.getElementById('lista-clientes');
+        const btnSalvarCliente = document.getElementById('btn-salvar-cliente');
+
+        window.resetClienteForm = function() {
+            clienteForm.reset();
+            document.getElementById('cliente-id').value = '';
+            btnSalvarCliente.innerHTML = '<span class="material-icons">save</span> Salvar Cliente';
+            btnSalvarCliente.classList.replace('btn-secondary', 'btn-success');
+        }
+
+        // 3.1. SALVAR/ATUALIZAR CLIENTE
+        clienteForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const id = document.getElementById('cliente-id').value;
+            const novoCliente = {
+                nome: document.getElementById('cliente-nome').value,
+                telefone: document.getElementById('cliente-telefone').value,
+                email: document.getElementById('cliente-email').value,
+                endereco: document.getElementById('cliente-endereco').value,
+                observacoes: document.getElementById('cliente-observacoes').value
+            };
+
+            if (id) {
+                update(ref(db, `clientes/${id}`), novoCliente)
+                    .then(() => {
+                        showNotification('Cliente atualizado com sucesso!', 'success');
+                        resetClienteForm();
+                    })
+                    .catch(error => {
+                        showNotification('Erro ao atualizar cliente: ' + error.message, 'error');
+                    });
+            } else {
+                push(clientesRef, novoCliente)
+                    .then(() => {
+                        showNotification('Cliente cadastrado com sucesso!', 'success');
+                        resetClienteForm();
+                    })
+                    .catch(error => {
+                        showNotification('Erro ao cadastrar cliente: ' + error.message, 'error');
+                    });
+            }
+        });
+
+        // 3.2. CARREGAR CLIENTES DO FIREBASE
+        function carregarClientes() {
+            onValue(clientesRef, (snapshot) => {
+                const clientes = snapshot.val();
+                listaClientes.innerHTML = '';
+                const clientesArray = [];
+
+                if (clientes) {
+                    for (let id in clientes) {
+                        clientesArray.push({ id, ...clientes[id] });
+                    }
+                    
+                    clientesArray.sort((a, b) => a.nome.localeCompare(b.nome));
+
+                    clientesArray.forEach(cliente => {
+                        const row = listaClientes.insertRow();
+                        row.dataset.clienteData = JSON.stringify(cliente); 
+                        
+                        row.insertCell().textContent = cliente.nome;
+                        row.insertCell().textContent = cliente.telefone;
+                        row.insertCell().textContent = cliente.email;
+                        
+                        const acoesCell = row.insertCell();
+                        acoesCell.className = 'action-buttons';
+                        
+                        const btnEditar = document.createElement('button');
+                        btnEditar.innerHTML = '<span class="material-icons" style="font-size: 18px;">edit</span>';
+                        btnEditar.className = 'btn-secondary';
+                        btnEditar.title = 'Editar';
+                        btnEditar.onclick = () => editarCliente(cliente);
+                        acoesCell.appendChild(btnEditar);
+                        
+                        const btnExcluir = document.createElement('button');
+                        btnExcluir.innerHTML = '<span class="material-icons" style="font-size: 18px;">delete</span>';
+                        btnExcluir.className = 'btn-danger';
+                        btnExcluir.title = 'Excluir';
+                        btnExcluir.onclick = () => confirmarExclusao(cliente.id, cliente.nome);
+                        acoesCell.appendChild(btnExcluir);
+                    });
+                } else {
+                    listaClientes.innerHTML = '<tr><td colspan="4" style="text-align: center;">Nenhum cliente cadastrado.</td></tr>';
+                }
+            });
+        }
+
+        // 3.3. PREENCHER FORMULÁRIO PARA EDIÇÃO
+        function editarCliente(cliente) {
+            document.getElementById('cliente-id').value = cliente.id;
+            document.getElementById('cliente-nome').value = cliente.nome;
+            document.getElementById('cliente-telefone').value = cliente.telefone;
+            document.getElementById('cliente-email').value = cliente.email;
+            document.getElementById('cliente-endereco').value = cliente.endereco;
+            document.getElementById('cliente-observacoes').value = cliente.observacoes;
+
+            btnSalvarCliente.innerHTML = '<span class="material-icons">update</span> Atualizar Cliente';
+            btnSalvarCliente.classList.replace('btn-success', 'btn-secondary');
+
+            document.getElementById('clientes-section').classList.add('active');
+            navLinks.forEach(l => l.classList.remove('active'));
+            document.querySelector('[data-section="clientes"]').classList.add('active');
+            
+            document.getElementById('clientes-section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 3.4. EXCLUIR CLIENTE
+        function confirmarExclusao(id, nome) {
+            if (confirm(`Tem certeza que deseja excluir o cliente "${nome}"? Esta ação não pode ser desfeita.`)) {
+                remove(ref(db, `clientes/${id}`))
+                    .then(() => {
+                        showNotification(`Cliente "${nome}" excluído com sucesso.`, 'danger');
+                    })
+                    .catch(error => {
+                        showNotification('Erro ao excluir cliente: ' + error.message, 'error');
+                    });
+            }
+        }
+        
+        // 3.5. FILTRAR CLIENTES NA TABELA (Busca Local)
+        window.filtrarClientes = function() {
+            const filtro = document.getElementById('filtro-clientes').value.toLowerCase();
+            const linhas = listaClientes.getElementsByTagName('tr');
+
+            for (let i = 0; i < linhas.length; i++) {
+                const row = linhas[i];
+                if (row.cells.length < 4) continue; 
+                
+                const clienteData = JSON.parse(row.dataset.clienteData);
+                const nome = clienteData.nome.toLowerCase();
+                const telefone = clienteData.telefone.toLowerCase();
+                const email = clienteData.email.toLowerCase();
+
+                if (nome.includes(filtro) || telefone.includes(filtro) || email.includes(filtro)) {
+                    row.style.display = "";
+                } else {
+                    row.style.display = "none";
+                }
+            }
+        }
+        
+    </script>
+</body>
+</html>
