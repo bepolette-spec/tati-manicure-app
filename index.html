@@ -116,11 +116,67 @@
                 <main class="main-content">
                     
                     <section id="agenda-section" class="content-section active">
-                        <div class="section-header"><h2>Agenda de Horários</h2></div>
+                        <div class="section-header">
+                            <h2>Novo Agendamento</h2>
+                            <button class="btn-primary" onclick="resetAgendamentoForm()"><span class="material-icons">add_alarm</span> Agendar Horário</button>
+                        </div>
+
                         <div class="card">
-                            <p>Aqui você verá os agendamentos do dia e os horários vagos.</p>
-                            <div id="calendarioAgenda" style="min-height: 400px; text-align: center; padding: 20px; color: var(--info-color); font-weight: 500;">
-                                Conteúdo da Agenda será desenvolvido na próxima etapa...
+                            <form id="agendamento-form">
+                                <input type="hidden" id="agendamento-id">
+                                <div class="form-row">
+                                    <div>
+                                        <label for="agenda-data">Data:</label>
+                                        <input type="date" id="agenda-data" required>
+                                    </div>
+                                    <div>
+                                        <label for="agenda-hora">Hora:</label>
+                                        <input type="time" id="agenda-hora" required>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div>
+                                        <label for="agenda-cliente-id">Cliente:</label>
+                                        <select id="agenda-cliente-id" required>
+                                            <option value="">-- Selecione o Cliente --</option>
+                                            </select>
+                                    </div>
+                                    <div>
+                                        <label for="agenda-servico-id">Serviço/Pacote:</label>
+                                        <select id="agenda-servico-id" required>
+                                            <option value="">-- Selecione o Serviço --</option>
+                                            </select>
+                                    </div>
+                                </div>
+                                
+                                <label for="agenda-observacoes">Observações do Agendamento:</label>
+                                <textarea id="agenda-observacoes" rows="2" placeholder="Ex: Atraso, confirmação de cor, etc."></textarea>
+
+                                <button type="submit" class="btn-success" id="btn-salvar-agendamento"><span class="material-icons">save</span> Salvar Agendamento</button>
+                                <button type="button" class="btn-secondary" onclick="resetAgendamentoForm()"><span class="material-icons">close</span> Cancelar</button>
+                            </form>
+                        </div>
+                        
+                        <div class="section-header" style="margin-top: 30px;">
+                            <h3>Próximos Agendamentos</h3>
+                        </div>
+
+                        <div class="card">
+                            <div style="max-height: 500px; overflow-y: auto;">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 15%;">Data/Hora</th>
+                                            <th style="width: 25%;">Cliente</th>
+                                            <th style="width: 25%;">Serviço</th>
+                                            <th>Status</th>
+                                            <th style="width: 150px;">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="lista-agendamentos">
+                                        </tbody>
+                                </table>
                             </div>
                         </div>
                     </section>
@@ -281,6 +337,7 @@
         // Referências aos nós (listas/tabelas) do seu banco de dados
         const clientesRef = ref(db, 'clientes');
         const servicosRef = ref(db, 'servicos'); 
+        const agendamentosRef = ref(db, 'agendamentos'); // NOVO NÓ
 
         // Senha de Acesso Única (Modelo Simples)
         const SENHA_UNICA = "tati123"; // **ATUALIZE ESTA SENHA!**
@@ -304,6 +361,8 @@
             // Força a carga inicial das listas ao entrar no app
             carregarClientes(); 
             carregarServicos(); 
+            popularSelects(); // Inicializa os SELECTs da Agenda
+            carregarAgendamentos(); // Carrega os agendamentos iniciais
         }
 
         function showLogin() {
@@ -338,6 +397,10 @@
                 // Recarrega as listas quando as abas são clicadas
                 if (targetSectionId === 'clientes') { carregarClientes(); }
                 if (targetSectionId === 'servicos') { carregarServicos(); }
+                if (targetSectionId === 'agenda') { 
+                    popularSelects(); 
+                    carregarAgendamentos(); 
+                }
 
                 navLinks.forEach(l => l.classList.remove('active'));
                 contentSections.forEach(s => s.classList.remove('active'));
@@ -640,7 +703,207 @@
                     });
             }
         }
+
+        // =================================================================
+        //              5. CRUD DE AGENDAMENTOS (NÓ: 'agendamentos')
+        // =================================================================
+
+        const agendamentoForm = document.getElementById('agendamento-form');
+        const listaAgendamentos = document.getElementById('lista-agendamentos');
+        const btnSalvarAgendamento = document.getElementById('btn-salvar-agendamento');
+        const selectCliente = document.getElementById('agenda-cliente-id');
+        const selectServico = document.getElementById('agenda-servico-id');
+
+        // Objeto para armazenar clientes e serviços em memória para referência rápida
+        let clientesCache = {};
+        let servicosCache = {};
+
+        // 5.0. FUNÇÃO PARA POPULAR OS SELECTS
+        function popularSelects() {
+            // 5.0.1. Popular Clientes
+            onValue(clientesRef, (snapshot) => {
+                clientesCache = {};
+                selectCliente.innerHTML = '<option value="">-- Selecione o Cliente --</option>';
+                if (snapshot.exists()) {
+                    snapshot.forEach((childSnapshot) => {
+                        const cliente = childSnapshot.val();
+                        cliente.id = childSnapshot.key;
+                        clientesCache[cliente.id] = cliente;
+                        const option = new Option(cliente.nome, cliente.id);
+                        selectCliente.appendChild(option);
+                    });
+                }
+            });
+
+            // 5.0.2. Popular Serviços
+            onValue(servicosRef, (snapshot) => {
+                servicosCache = {};
+                selectServico.innerHTML = '<option value="">-- Selecione o Serviço --</option>';
+                if (snapshot.exists()) {
+                    snapshot.forEach((childSnapshot) => {
+                        const servico = childSnapshot.val();
+                        servico.id = childSnapshot.key;
+                        servicosCache[servico.id] = servico;
+                        const nomeServico = servico.isPacote ? `[Pacote] ${servico.nome}` : servico.nome;
+                        const option = new Option(`${nomeServico} (R$ ${parseFloat(servico.preco).toFixed(2).replace('.', ',')})`, servico.id);
+                        selectServico.appendChild(option);
+                    });
+                }
+            });
+        }
+
+        // Inicializa a carga dos selects ao carregar o app
+        popularSelects();
+
+        // Função para Resetar/Limpar o Formulário de Agendamento
+        window.resetAgendamentoForm = function() {
+            agendamentoForm.reset();
+            document.getElementById('agendamento-id').value = '';
+            btnSalvarAgendamento.innerHTML = '<span class="material-icons">save</span> Salvar Agendamento';
+            btnSalvarAgendamento.classList.replace('btn-secondary', 'btn-success');
+        }
+
+        // 5.1. SALVAR/ATUALIZAR AGENDAMENTO
+        agendamentoForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const clienteId = document.getElementById('agenda-cliente-id').value;
+            const servicoId = document.getElementById('agenda-servico-id').value;
+
+            // Validação simples
+            if (!clienteId || !servicoId) {
+                 showNotification('Por favor, selecione um Cliente e um Serviço.', 'error');
+                 return;
+            }
+
+            const id = document.getElementById('agendamento-id').value;
+            const clienteInfo = clientesCache[clienteId] || { nome: 'Cliente Desconhecido', email: '' };
+            const servicoInfo = servicosCache[servicoId] || { nome: 'Serviço Desconhecido', preco: 0 };
+            
+            const novoAgendamento = {
+                data: document.getElementById('agenda-data').value,
+                hora: document.getElementById('agenda-hora').value,
+                clienteId: clienteId,
+                servicoId: servicoId,
+                clienteNome: clienteInfo.nome, 
+                servicoNome: servicoInfo.nome,
+                preco: servicoInfo.preco,
+                observacoes: document.getElementById('agenda-observacoes').value,
+                status: 'Agendado' 
+            };
+
+            if (id) {
+                // MODO EDIÇÃO
+                update(ref(db, `agendamentos/${id}`), novoAgendamento)
+                    .then(() => {
+                        showNotification('Agendamento atualizado com sucesso!', 'success');
+                        resetAgendamentoForm();
+                    })
+                    .catch(error => {
+                        showNotification('Erro ao atualizar agendamento: ' + error.message, 'error');
+                    });
+            } else {
+                // MODO CADASTRO (NOVO)
+                push(agendamentosRef, novoAgendamento)
+                    .then(() => {
+                        // 5.1.1. Lógica de Envio de E-mail de Confirmação
+                        const clienteEmail = clienteInfo.email;
+                        let notificacao = 'Agendamento salvo com sucesso!';
+
+                        if (clienteEmail && clienteEmail.trim() !== '') {
+                             // E-mail cadastrado, tenta enviar
+                            const agendamentoDataHora = `${novoAgendamento.data.split('-').reverse().join('/')} às ${novoAgendamento.hora.substring(0, 5)}`;
+                            const servicoPreco = `R$ ${parseFloat(novoAgendamento.preco).toFixed(2).replace('.', ',')}`;
+
+                            sendEmailConfirmation({
+                                to: clienteEmail,
+                                subject: `Confirmação de Agendamento - Tati Manicure`,
+                                body: `Olá ${novoAgendamento.clienteNome},\n\nSeu agendamento com a Tati Manicure foi confirmado com sucesso!\n\nDetalhes:\n- Data e Hora: ${agendamentoDataHora}\n- Serviço: ${novoAgendamento.servicoNome}\n- Preço Estimado: ${servicoPreco}\n\nPor favor, chegue com 5 minutos de antecedência. Qualquer imprevisto, avise a Tati!\n\nAtenciosamente,\nEquipe Tati Manicure.`,
+                                // Inclua aqui qualquer outro dado que sua função serverless precise (ex: Nome da Tati)
+                            });
+                            // A notificação será atualizada dentro da função sendEmailConfirmation
+                            
+                        } else {
+                            // Sem e-mail cadastrado, apenas notifica que salvou
+                             showNotification('Agendamento salvo com sucesso! (Cliente sem e-mail cadastrado)', 'info');
+                        }
+                        
+                        resetAgendamentoForm();
+                    })
+                    .catch(error => {
+                        showNotification('Erro ao salvar agendamento: ' + error.message, 'error');
+                    });
+            }
+        });
         
-    </script>
-</body>
-</html>
+        // 5.2. CARREGAR AGENDAMENTOS
+        function carregarAgendamentos() {
+            onValue(agendamentosRef, (snapshot) => {
+                const agendamentos = snapshot.val();
+                listaAgendamentos.innerHTML = '';
+                const agendamentosArray = [];
+
+                if (agendamentos) {
+                    for (let id in agendamentos) {
+                        agendamentosArray.push({ id, ...agendamentos[id] });
+                    }
+                    
+                    // Ordena por data e hora (do mais próximo ao mais distante)
+                    agendamentosArray.sort((a, b) => {
+                        const dateTimeA = new Date(`${a.data}T${a.hora}`);
+                        const dateTimeB = new Date(`${b.data}T${b.hora}`);
+                        return dateTimeA - dateTimeB;
+                    });
+
+                    agendamentosArray.forEach(agendamento => {
+                        const row = listaAgendamentos.insertRow();
+                        
+                        // Formatação da Data e Hora
+                        const dataFormatada = agendamento.data.split('-').reverse().join('/');
+                        row.insertCell().innerHTML = `<strong>${dataFormatada}</strong> às ${agendamento.hora.substring(0, 5)}`;
+                        
+                        // Cliente e Serviço
+                        row.insertCell().textContent = agendamento.clienteNome;
+                        
+                        const nomeServicoCompleto = (servicosCache[agendamento.servicoId] && servicosCache[agendamento.servicoId].isPacote) ? 
+                            `[Pacote] ${agendamento.servicoNome}` : agendamento.servicoNome;
+                            
+                        row.insertCell().textContent = `${nomeServicoCompleto} (R$ ${parseFloat(agendamento.preco).toFixed(2).replace('.', ',')})`;
+
+                        // Status
+                        const statusCell = row.insertCell();
+                        statusCell.textContent = agendamento.status;
+                        // Adicionando um estilo simples para o status
+                        if (agendamento.status === 'Agendado') {
+                            statusCell.style.fontWeight = 'bold';
+                            statusCell.style.color = '#17a2b8'; // Cor de info
+                        }
+                        
+                        const acoesCell = row.insertCell();
+                        acoesCell.className = 'action-buttons';
+                        
+                        // Botão Editar
+                        const btnEditar = document.createElement('button');
+                        btnEditar.innerHTML = '<span class="material-icons" style="font-size: 18px;">edit</span>';
+                        btnEditar.className = 'btn-secondary';
+                        btnEditar.title = 'Editar';
+                        btnEditar.onclick = () => editarAgendamento(agendamento);
+                        acoesCell.appendChild(btnEditar);
+                        
+                        // Botão Excluir
+                        const btnExcluir = document.createElement('button');
+                        btnExcluir.innerHTML = '<span class="material-icons" style="font-size: 18px;">delete</span>';
+                        btnExcluir.className = 'btn-danger';
+                        btnExcluir.title = 'Excluir';
+                        btnExcluir.onclick = () => confirmarExclusaoAgendamento(agendamento.id, agendamento.clienteNome);
+                        acoesCell.appendChild(btnExcluir);
+                    });
+                } else {
+                    listaAgendamentos.innerHTML = '<tr><td colspan="5" style="text-align: center;">Nenhum agendamento futuro cadastrado.</td></tr>';
+                }
+            });
+        }
+        // Força a carga dos agendamentos ao entrar na página
+        carregarAgendamentos();
+
+        // 5.3. PREENCHER FORMULÁRIO PARA EDIÇÃO
