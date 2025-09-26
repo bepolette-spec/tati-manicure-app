@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tati Manicure - Gerenciamento de Agendamentos</title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+    
     <style>
         /* --- Variáveis de Cor (Tema Manicure/Beleza) --- */
         :root {
@@ -29,12 +31,26 @@
         /* --- Estilos Gerais (Adaptados) --- */
         body { font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; margin: 0; padding: 0; background-color: var(--bg-color); color: var(--text-color); font-size: 16px; }
         h1, h2, h3 { color: var(--secondary-color); margin-top: 0; margin-bottom: 20px; }
-        .sidebar { width: 250px; background-color: var(--sidebar-bg-color); color: var(--sidebar-text-color); padding: 20px 0; box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05); flex-shrink: 0; transition: transform 0.3s ease-in-out; }
+        
+        /* Sidebar: Adicionando propriedades de responsividade */
+        .sidebar { 
+            width: 250px; 
+            background-color: var(--sidebar-bg-color); 
+            color: var(--sidebar-text-color); 
+            padding: 20px 0; 
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05); 
+            flex-shrink: 0; 
+            transition: transform 0.3s ease-in-out; 
+        }
+        
+        /* Estilos de menu */
         .sidebar h2 { text-align: center; color: var(--primary-color); margin-bottom: 30px; font-size: 1.8rem; border-bottom: 1px solid rgba(0, 0, 0, 0.05); padding-bottom: 20px; }
         .sidebar ul { list-style: none; padding: 0; margin: 0; }
         .sidebar ul li a { display: flex; align-items: center; padding: 12px 20px; color: var(--sidebar-text-color); transition: background-color 0.3s ease; font-size: 1.1rem; text-decoration: none; }
         .sidebar ul li a .material-icons { margin-right: 10px; color: var(--primary-color); }
         .sidebar ul li a:hover, .sidebar ul li a.active { background-color: var(--sidebar-hover-bg); border-left: 5px solid var(--primary-color); padding-left: 15px; font-weight: 600; }
+        
+        /* Conteúdo Principal */
         .main-content { flex-grow: 1; padding: 30px; overflow-y: auto; }
         .content-section { display: none; }
         .content-section.active { display: block; }
@@ -50,11 +66,17 @@
         .btn-secondary { background-color: var(--secondary-color); color: white; }
         .form-row { display: flex; gap: 15px; }
         .form-row > div { flex: 1; }
+        
+        /* Login */
         #login-container { display: flex; justify-content: center; align-items: center; width: 100vw; height: 100vh; background-color: var(--sidebar-hover-bg); }
         #login-card { width: 100%; max-width: 400px; padding: 40px; }
         #login-card h2 { text-align: center; font-size: 2rem; color: var(--primary-color); }
+        
+        /* Estrutura do App */
         #app-container { display: none; width: 100%; height: 100vh; }
         .app-flex { display: flex; height: 100%; }
+        
+        /* Header */
         #header { display: flex; justify-content: flex-end; align-items: center; padding: 10px 30px; background-color: white; border-bottom: 1px solid var(--border-color); }
 
         /* Estilos de Tabela */
@@ -70,10 +92,75 @@
         .notification.success { background-color: var(--success-color); }
         .notification.error { background-color: var(--danger-color); }
         .notification.info { background-color: var(--info-color); }
+        
+        /* NOVO: Estilo para o botão de menu (hambúrguer) */
+        #menu-toggle {
+            display: none; 
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 110; 
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            justify-content: center;
+            align-items: center;
+            box-shadow: var(--shadow);
+        }
+        
+        /* NOVO: Media Query para responsividade (Celulares e Tablets pequenos) */
+        @media (max-width: 768px) {
+            .app-flex {
+                display: block; /* Desativa o flexbox */
+            }
 
+            /* Configura a sidebar para mobile */
+            .sidebar { 
+                transform: translateX(-100%); /* Esconde a sidebar */
+                position: fixed; 
+                height: 100%;
+                z-index: 100;
+                width: 220px; /* Largura menor no mobile */
+            }
+            .sidebar.open {
+                transform: translateX(0); /* Mostra a sidebar */
+            }
+            .sidebar h2 {
+                display: none; /* Esconde o título da sidebar */
+            }
+
+            /* Mostra o botão de menu */
+            #menu-toggle {
+                display: flex; 
+            }
+            
+            /* Ajusta o header para que o botão Sair não fique em cima do botão Menu */
+            #header {
+                justify-content: flex-end; 
+                padding: 10px 15px;
+                position: fixed;
+                width: 100%;
+                top: 0;
+                box-sizing: border-box;
+                z-index: 90;
+            }
+            
+            /* Ajusta o conteúdo principal para respeitar o header fixo */
+            .main-content {
+                padding: 20px; 
+                padding-top: 60px; /* Espaço para o header */
+            }
+        }
     </style>
 </head>
 <body>
+
+    <button id="menu-toggle" class="btn-primary" type="button">
+        <span class="material-icons">menu</span>
+    </button>
 
     <div id="notification-bar" class="notification"></div>
 
@@ -337,10 +424,26 @@
         // Referências aos nós (listas/tabelas) do seu banco de dados
         const clientesRef = ref(db, 'clientes');
         const servicosRef = ref(db, 'servicos'); 
-        const agendamentosRef = ref(db, 'agendamentos'); // NOVO NÓ
+        const agendamentosRef = ref(db, 'agendamentos'); 
 
         // Senha de Acesso Única (Modelo Simples)
         const SENHA_UNICA = "tati123"; // **ATUALIZE ESTA SENHA!**
+        
+        // =================================================================
+        //                 1.1. CONFIGURAÇÃO EMAILJS
+        // =================================================================
+        // ⚠️ ATENÇÃO: COLOQUE AS SUAS CHAVES DO EMAILJS AQUI!
+        const EMAILJS_USER_ID = "[COLOQUE SUA CHAVE AQUI]"; 
+        const EMAILJS_SERVICE_ID = "[COLOQUE SUA CHAVE AQUI]";
+        const EMAILJS_TEMPLATE_ID = "[COLOQUE SUA CHAVE AQUI]";
+        
+        // Inicializa o EmailJS com seu User ID
+        if (typeof emailjs !== 'undefined') {
+            emailjs.init(EMAILJS_USER_ID);
+        } else {
+             console.error("EmailJS não carregou. Verifique o link no <head>.");
+        }
+
 
         // =================================================================
         //                 2. LÓGICA DE LOGIN E NAVEGAÇÃO
@@ -353,6 +456,10 @@
         const navLinks = document.querySelectorAll('.sidebar ul li a');
         const contentSections = document.querySelectorAll('.content-section');
         const userInfoDisplay = document.getElementById('userInfo');
+        
+        // NOVO: Referências para os novos elementos de Responsividade
+        const menuToggle = document.getElementById('menu-toggle');
+        const sidebar = document.getElementById('sidebar');
 
         function showApp(userName = 'Tati') {
             loginContainer.style.display = 'none';
@@ -388,6 +495,11 @@
             showNotification('Você saiu do sistema.', 'info');
         });
 
+        // Lógica de Responsividade (Menu Hambúrguer)
+        menuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+        });
+
         // Navegação entre Telas
         navLinks.forEach(link => {
             link.addEventListener('click', (e) => {
@@ -407,6 +519,11 @@
 
                 e.currentTarget.classList.add('active');
                 document.getElementById(`${targetSectionId}-section`).classList.add('active');
+                
+                // NOVO: Fecha a sidebar no mobile após clicar em um link
+                if (window.innerWidth <= 768) {
+                    sidebar.classList.remove('open');
+                }
             });
         });
         
@@ -441,7 +558,8 @@
             const novoCliente = {
                 nome: document.getElementById('cliente-nome').value,
                 telefone: document.getElementById('cliente-telefone').value,
-                email: document.getElementById('cliente-email').value,
+                // O email pode ser opcional (vazio)
+                email: document.getElementById('cliente-email').value, 
                 endereco: document.getElementById('cliente-endereco').value,
                 observacoes: document.getElementById('cliente-observacoes').value
             };
@@ -808,20 +926,20 @@
                     .then(() => {
                         // 5.1.1. Lógica de Envio de E-mail de Confirmação
                         const clienteEmail = clienteInfo.email;
-                        let notificacao = 'Agendamento salvo com sucesso!';
 
                         if (clienteEmail && clienteEmail.trim() !== '') {
                              // E-mail cadastrado, tenta enviar
-                            const agendamentoDataHora = `${novoAgendamento.data.split('-').reverse().join('/')} às ${novoAgendamento.hora.substring(0, 5)}`;
+                            const dataFormatada = novoAgendamento.data.split('-').reverse().join('/');
+                            const agendamentoDataHora = `${dataFormatada} às ${novoAgendamento.hora.substring(0, 5)}`;
                             const servicoPreco = `R$ ${parseFloat(novoAgendamento.preco).toFixed(2).replace('.', ',')}`;
 
                             sendEmailConfirmation({
                                 to: clienteEmail,
-                                subject: `Confirmação de Agendamento - Tati Manicure`,
-                                body: `Olá ${novoAgendamento.clienteNome},\n\nSeu agendamento com a Tati Manicure foi confirmado com sucesso!\n\nDetalhes:\n- Data e Hora: ${agendamentoDataHora}\n- Serviço: ${novoAgendamento.servicoNome}\n- Preço Estimado: ${servicoPreco}\n\nPor favor, chegue com 5 minutos de antecedência. Qualquer imprevisto, avise a Tati!\n\nAtenciosamente,\nEquipe Tati Manicure.`,
-                                // Inclua aqui qualquer outro dado que sua função serverless precise (ex: Nome da Tati)
+                                cliente_nome: novoAgendamento.clienteNome, // Chaves usadas no Template do EmailJS
+                                data_hora: agendamentoDataHora,
+                                servico_nome: novoAgendamento.servicoNome,
+                                servico_preco: servicoPreco
                             });
-                            // A notificação será atualizada dentro da função sendEmailConfirmation
                             
                         } else {
                             // Sem e-mail cadastrado, apenas notifica que salvou
@@ -935,19 +1053,22 @@
             }
         }
         
-        // 5.5. LÓGICA DE ENVIO DE E-MAIL (REQUER BACK-END/SERVERLESS FUNCTION)
-        function sendEmailConfirmation(emailDetails) {
-            // --- IMPORTANTE: LEIA ESTA INSTRUÇÃO SOBRE ENVIO DE E-MAIL ---
-            
-            // O envio de e-mail diretamente do navegador (front-end) expõe credenciais e 
-            // é inseguro. Esta função deve ser substituída por uma chamada a um serviço 
-            // de back-end (como Firebase Cloud Functions, EmailJS, SendGrid, etc.).
-            
-            // Para manter o projeto simples e seguro (sem back-end), este código apenas 
-            // exibe a notificação de sucesso e registra a tentativa no console do navegador.
-            
-            console.warn("Tentativa de Envio de E-mail (Ação de BACK-END Requerida):", emailDetails);
-            showNotification('Agendamento salvo. E-mail de confirmação *simulado* enviado.', 'info');
+        // 5.5. LÓGICA DE ENVIO DE E-MAIL (Usando EmailJS)
+        function sendEmailConfirmation(templateParams) {
+            if (!EMAILJS_USER_ID || !EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID) {
+                console.error("Chaves do EmailJS ausentes. Não é possível enviar e-mail.");
+                showNotification('Agendamento salvo. ERRO: Chaves do EmailJS ausentes.', 'warning');
+                return;
+            }
+
+            emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
+                .then((response) => {
+                   console.log('E-mail enviado com sucesso!', response.status, response.text);
+                   showNotification('Agendamento salvo e e-mail de confirmação enviado!', 'success');
+                }, (error) => {
+                   console.error('Falha ao enviar e-mail:', error);
+                   showNotification('Agendamento salvo. ERRO ao enviar e-mail. Tente novamente.', 'error');
+                });
         }
         
     </script>
