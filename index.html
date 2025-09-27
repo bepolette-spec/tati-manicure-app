@@ -356,8 +356,13 @@
             flex-shrink: 0;
             padding: 9px 15px; /* Ajuste para alinhar com o input */
         }
-        /* Responsividade Básica */
+        
+        /* --------------------------------------------------- */
+        /* RESPONSIVIDADE MOBILE (Mobile First - Portrait Mode)*/
+        /* --------------------------------------------------- */
         @media (max-width: 768px) {
+            
+            /* Estrutura Principal */
             .sidebar {
                 width: 100%;
                 height: auto;
@@ -373,15 +378,17 @@
                 flex-direction: column;
             }
 
+            /* Navegação Horizontal */
             .sidebar ul {
                 display: flex;
-                flex-wrap: wrap;
-                justify-content: space-around;
+                flex-wrap: nowrap; /* Tenta manter em uma linha, mas permite rolagem */
+                overflow-x: auto;
+                justify-content: flex-start;
                 border-bottom: 1px solid var(--border-color);
             }
 
             .sidebar ul li {
-                flex-basis: 30%; /* Ajuste para caber mais itens */
+                flex-shrink: 0; /* Impede que os itens encolham */
                 text-align: center;
             }
 
@@ -390,6 +397,7 @@
                 padding: 10px;
                 flex-direction: column;
                 font-size: 0.75rem;
+                white-space: nowrap;
             }
 
             .sidebar ul li a .material-icons {
@@ -400,6 +408,83 @@
 
             .user-info {
                 display: none;
+            }
+            
+            /* 1. Correção de Formulários e Filtros (Empilhamento) */
+            .form-row, .filter-row {
+                flex-direction: column;
+                gap: 0; /* Remove gap quando empilha */
+            }
+
+            .form-row > div, 
+            .filter-row > div {
+                flex: 0 0 100% !important; /* Força largura total */
+                width: 100%;
+            }
+            
+            /* Ajusta margem para inputs empilhados */
+            .form-group, .filter-row > div {
+                margin-bottom: 10px;
+            }
+            
+            .filter-row button {
+                width: 100%;
+                margin-top: 5px; 
+                padding: 10px 15px !important;
+            }
+            
+            /* 2. Correção de Tabelas (Cartão-like View) */
+            .data-table, .data-table tbody, .data-table td, .data-table tr {
+                display: block; /* Força elementos da tabela a empilhar */
+            }
+
+            .data-table thead {
+                display: none; /* Esconde o cabeçalho original */
+            }
+
+            .data-table tr {
+                border: 1px solid var(--border-color);
+                margin-bottom: 15px;
+                border-radius: 8px;
+                box-shadow: 0 1px 3px var(--shadow-color);
+                padding: 10px;
+            }
+
+            .data-table td {
+                border: none;
+                position: relative;
+                padding-left: 50% !important; /* Espaço para o rótulo */
+                text-align: right; /* Alinha o valor à direita */
+                white-space: normal; /* Permite quebras de linha */
+                min-height: 40px; 
+            }
+
+            /* Rótulo customizado (que usa o data-label do JS) */
+            .data-table td::before {
+                content: attr(data-label);
+                position: absolute;
+                left: 10px;
+                width: 45%; 
+                padding-right: 10px;
+                white-space: nowrap;
+                text-align: left;
+                font-weight: bold;
+                color: var(--primary-color);
+            }
+            
+            .data-table td.action-buttons {
+                text-align: left;
+                padding-left: 10px !important;
+            }
+            
+            .data-table td.action-buttons::before {
+                content: "Ações";
+            }
+            
+            .data-table td.action-buttons button {
+                margin-top: 5px;
+                width: calc(50% - 5px); /* Divide o espaço para os botões */
+                box-sizing: border-box;
             }
         }
     </style>
@@ -844,22 +929,32 @@
                     clientesArray.forEach(cliente => {
                         const row = listaClientes.insertRow();
                         row.dataset.clienteData = JSON.stringify(cliente);
-                        row.insertCell().textContent = cliente.nome;
-                        row.insertCell().textContent = cliente.telefone;
-                        row.insertCell().textContent = cliente.email;
+                        
+                        // Célula Nome (data-label "Nome")
+                        row.insertCell().setAttribute('data-label', 'Nome');
+                        row.cells[0].textContent = cliente.nome;
+
+                        // Célula Telefone (data-label "Telefone")
+                        row.insertCell().setAttribute('data-label', 'Telefone');
+                        row.cells[1].textContent = cliente.telefone;
+
+                        // Célula E-mail (data-label "E-mail")
+                        row.insertCell().setAttribute('data-label', 'E-mail');
+                        row.cells[2].textContent = cliente.email;
 
                         const acoesCell = row.insertCell();
                         acoesCell.className = 'action-buttons';
+                        acoesCell.setAttribute('data-label', 'Ações');
 
                         const btnEditar = document.createElement('button');
-                        btnEditar.innerHTML = '<span class="material-icons" style="font-size: 18px;">edit</span>';
+                        btnEditar.innerHTML = '<span class="material-icons" style="font-size: 18px;">edit</span> Editar';
                         btnEditar.className = 'btn-secondary';
                         btnEditar.title = 'Editar';
                         btnEditar.onclick = () => editarCliente(cliente);
                         acoesCell.appendChild(btnEditar);
 
                         const btnExcluir = document.createElement('button');
-                        btnExcluir.innerHTML = '<span class="material-icons" style="font-size: 18px;">delete</span>';
+                        btnExcluir.innerHTML = '<span class="material-icons" style="font-size: 18px;">delete</span> Excluir';
                         btnExcluir.className = 'btn-danger';
                         btnExcluir.title = 'Excluir';
                         btnExcluir.onclick = () => confirmarExclusaoCliente(cliente.id, cliente.nome);
@@ -921,7 +1016,7 @@
                 const email = clienteData.email.toLowerCase();
 
                 if (nome.includes(filtro) || telefone.includes(filtro) || email.includes(filtro)) {
-                    row.style.display = "";
+                    row.style.display = "block"; /* Usa block para o modo mobile */
                 } else {
                     row.style.display = "none";
                 }
@@ -996,22 +1091,32 @@
 
                     servicosArray.forEach(servico => {
                         const row = listaServicos.insertRow();
-                        row.insertCell().textContent = servico.nome;
-                        row.insertCell().textContent = servico.tipo;
-                        row.insertCell().textContent = `R$ ${parseFloat(servico.preco).toFixed(2).replace('.', ',')}`;
+                        
+                        // Célula Serviço (data-label "Serviço")
+                        row.insertCell().setAttribute('data-label', 'Serviço');
+                        row.cells[0].textContent = servico.nome;
+
+                        // Célula Tipo (data-label "Tipo")
+                        row.insertCell().setAttribute('data-label', 'Tipo');
+                        row.cells[1].textContent = servico.tipo;
+                        
+                        // Célula Preço (data-label "Preço")
+                        row.insertCell().setAttribute('data-label', 'Preço');
+                        row.cells[2].textContent = `R$ ${parseFloat(servico.preco).toFixed(2).replace('.', ',')}`;
 
                         const acoesCell = row.insertCell();
                         acoesCell.className = 'action-buttons';
+                        acoesCell.setAttribute('data-label', 'Ações');
 
                         const btnEditar = document.createElement('button');
-                        btnEditar.innerHTML = '<span class="material-icons" style="font-size: 18px;">edit</span>';
+                        btnEditar.innerHTML = '<span class="material-icons" style="font-size: 18px;">edit</span> Editar';
                         btnEditar.className = 'btn-secondary';
                         btnEditar.title = 'Editar';
                         btnEditar.onclick = () => editarServico(servico);
                         acoesCell.appendChild(btnEditar);
 
                         const btnExcluir = document.createElement('button');
-                        btnExcluir.innerHTML = '<span class="material-icons" style="font-size: 18px;">delete</span>';
+                        btnExcluir.innerHTML = '<span class="material-icons" style="font-size: 18px;">delete</span> Excluir';
                         btnExcluir.className = 'btn-danger';
                         btnExcluir.title = 'Excluir';
                         btnExcluir.onclick = () => confirmarExclusaoServico(servico.id, servico.nome);
@@ -1202,35 +1307,40 @@
                     const row = lista.insertRow();
                     row.dataset.agendamentoData = JSON.stringify(agendamento);
                     
-                    // Coluna Data/Hora
-                    row.insertCell().textContent = formatarDataHora(agendamento.data, agendamento.hora);
+                    // Coluna Data/Hora (data-label "Data/Hora")
+                    row.insertCell().setAttribute('data-label', 'Data/Hora');
+                    row.cells[0].textContent = formatarDataHora(agendamento.data, agendamento.hora);
                     
-                    // Coluna Cliente
+                    // Coluna Cliente (data-label "Cliente")
                     const clienteCell = row.insertCell();
+                    clienteCell.setAttribute('data-label', 'Cliente');
                     clienteCell.innerHTML = `<strong>${agendamento.clienteNome}</strong><br><small>${agendamento.clienteTelefone}</small>`;
                     
-                    // Coluna Serviço
+                    // Coluna Serviço (data-label "Serviço")
+                    const servicoCell = row.insertCell();
+                    servicoCell.setAttribute('data-label', 'Serviço');
                     const precoFormatado = parseFloat(agendamento.servicoPreco).toFixed(2).replace('.', ',');
-                    row.insertCell().innerHTML = `<strong>${agendamento.servicoNome}</strong><br><small>R$ ${precoFormatado}</small>`;
+                    servicoCell.innerHTML = `<strong>${agendamento.servicoNome}</strong><br><small>R$ ${precoFormatado}</small>`;
                     
-                    // Coluna Status
+                    // Coluna Status (data-label "Status")
                     const statusCell = row.insertCell();
+                    statusCell.setAttribute('data-label', 'Status');
                     statusCell.textContent = agendamento.status;
                     statusCell.style.color = agendamento.status === 'Ativo' ? varToColor('--success-color') : varToColor('--secondary-color');
                     
-                    // Coluna Ações
+                    // Coluna Ações (data-label "Ações" - será sobrescrito pelo CSS)
                     const acoesCell = row.insertCell();
                     acoesCell.className = 'action-buttons';
                     
                     const btnEditar = document.createElement('button');
-                    btnEditar.innerHTML = '<span class="material-icons" style="font-size: 18px;">edit</span>';
+                    btnEditar.innerHTML = '<span class="material-icons" style="font-size: 18px;">edit</span> Editar';
                     btnEditar.className = 'btn-secondary';
                     btnEditar.title = 'Editar';
                     btnEditar.onclick = () => editarAgendamento(agendamento);
                     acoesCell.appendChild(btnEditar);
 
                     const btnConcluir = document.createElement('button');
-                    btnConcluir.innerHTML = '<span class="material-icons" style="font-size: 18px;">check</span>';
+                    btnConcluir.innerHTML = '<span class="material-icons" style="font-size: 18px;">check</span> Concluir';
                     btnConcluir.className = 'btn-success';
                     btnConcluir.title = 'Concluir';
                     btnConcluir.onclick = () => concluirAgendamento(agendamento.id, agendamento.clienteNome);
@@ -1286,7 +1396,7 @@
             for (let i = 0; i < linhas.length; i++) {
                 const row = linhas[i];
                 if (row.cells.length < 5 || !row.dataset.agendamentoData) { 
-                    row.style.display = ""; // Mantém linhas como 'sem agendamentos' visíveis
+                    row.style.display = "block"; // Mantém linhas como 'sem agendamentos' visíveis
                     continue; 
                 }
 
@@ -1294,7 +1404,7 @@
                 const clienteNome = agendamentoData.clienteNome.toLowerCase();
                 
                 if (clienteNome.includes(filtro)) {
-                    row.style.display = "";
+                    row.style.display = "block";
                 } else {
                     row.style.display = "none";
                 }
@@ -1457,25 +1567,29 @@
                          const row = listaHistorico.insertRow();
                          row.dataset.clienteNome = agendamento.clienteNome.toLowerCase();
                          
-                         // Coluna Data
-                         row.insertCell().textContent = agendamento.data.split('-').reverse().join('/');
+                         // Coluna Data (data-label "Data")
+                         row.insertCell().setAttribute('data-label', 'Data');
+                         row.cells[0].textContent = agendamento.data.split('-').reverse().join('/');
                          
-                         // Coluna Cliente
-                         row.insertCell().innerHTML = `<strong>${agendamento.clienteNome}</strong><br><small>${agendamento.clienteTelefone}</small>`;
+                         // Coluna Cliente (data-label "Cliente")
+                         row.insertCell().setAttribute('data-label', 'Cliente');
+                         row.cells[1].innerHTML = `<strong>${agendamento.clienteNome}</strong><br><small>${agendamento.clienteTelefone}</small>`;
                          
-                         // Coluna Serviço
-                         row.insertCell().textContent = agendamento.servicoNome;
+                         // Coluna Serviço (data-label "Serviço")
+                         row.insertCell().setAttribute('data-label', 'Serviço');
+                         row.cells[2].textContent = agendamento.servicoNome;
                          
-                         // Coluna Valor
+                         // Coluna Valor (data-label "Valor")
+                         row.insertCell().setAttribute('data-label', 'Valor');
                          const valorFormatado = parseFloat(agendamento.servicoPreco).toFixed(2).replace('.', ',');
-                         row.insertCell().textContent = `R$ ${valorFormatado}`;
+                         row.cells[3].textContent = `R$ ${valorFormatado}`;
                          
                          // Coluna Ações (Excluir)
                          const acoesCell = row.insertCell();
                          acoesCell.className = 'action-buttons';
                          
                          const btnReverter = document.createElement('button');
-                         btnReverter.innerHTML = '<span class="material-icons" style="font-size: 18px;">undo</span>';
+                         btnReverter.innerHTML = '<span class="material-icons" style="font-size: 18px;">undo</span> Reverter';
                          btnReverter.className = 'btn-danger';
                          btnReverter.title = 'Reverter para Ativo';
                          btnReverter.onclick = () => reverterAgendamento(agendamento.id, agendamento.clienteNome);
@@ -1520,7 +1634,7 @@
                  const clienteNome = row.dataset.clienteNome;
                 
                  if (clienteNome.includes(filtro)) {
-                     row.style.display = "";
+                     row.style.display = "block";
                  } else {
                      row.style.display = "none";
                  }
