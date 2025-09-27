@@ -74,9 +74,9 @@
             transition: background-color 0.3s ease;
             font-size: 1.1rem;
             text-decoration: none;
-            overflow: hidden; /* Correção para o texto longo */
-            white-space: nowrap; /* Correção para o texto longo */
-            text-overflow: ellipsis; /* Adiciona '...' para o texto longo */
+            overflow: hidden; 
+            white-space: nowrap; 
+            text-overflow: ellipsis; 
         }
 
         .sidebar ul li a:hover {
@@ -106,29 +106,37 @@
 
         /* Header e Botão de Menu (Mobile) */
         .header {
-            display: none; /* Escondido por padrão no desktop */
+            display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 15px 20px;
             background-color: var(--header-bg);
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            position: fixed;
+            position: sticky;
             top: 0;
             left: 0;
             right: 0;
             z-index: 20;
+        }
+        
+        .header .desktop-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px; 
         }
 
         .menu-toggle {
             cursor: pointer;
             color: var(--primary-color);
             font-size: 2rem;
+            display: none; /* Escondido por padrão no desktop */
         }
         
         .header .logo-mobile {
             color: var(--primary-color);
             font-size: 1.5rem;
             font-weight: bold;
+            display: none; /* Escondido por padrão no desktop */
         }
 
         /* Container da página */
@@ -137,7 +145,7 @@
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-            margin-top: 20px; /* Para desktop */
+            margin-top: 20px; 
         }
 
         /* Estilos de Abas */
@@ -202,6 +210,8 @@
             cursor: pointer;
             font-size: 1rem;
             transition: background-color 0.3s ease;
+            display: flex;
+            align-items: center;
         }
 
         .btn-primary {
@@ -220,37 +230,45 @@
         }
 
         /* Tabela de Agendamentos */
-        #agenda-table {
+        #agenda-table, #clientes-table, #servicos-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
         }
 
-        #agenda-table th, #agenda-table td {
+        #agenda-table th, #agenda-table td, 
+        #clientes-table th, #clientes-table td,
+        #servicos-table th, #servicos-table td {
             border: 1px solid #eee;
             padding: 12px;
             text-align: left;
         }
 
-        #agenda-table th {
+        #agenda-table th, #clientes-table th, #servicos-table th {
             background-color: var(--secondary-color);
             font-weight: bold;
         }
 
-        #agenda-table tr:nth-child(even) {
+        #agenda-table tr:nth-child(even), 
+        #clientes-table tr:nth-child(even),
+        #servicos-table tr:nth-child(even) {
             background-color: #f9f9f9;
         }
 
         /* Media Query para responsividade (Celulares e Tablets pequenos) */
         @media (max-width: 768px) {
             
-            .header {
-                display: flex; /* Mostra o header no mobile */
+            .header .menu-toggle, .header .logo-mobile {
+                display: initial; /* Mostra ícone e logo mobile */
+            }
+            
+            .header .desktop-actions {
+                display: none; /* Esconde ações de desktop no mobile */
             }
 
             .sidebar {
-                width: 230px; /* Largura um pouco maior para o texto */
-                z-index: 120; /* Z-index alto para cobrir o conteúdo */
+                width: 230px; 
+                z-index: 120; 
                 box-shadow: 4px 0 6px rgba(0,0,0,0.2);
             }
             
@@ -263,14 +281,16 @@
                 margin-left: 0;
                 padding-top: 70px; /* Espaço para o header fixo */
             }
-
-            /* Esconde o menu quando a sidebar está aberta no mobile */
-            body:has(.sidebar.opened) .content {
-                 overflow: hidden; 
-            }
             
             .page-container {
                 margin-top: 0;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+                margin-left: 0 !important;
+                margin-bottom: 10px;
             }
         }
     </style>
@@ -280,6 +300,13 @@
     <header class="header">
         <span class="material-icons menu-toggle">menu</span>
         <div class="logo-mobile">Tati Manicure</div>
+        
+        <div class="desktop-actions">
+            <span>Olá, Tati!</span>
+            <button class="btn" style="background-color: var(--primary-color); color: white;">
+                <span class="material-icons" style="font-size: 1.1rem; margin-right: 5px;">exit_to_app</span> Sair
+            </button>
+        </div>
     </header>
 
     <nav class="sidebar closed">
@@ -330,8 +357,12 @@
                     </div>
 
                     <div class="button-group">
-                        <button type="submit" class="btn btn-primary">Salvar Agendamento</button>
-                        <button type="reset" class="btn btn-secondary">Limpar</button>
+                        <button type="submit" class="btn btn-primary">
+                            <span class="material-icons" style="margin-right: 5px;">save</span> Salvar Agendamento
+                        </button>
+                        <button type="reset" class="btn btn-secondary">
+                            <span class="material-icons" style="margin-right: 5px;">clear</span> Limpar
+                        </button>
                     </div>
                 </form>
             </div>
@@ -356,12 +387,102 @@
 
         <section id="page-clientes" class="page-container" style="display:none;">
             <h2>Clientes</h2>
-            <p>Gerenciamento de Clientes (Em desenvolvimento)</p>
+            <div class="tabs">
+                <button class="tab-button active" data-tab="novo-cliente">Novo Cliente</button>
+                <button class="tab-button" data-tab="lista-clientes">Lista de Clientes</button>
+            </div>
+
+            <div id="tab-novo-cliente" class="tab-content active">
+                <h3>Novo Cliente</h3>
+                <form id="clienteForm">
+                    <div class="form-group">
+                        <label for="clienteNome">Nome Completo:</label>
+                        <input type="text" id="clienteNome" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="clienteTelefone">Telefone (WhatsApp):</label>
+                        <input type="tel" id="clienteTelefone" placeholder="(XX) XXXXX-XXXX" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="clienteEmail">E-mail (Para confirmação):</label>
+                        <input type="email" id="clienteEmail">
+                    </div>
+                    
+                    <div class="button-group">
+                        <button type="submit" class="btn btn-primary">
+                            <span class="material-icons" style="margin-right: 5px;">person_add</span> Salvar Cliente
+                        </button>
+                        <button type="reset" class="btn btn-secondary">
+                            <span class="material-icons" style="margin-right: 5px;">clear</span> Limpar
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="tab-lista-clientes" class="tab-content">
+                <h3>Lista de Clientes</h3>
+                <table id="clientes-table">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Telefone</th>
+                            <th>E-mail</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="clientes-tbody">
+                        </tbody>
+                </table>
+            </div>
         </section>
 
         <section id="page-servicos" class="page-container" style="display:none;">
             <h2>Serviços</h2>
-            <p>Gerenciamento de Serviços (Em desenvolvimento)</p>
+            <div class="tabs">
+                <button class="tab-button active" data-tab="novo-servico">Novo Serviço</button>
+                <button class="tab-button" data-tab="lista-servicos">Lista de Serviços</button>
+            </div>
+
+            <div id="tab-novo-servico" class="tab-content active">
+                <h3>Novo Serviço</h3>
+                <form id="servicoForm">
+                    <div class="form-group">
+                        <label for="servicoNome">Nome do Serviço:</label>
+                        <input type="text" id="servicoNome" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="servicoPreco">Preço (R$):</label>
+                        <input type="number" step="0.01" id="servicoPreco" required>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button type="submit" class="btn btn-primary">
+                            <span class="material-icons" style="margin-right: 5px;">add_circle_outline</span> Salvar Serviço
+                        </button>
+                        <button type="reset" class="btn btn-secondary">
+                            <span class="material-icons" style="margin-right: 5px;">clear</span> Limpar
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="tab-lista-servicos" class="tab-content">
+                <h3>Lista de Serviços</h3>
+                <table id="servicos-table">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Preço</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="servicos-tbody">
+                        </tbody>
+                </table>
+            </div>
         </section>
 
         <section id="page-historico" class="page-container" style="display:none;">
@@ -439,7 +560,6 @@
                 const tbody = document.getElementById('agenda-tbody');
                 tbody.innerHTML = ''; // Limpa a tabela
 
-                // Pega a data atual (sem hora) para filtrar
                 const hoje = new Date();
                 hoje.setHours(0, 0, 0, 0);
 
@@ -447,14 +567,12 @@
                     const agendamento = agendamentos[id];
                     const dataAgendamento = new Date(agendamento.dataHora);
                     
-                    // Mostra apenas agendamentos futuros ou do dia atual
                     if (dataAgendamento >= hoje) { 
                         const cliente = clientesArray.find(c => c.id === agendamento.clienteId);
                         const servico = servicosArray.find(s => s.id === agendamento.servicoId);
                         
                         const row = tbody.insertRow();
                         
-                        // Formatação de data e hora
                         const dataFormatada = dataAgendamento.toLocaleDateString('pt-BR');
                         const horaFormatada = dataAgendamento.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
@@ -468,9 +586,8 @@
             });
         }
 
-        // --- FUNÇÃO SALVAR AGENDAMENTO E ENVIAR E-MAIL (ATUALIZADA) ---
+        // --- FUNÇÃO SALVAR AGENDAMENTO E ENVIAR E-MAIL (COM SUAS CHAVES) ---
         
-        // A função precisa ser global para ser acessada pelo script abaixo
         window.salvarAgendamento = function() {
             const dataHora = document.getElementById('agendamentoData').value;
             const clienteId = document.getElementById('agendamentoCliente').value;
@@ -482,7 +599,6 @@
                 return;
             }
 
-            // Busca os detalhes do cliente e serviço para o e-mail
             const cliente = clientesArray.find(c => c.id === clienteId);
             const servico = servicosArray.find(s => s.id === servicoId);
 
@@ -504,7 +620,7 @@
                 clienteId: clienteId,
                 servicoId: servicoId,
                 observacao: observacao,
-                status: 'agendado' // Novo campo de status
+                status: 'agendado' 
             };
 
             const novoAgendamentoRef = ref(db, 'agendamentos/' + push(ref(db, 'agendamentos')).key);
@@ -515,13 +631,12 @@
                     
                     // --- INÍCIO DO CÓDIGO EMAILJS (SÓ TENTA ENVIAR SE TIVER E-MAIL) ---
                     if (cliente.email && cliente.email.trim() !== "") {
-                        // Formatação da data para o e-mail
+                        
                         const dataObj = new Date(dataHora);
                         const dataFormatada = dataObj.toLocaleDateString('pt-BR', { dateStyle: 'long' });
                         const horaFormatada = dataObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
                         const templateParams = {
-                            // Variáveis que você configurou no template do EmailJS
                             to: cliente.email, 
                             cliente_nome: cliente.nome,
                             servico_nome: servico.nome,
@@ -541,7 +656,6 @@
                             console.log('E-MAIL ENVIADO!', response.status, response.text);
                         }, (error) => {
                             console.error('ERRO AO ENVIAR E-MAIL:', error);
-                            // Notifica o usuário, mas não impede o salvamento
                             alert('Agendamento salvo, mas houve um erro ao enviar o e-mail de confirmação. Cheque seu serviço Outlook no EmailJS.');
                         });
                     } else {
@@ -549,7 +663,6 @@
                     }
                     // --- FIM DO CÓDIGO EMAILJS ---
 
-                    // Limpa o formulário e recarrega a agenda
                     document.getElementById('agendamentoForm').reset();
                     carregarAgendamentos(); 
                 })
@@ -562,10 +675,8 @@
         // --- INICIALIZAÇÃO E EVENTOS ---
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Carrega Clientes e Serviços e depois Agendamentos
             carregarClientes();
             carregarServicos();
-            // Um pequeno delay para garantir que os arrays estejam prontos
             setTimeout(carregarAgendamentos, 500); 
             
             // Evento do Formulário
@@ -583,18 +694,14 @@
                 link.addEventListener('click', (e) => {
                     e.preventDefault();
                     
-                    // Remove a classe 'active' de todos os links e containers
                     sidebarLinks.forEach(l => l.classList.remove('active'));
                     pageContainers.forEach(p => p.style.display = 'none');
                     
-                    // Adiciona a classe 'active' no link clicado
                     link.classList.add('active');
                     
-                    // Mostra o container da página correspondente
                     const pageId = link.getAttribute('data-page');
                     document.getElementById(`page-${pageId}`).style.display = 'block';
 
-                    // Fecha a sidebar no mobile após a navegação
                     if (window.innerWidth <= 768) {
                         sidebar.classList.remove('opened');
                         sidebar.classList.add('closed');
@@ -602,7 +709,7 @@
                 });
             });
 
-            // Evento de Abas (Novo Agendamento vs Lista)
+            // Evento de Abas
             const tabButtons = document.querySelectorAll('.tab-button');
             const tabContents = document.querySelectorAll('.tab-content');
             
@@ -610,11 +717,14 @@
                 button.addEventListener('click', () => {
                     const tabName = button.getAttribute('data-tab');
 
-                    tabButtons.forEach(btn => btn.classList.remove('active'));
-                    tabContents.forEach(content => content.classList.remove('active'));
+                    // Encontra o container da página pai para restringir a busca de tabs
+                    const parentContainer = button.closest('.page-container');
+                    
+                    parentContainer.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                    parentContainer.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
 
                     button.classList.add('active');
-                    document.getElementById(`tab-${tabName}`).classList.add('active');
+                    parentContainer.querySelector(`#tab-${tabName}`).classList.add('active');
                 });
             });
             
