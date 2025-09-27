@@ -357,7 +357,7 @@
 </head>
 <body>
 
-    <div id="login-container" style="display: flex;">
+    <div id="login-container">
         <div class="login-card">
             <h1>Tati Manicure</h1>
             <p>Gerenciamento de Clientes e Agenda</p>
@@ -382,7 +382,7 @@
                 </ul>
             </nav>
             <div class="user-info">
-                <p id="userInfo">Olá, Usuário!</p>
+                <p id="userInfo">Olá, Tati!</p>
                 <button id="logout-button" class="btn btn-danger"><span class="material-icons">logout</span> Sair</button>
             </div>
         </div>
@@ -586,6 +586,9 @@
 
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
         import { getDatabase, ref, onValue, push, set, update, remove } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js";
+        
+        // --- NOVO: INTEGRAÇÃO EMAILJS ---
+        import emailjs from "https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js";
          
         // Sua configuração do Firebase (dados enviados por você)
         const firebaseConfig = {
@@ -596,7 +599,7 @@
             storageBucket: "tati-manicure.firebasestorage.app",
             messagingSenderId: "1061777323027",
             appId: "1:1061777323027:web:7b54e5fdbb7f06ee293be6",
-            measurementId: "G-V3ZJ5XBT" // Corrigi o measurementId
+            measurementId: "G-V3ZJ5XBT" 
         };
 
         // Inicialização do Firebase
@@ -607,11 +610,65 @@
         const clientesRef = ref(db, 'clientes');
         const servicosRef = ref(db, 'servicos'); 
         const agendamentosRef = ref(db, 'agendamentos'); 
-        const SENHA_UNICA = "tati123"; // **ATUALIZE ESTA SENHA!**
+        const SENHA_UNICA = "tati123"; // **SENHA ATUAL: tati123**
 
         // Caches de Dados (para evitar consultas repetidas e facilitar a Agenda)
         let cacheClientes = {}; 
         let cacheServicos = {}; 
+
+        // =================================================================
+        //      AUXILIAR: FUNÇÃO DE E-MAIL (EMAILJS)
+        // =================================================================
+
+        // Inicializar EmailJS com sua chave pública
+        const EMAILJS_PUBLIC_KEY = 'NL4GJXPD62V3HSEOC'; 
+        emailjs.init(EMAILJS_PUBLIC_KEY);
+
+        const EMAILJS_SERVICE_ID = 'service_pphgor9';
+        const EMAILJS_TEMPLATE_ID = 'template_t6tt9ap';
+
+        // Função auxiliar para formatar a data para exibição (usada no Email e na Tabela)
+        function formatarDataHora(dataString, horaString) {
+            const data = new Date(dataString + 'T' + horaString + ':00');
+            if (isNaN(data.getTime())) return 'Data Inválida';
+            
+            const options = { weekday: 'short', day: '2-digit', month: '2-digit' };
+            let dataFormatada = data.toLocaleDateString('pt-BR', options);
+            dataFormatada = dataFormatada.replace(/,|\./g, '').trim(); 
+            const horaFormatada = horaString.substring(0, 5); 
+            
+            return `${dataFormatada} ${horaFormatada}`;
+        }
+
+
+        // Função para enviar o e-mail de confirmação
+        function enviarEmailConfirmacao(agendamento) {
+            const cliente = cacheClientes[agendamento.clienteId];
+            
+            if (!cliente || !cliente.email) {
+                console.warn(`Não foi possível enviar e-mail. Cliente ${agendamento.clienteNome} não tem e-mail cadastrado.`);
+                return; 
+            }
+            
+            const templateParams = {
+                to: cliente.email, 
+                cliente_nome: cliente.nome.split(' ')[0], 
+                servico_nome: agendamento.servicoNome,
+                servico_preco: `R$ ${parseFloat(agendamento.servicoPreco).toFixed(2).replace('.', ',')}`,
+                data_e_hora: formatarDataHora(agendamento.data, agendamento.hora).replace(/,/g, ''), 
+                to_email: cliente.email
+            };
+
+            emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
+                .then(() => {
+                    console.log(`E-mail de confirmação enviado para: ${cliente.email}`);
+                })
+                .catch((error) => {
+                    console.error("Erro ao enviar e-mail:", error);
+                    showNotification('Erro ao enviar e-mail de confirmação.', 'info');
+                });
+        }
+
 
         // =================================================================
         //      1. LÓGICA DE LOGIN, NAVEGAÇÃO E NOTIFICAÇÃO
@@ -628,7 +685,7 @@
 
         function showApp(userName = 'Tati') {
             loginContainer.style.display = 'none';
-            appContainer.style.display = 'grid'; // Mudado para 'grid' para o layout funcionar
+            appContainer.style.display = 'grid'; 
             userInfoDisplay.textContent = `Olá, ${userName}!`;
             
             // Força a carga inicial de dados essenciais
@@ -849,7 +906,7 @@
         window.resetServicoForm = function() {
             servicoForm.reset();
             document.getElementById('servico-id').value = '';
-            document.getElementById('servico-isPacote').checked = false; // Garante que o checkbox é resetado
+            document.getElementById('servico-isPacote').checked = false; 
             btnSalvarServico.innerHTML = '<span class="material-icons">save</span> Salvar Serviço';
             btnSalvarServico.classList.replace('btn-secondary', 'btn-success');
         }
@@ -895,7 +952,7 @@
             onValue(servicosRef, (snapshot) => {
                 const servicos = snapshot.val();
                 listaServicos.innerHTML = '';
-                cacheServicos = {}; // Limpa e repopula o cache
+                cacheServicos = {}; 
                 const servicosArray = [];
 
                 if (servicos) {
@@ -973,26 +1030,9 @@
         const servicoSelect = document.getElementById('agenda-servico-id');
         const btnSalvarAgendamento = document.getElementById('btn-salvar-agendamento');
 
-        // Função auxiliar para formatar a data para exibição
-        function formatarDataHora(dataString, horaString) {
-            const data = new Date(dataString + 'T' + horaString + ':00');
-            if (isNaN(data.getTime())) return 'Data Inválida';
-            
-            // Obtém o dia da semana (ex: Qui)
-            const options = { weekday: 'short', day: '2-digit', month: '2-digit' };
-            let dataFormatada = data.toLocaleDateString('pt-BR', options);
-            
-            // Remove vírgulas/pontos extras e formata a hora
-            dataFormatada = dataFormatada.replace(/,|\./g, '').trim(); 
-            const horaFormatada = horaString.substring(0, 5); 
-            
-            return `${dataFormatada} ${horaFormatada}`;
-        }
-
         // 4.1. POPULAR SELECTS (CLIENTES e SERVIÇOS)
         function popularSelects() {
             // 4.1.1. Popula Select de Clientes
-            // Usa cacheClientes preenchido em carregarClientes
             clienteSelect.innerHTML = '<option value="">-- Selecione o Cliente --</option>';
             let clientesArray = Object.values(cacheClientes).sort((a, b) => a.nome.localeCompare(b.nome));
 
@@ -1004,7 +1044,6 @@
             });
 
             // 4.1.2. Popula Select de Serviços
-            // Usa cacheServicos preenchido em carregarServicos
             servicoSelect.innerHTML = '<option value="">-- Selecione o Serviço --</option>';
             let servicosArray = Object.values(cacheServicos).sort((a, b) => a.nome.localeCompare(b.nome));
                 
@@ -1033,7 +1072,6 @@
             const data = document.getElementById('agenda-data').value;
             const hora = document.getElementById('agenda-hora').value;
             
-            // Desnormalização de dados para o agendamento
             const clienteNome = cacheClientes[clienteId] ? cacheClientes[clienteId].nome : 'Cliente Removido';
             const servico = cacheServicos[servicoId];
             
@@ -1049,9 +1087,8 @@
                 clienteNome: clienteNome,
                 servicoId: servicoId,
                 servicoNome: servico.nome,
-                servicoPreco: servico.preco, // Salva o preço no momento do agendamento
+                servicoPreco: servico.preco, 
                 observacoes: document.getElementById('agenda-observacoes').value.trim(),
-                // Se for uma atualização, tenta manter o status original, senão define como 'Agendado'
                 status: id ? document.querySelector('.data-table tr[data-id="' + id + '"] span')?.textContent || 'Agendado' : 'Agendado' 
             };
 
@@ -1059,6 +1096,7 @@
                 update(ref(db, `agendamentos/${id}`), novoAgendamento)
                     .then(() => {
                         showNotification('Agendamento atualizado com sucesso!', 'success');
+                        enviarEmailConfirmacao(novoAgendamento); // Envia e-mail na atualização
                         resetAgendamentoForm();
                     })
                     .catch(error => {
@@ -1068,6 +1106,7 @@
                 push(agendamentosRef, novoAgendamento)
                     .then(() => {
                         showNotification('Agendamento criado com sucesso!', 'success');
+                        enviarEmailConfirmacao(novoAgendamento); // Envia e-mail no novo agendamento
                         resetAgendamentoForm();
                     })
                     .catch(error => {
@@ -1091,10 +1130,9 @@
                         agendamentosArray.push({ id, ...agendamentos[id] });
                     }
                     
-                    // Filtra e ordena apenas os agendamentos futuros e ativos ('Agendado')
                     const proximosAgendamentos = agendamentosArray
                         .filter(a => {
-                            if (a.status !== 'Agendado') return false; // Mostra apenas os agendados
+                            if (a.status !== 'Agendado') return false; 
                             if (a.data > hoje) return true;
                             if (a.data === hoje && a.hora >= agora) return true;
                             return false;
@@ -1108,14 +1146,13 @@
 
                     proximosAgendamentos.forEach(agendamento => {
                         const row = listaAgendamentos.insertRow();
-                        row.dataset.id = agendamento.id; // Adiciona o ID para referência
+                        row.dataset.id = agendamento.id; 
                         const dataHoraFormatada = formatarDataHora(agendamento.data, agendamento.hora);
 
                         row.insertCell().textContent = dataHoraFormatada;
                         row.insertCell().textContent = agendamento.clienteNome;
                         row.insertCell().textContent = agendamento.servicoNome;
                         
-                        // Célula de Status (sempre 'Agendado' nesta lista)
                         const statusCell = row.insertCell();
                         const statusSpan = document.createElement('span');
                         statusSpan.textContent = 'Agendado';
@@ -1126,7 +1163,6 @@
                         statusSpan.style.color = 'white';
                         statusCell.appendChild(statusSpan);
 
-                        // Célula de Ações
                         const acoesCell = row.insertCell();
                         acoesCell.className = 'action-buttons';
                         
@@ -1162,7 +1198,6 @@
 
         // 4.4. PREENCHER FORMULÁRIO PARA EDIÇÃO DE AGENDAMENTO
         function editarAgendamento(agendamento) {
-            // É importante repopular os selects com os dados atuais
             popularSelects(); 
             
             document.getElementById('agendamento-id').value = agendamento.id;
@@ -1185,7 +1220,6 @@
                 update(ref(db, `agendamentos/${id}`), { status: novoStatus })
                     .then(() => {
                         showNotification(`Agendamento atualizado para **${novoStatus}**!`, 'info');
-                        // A função carregarAgendamentos() e carregarHistorico() serão atualizadas automaticamente pelo onValue
                     })
                     .catch(error => {
                         showNotification(`Erro ao atualizar status: ${error.message}`, 'error');
@@ -1256,7 +1290,6 @@
             const dataInicio = filtroDataInicio.value;
             const dataFim = filtroDataFim.value;
             
-            // Configuração de datas de filtro, se não definidas, usa um período padrão
             const dataInicial = dataInicio || '1900-01-01'; 
             const dataFinal = dataFim || '9999-12-31'; 
 
@@ -1271,18 +1304,16 @@
                     for (let id in agendamentos) {
                         const agendamento = { id, ...agendamentos[id] };
 
-                        // Filtra por status "Concluído" e pelo período de data
                         if (agendamento.status === 'Concluído' && agendamento.data >= dataInicial && agendamento.data <= dataFinal) {
                             atendimentosConcluidos.push(agendamento);
                             lucroTotal += parseFloat(agendamento.servicoPreco || 0);
                         }
                     }
 
-                    // Ordena do mais recente para o mais antigo
                     atendimentosConcluidos.sort((a, b) => {
                         const dateTimeA = a.data + 'T' + a.hora;
                         const dateTimeB = b.data + 'T' + b.hora;
-                        return new Date(dateTimeB) - new Date(dateTimeA); // Ordem decrescente (mais recente primeiro)
+                        return new Date(dateTimeB) - new Date(dateTimeA); 
                     });
 
                     atendimentosConcluidos.forEach(agendamento => {
@@ -1292,7 +1323,6 @@
                         row.insertCell().textContent = agendamento.servicoNome;
                         row.insertCell().textContent = `R$ ${parseFloat(agendamento.servicoPreco).toFixed(2).replace('.', ',')}`;
 
-                        // Status fixo para o histórico
                         const statusCell = row.insertCell();
                         const statusSpan = document.createElement('span');
                         statusSpan.textContent = 'Concluído';
@@ -1305,14 +1335,13 @@
                     });
                 }
                 
-                // Atualiza os resumos
                 lucroTotalDisplay.textContent = `R$ ${lucroTotal.toFixed(2).replace('.', ',')}`;
                 totalAtendimentosDisplay.textContent = atendimentosConcluidos.length;
                 
                 if (atendimentosConcluidos.length === 0) {
                     listaHistorico.innerHTML = '<tr><td colspan="5" style="text-align: center;">Nenhum atendimento concluído encontrado no período.</td></tr>';
                 }
-            }, { onlyOnce: true }); // Para o histórico, usa oneValue para buscar os dados do filtro
+            }, { onlyOnce: true }); 
         }
 
         // 5.1. Inicialização do histórico ao entrar na seção
@@ -1323,10 +1352,9 @@
         //      6. INICIALIZAÇÃO
         // =================================================================
 
-        // Verifica se a sessão está ativa e mostra a tela de Login
+        // Garante que a tela de Login é a primeira a ser mostrada
         showLogin();
 
-        // Nota: carregarClientes/Servicos/Agendamentos e popularSelects são chamados no showApp() após o login.
     </script>
 </body>
 </html>
