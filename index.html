@@ -88,8 +88,8 @@
         #app-container {
             display: none; /* Inicia escondido, só aparece após o login */
             width: 100%;
-            display: grid;
-            grid-template-columns: var(--sidebar-width) 1fr;
+            /* CORREÇÃO DE LAYOUT: Trocando grid por flex para maior compatibilidade */
+            display: flex; 
         }
 
         /* =================================================================
@@ -105,7 +105,7 @@
             width: var(--sidebar-width);
             display: flex;
             flex-direction: column;
-            justify-content: space-between; /* Para empurrar a seção de usuário/sair para baixo */
+            justify-content: space-between; 
         }
 
         .sidebar h1 {
@@ -162,14 +162,15 @@
            ================================================================= */
 
         .main-content {
-            margin-left: var(--sidebar-width); /* Compensar a sidebar fixa */
+            margin-left: var(--sidebar-width); /* Mantém o espaçamento com a sidebar fixa */
             padding: 30px;
             width: calc(100% - var(--sidebar-width));
+            flex-grow: 1; /* Garante que ocupe o restante do espaço */
         }
 
         .content-section {
             display: none;
-            padding-bottom: 50px; /* Espaço no final */
+            padding-bottom: 50px; 
         }
 
         .content-section.active {
@@ -209,7 +210,7 @@
 
         .form-row > div {
             flex: 1;
-            min-width: 0; /* Permite o flex item encolher */
+            min-width: 0; 
         }
 
         label {
@@ -568,7 +569,7 @@
                     <p>Funcionalidade em desenvolvimento. Futuramente, aqui você poderá configurar:</p>
                     <ul>
                         <li>Alteração de Senha de Acesso.</li>
-                        <li>Notificações por E-mail (integração futura).</li>
+                        <li>Notificações por E-mail.</li>
                         <li>Configurações de horário de trabalho.</li>
                     </ul>
                 </div>
@@ -643,6 +644,7 @@
 
         // Função para enviar o e-mail de confirmação
         function enviarEmailConfirmacao(agendamento) {
+            // Usa o cache para buscar o e-mail do cliente
             const cliente = cacheClientes[agendamento.clienteId];
             
             if (!cliente || !cliente.email) {
@@ -650,10 +652,12 @@
                 return; 
             }
             
+            // Parâmetros que correspondem às variáveis no seu Template do EmailJS ({{cliente_nome}}, etc.)
             const templateParams = {
                 to: cliente.email, 
                 cliente_nome: cliente.nome.split(' ')[0], 
                 servico_nome: agendamento.servicoNome,
+                // Formata o preço no padrão brasileiro (R$ X,XX)
                 servico_preco: `R$ ${parseFloat(agendamento.servicoPreco).toFixed(2).replace('.', ',')}`,
                 data_e_hora: formatarDataHora(agendamento.data, agendamento.hora).replace(/,/g, ''), 
                 to_email: cliente.email
@@ -685,7 +689,7 @@
 
         function showApp(userName = 'Tati') {
             loginContainer.style.display = 'none';
-            appContainer.style.display = 'grid'; 
+            appContainer.style.display = 'flex'; // Usando flex para o layout corrigido
             userInfoDisplay.textContent = `Olá, ${userName}!`;
             
             // Força a carga inicial de dados essenciais
