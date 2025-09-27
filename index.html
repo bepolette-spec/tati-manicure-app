@@ -88,8 +88,7 @@
         #app-container {
             display: none; /* Inicia escondido, só aparece após o login */
             width: 100%;
-            /* CORREÇÃO DE LAYOUT: Trocando grid por flex para maior compatibilidade */
-            display: flex; 
+            display: flex; /* CORREÇÃO: Usa flex para alinhar Sidebar e Main Content */
         }
 
         /* =================================================================
@@ -169,12 +168,12 @@
         }
 
         .content-section {
-            display: none;
+            display: none; /* CORREÇÃO FINAL: Garante que todas as seções, por padrão, fiquem escondidas */
             padding-bottom: 50px; 
         }
 
         .content-section.active {
-            display: block;
+            display: block; /* Garante que apenas a seção com a classe 'active' apareça */
         }
 
         .section-header {
@@ -625,6 +624,7 @@
         const EMAILJS_PUBLIC_KEY = 'NL4GJXPD62V3HSEOC'; 
         emailjs.init(EMAILJS_PUBLIC_KEY);
 
+        // IDs que você configurou no EmailJS
         const EMAILJS_SERVICE_ID = 'service_pphgor9';
         const EMAILJS_TEMPLATE_ID = 'template_t6tt9ap';
 
