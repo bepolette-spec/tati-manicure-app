@@ -433,7 +433,6 @@
                 <li><a href="#" data-section="clientes"><span class="material-icons">people</span> Clientes</a></li>
                 <li><a href="#" data-section="servicos"><span class="material-icons">local_offer</span> Serviços</a></li>
                 <li><a href="#" data-section="historico"><span class="material-icons">history</span> Histórico/Lucros</a></li>
-                <li><a href="#" data-section="configuracoes"><span class="material-icons">settings</span> Configurações</a></li>
             </ul>
 
             <div class="user-info">
@@ -540,7 +539,7 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="cliente-email">E-mail (Para Confirmações)</label>
+                            <label for="cliente-email">E-mail (Opcional)</label>
                             <input type="email" id="cliente-email">
                         </div>
                         <div class="form-group">
@@ -654,37 +653,6 @@
             <div id="historico-section" class="content-section">
                 </div>
             
-            <div id="configuracoes-section" class="content-section">
-                <div class="section-header"><h2>Configurações do Sistema</h2></div>
-                <div class="card">
-                    <h3>Integração de E-mail (EmailJS)</h3>
-                    <p style="font-size: 0.9rem; color: var(--secondary-color);">
-                        Preencha suas chaves do EmailJS para enviar confirmações automáticas de agendamento por e-mail.
-                    </p>
-                    <form id="config-email-form">
-                        <input type="hidden" id="config-id" value="email_config">
-                        <div class="form-group">
-                            <label for="config-service-id">Service ID (Outlook/EmailJS):</label>
-                            <input type="text" id="config-service-id" required placeholder="ex: service_xxxxxx">
-                        </div>
-                        <div class="form-group">
-                            <label for="config-template-id">Template ID (Confirmação):</label>
-                            <input type="text" id="config-template-id" required placeholder="ex: template_xxxxxx">
-                        </div>
-                        <div class="form-group">
-                            <label for="config-public-key">Public Key (EmailJS Account):</label>
-                            <input type="text" id="config-public-key" required placeholder="ex: public_key_xxxxxx">
-                        </div>
-                        <button type="submit" class="btn-primary" id="btn-salvar-config">
-                            <span class="material-icons">save</span> Salvar Configurações
-                        </button>
-                        <button type="button" class="btn-secondary" onclick="resetConfigForm()">
-                            <span class="material-icons">refresh</span> Limpar
-                        </button>
-                    </form>
-                </div>
-            </div>
-
         </main>
     </div>
 
@@ -692,13 +660,7 @@
         
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
         import { getDatabase, ref, onValue, push, set, update, remove } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js";
-        import emailjs from "https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js";
-        // Linha Corrigida
         
-        // **CORREÇÃO CRÍTICA DO EMAILJS**
-        // A chave pública 'NL4GJXPD62V3HSEOC' foi usada para inicializar o EmailJS
-        emailjs.init("NL4GJXPD62V3HSEOC");
-         
         // =================================================================
         // 1.1. CONFIGURAÇÃO FIREBASE E VARIÁVEIS GLOBAIS
         // =================================================================
@@ -722,13 +684,11 @@
         const clientesRef = ref(db, 'clientes');
         const servicosRef = ref(db, 'servicos'); 
         const agendamentosRef = ref(db, 'agendamentos'); 
-        const configRef = ref(db, 'config');
         const SENHA_UNICA = "tati123";
 
         // Caches de Dados
         let cacheClientes = {}; 
         let cacheServicos = {};
-        let cacheConfig = {};
         let agendamentosAtivos = []; // Novo cache para agendamentos ativos para filtros locais
         
         // =================================================================
@@ -759,7 +719,6 @@
             // Define o filtro de data da agenda como o dia atual e carrega
             document.getElementById('filtro-agenda-data').value = today;
             carregarAgendamentos(); 
-            carregarConfiguracoes();
         }
         
         function showLogin() {
@@ -802,7 +761,6 @@
                     carregarAgendamentos(); 
                 }
                 if (targetSectionId === 'historico') { carregarHistorico(); }
-                if (targetSectionId === 'configuracoes') { carregarConfiguracoes(); }
         
                 navLinks.forEach(l => l.classList.remove('active'));
                 contentSections.forEach(s => s.classList.remove('active'));
@@ -1186,15 +1144,7 @@
             set(dbRef, novoAgendamento)
                 .then(() => {
                     resetAgendamentoForm(); // Limpa o formulário
-                    
-                    // Se for uma atualização, a notificação já foi dada no then anterior, 
-                    // mas podemos reforçar ou apenas notificar se for novo.
-                    if (!id) {
-                       // showNotification('Agendamento salvo com sucesso!', 'success');
-                    }
-                    
-                    // Tenta enviar o e-mail
-                    enviarEmailConfirmacao(novoAgendamento, dbRef.key || id); 
+                    showNotification('Agendamento salvo com sucesso!', 'success');
                 })
                 .catch(error => {
                     showNotification('Erro ao salvar agendamento: ' + error.message, 'error');
@@ -1583,92 +1533,8 @@
             document.getElementById('filtro-historico-cliente').value = '';
             renderizarHistorico();
         }
-
-        // =================================================================
-        // 6. CONFIGURAÇÕES (NÓ: 'config')
-        // =================================================================
-
-        const configEmailForm = document.getElementById('config-email-form');
         
-        window.resetConfigForm = function() {
-             configEmailForm.reset();
-        }
-        
-        // 6.1. SALVAR CONFIGURAÇÕES
-        configEmailForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const configId = document.getElementById('config-id').value;
-            
-            const novaConfig = {
-                serviceId: document.getElementById('config-service-id').value.trim(),
-                templateId: document.getElementById('config-template-id').value.trim(),
-                publicKey: document.getElementById('config-public-key').value.trim(),
-            };
-            
-            set(ref(db, `config/${configId}`), novaConfig)
-                .then(() => {
-                    showNotification('Configurações de E-mail salvas com sucesso!', 'success');
-                    carregarConfiguracoes(); // Recarrega o cache
-                })
-                .catch(error => {
-                    showNotification('Erro ao salvar configurações: ' + error.message, 'error');
-                });
-        });
-
-        // 6.2. CARREGAR CONFIGURAÇÕES DO FIREBASE (e popular cache)
-        function carregarConfiguracoes() {
-            onValue(configRef, (snapshot) => {
-                const configs = snapshot.val();
-                if (configs && configs.email_config) {
-                    cacheConfig = configs.email_config;
-                    
-                    // Preenche o formulário de configuração, se estiver visível
-                    document.getElementById('config-service-id').value = cacheConfig.serviceId || '';
-                    document.getElementById('config-template-id').value = cacheConfig.templateId || '';
-                    document.getElementById('config-public-key').value = cacheConfig.publicKey || '';
-                } else {
-                     cacheConfig = {}; // Limpa o cache se não houver configurações
-                     resetConfigForm();
-                }
-            }, {
-                // Fica escutando por mudanças, pois as configurações podem ser alteradas
-            });
-        }
-
-        // =================================================================
-        // 7. LÓGICA DE E-MAIL (EMAILJS)
-        // =================================================================
-        
-        function enviarEmailConfirmacao(agendamento, agendamentoId) {
-            const { clienteEmail, clienteNome, servicoNome, servicoPreco, data, hora } = agendamento;
-            
-            // 7.1. VERIFICAÇÃO DE CONFIGURAÇÕES E E-MAIL
-            if (!clienteEmail || !cacheConfig.serviceId || !cacheConfig.templateId || !cacheConfig.publicKey) {
-                console.warn('Configurações de e-mail incompletas ou cliente sem e-mail. Não enviando e-mail.');
-                showNotification('Agendamento salvo, mas o **E-mail não foi enviado** (Configurações pendentes).', 'info');
-                return;
-            }
-        
-            const templateParams = {
-                to: clienteEmail, // O e-mail do cliente
-                cliente_nome: clienteNome,
-                servico_nome: servicoNome,
-                servico_preco: `R$ ${parseFloat(servicoPreco).toFixed(2).replace('.', ',')}`,
-                data_hora: formatarDataHora(data, hora),
-                // Adicione outros parâmetros conforme seu template do EmailJS
-            };
-        
-            emailjs.send(cacheConfig.serviceId, cacheConfig.templateId, templateParams)
-                .then(() => {
-                   console.log('E-MAIL ENVIADO COM SUCESSO!');
-                   showNotification('Agendamento salvo e **e-mail de confirmação enviado!**', 'success');
-                }, (err) => {
-                   console.error('FALHA AO ENVIAR O E-MAIL:', err);
-                   showNotification(`Agendamento salvo, mas **erro ao enviar e-mail**: ${err.text || err.message || err}`, 'error');
-                });
-        }
-        
-        // Inicializa a exibição (em um ambiente real, deve estar aqui ou no final do HTML)
+        // Inicializa a exibição
         document.addEventListener('DOMContentLoaded', () => {
              // Mostra a tela de login ao carregar a página
             showLogin();
