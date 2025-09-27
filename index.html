@@ -1,1243 +1,639 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tati Manicure - Gerenciamento de Agendamentos</title>
+    <title>Tati Manicure - App</title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
-    
     <style>
-        /* --- Variáveis de Cor (Tema Manicure/Beleza) --- */
+        /* Variáveis CSS */
         :root {
-            --primary-color: #ff69b4; /* Rosa Choque/Hot Pink (Cor Principal) */
-            --secondary-color: #4b4b4b; /* Cinza Escuro (Texto Principal) */
-            --success-color: #28a745; 
-            --danger-color: #dc3545; 
-            --warning-color: #ffc107; 
-            --info-color: #17a2b8; 
-            --bg-color: #f8f9fa; /* Fundo Branco Suave */
-            --sidebar-bg-color: #ffffff; /* Fundo da Sidebar Branco */
-            --sidebar-text-color: #343a40; /* Texto Escuro na Sidebar */
-            --sidebar-hover-bg: #ffe0f5; /* Hover Rosa Claro */
-            --card-bg-color: #ffffff;
-            --text-color: #343a3f; 
-            --border-color: #e0e0e0; 
-            --shadow: 0 4px 12px rgba(0, 0, 0, 0.05); 
-            --input-border: #ced4da; 
-            --input-focus-border: var(--primary-color);
+            --primary-color: #ff85a2; /* Rosa Principal */
+            --secondary-color: #f1f1f1; /* Fundo Secundário */
+            --text-color: #333;
+            --sidebar-bg: #fff;
+            --sidebar-text-color: #333;
+            --active-bg: #ffe4ec;
+            --active-text: var(--primary-color);
+            --header-bg: #fff;
         }
 
-        /* --- Estilos Gerais (Adaptados) --- */
-        body { font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; margin: 0; padding: 0; background-color: var(--bg-color); color: var(--text-color); font-size: 16px; }
-        h1, h2, h3 { color: var(--secondary-color); margin-top: 0; margin-bottom: 20px; }
-        
-        /* Sidebar: Adicionando propriedades de responsividade */
-        .sidebar { 
-            width: 250px; 
-            background-color: var(--sidebar-bg-color); 
-            color: var(--sidebar-text-color); 
-            padding: 20px 0; 
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05); 
-            flex-shrink: 0; 
-            transition: transform 0.3s ease-in-out; 
-        }
-        
-        /* Estilos de menu */
-        .sidebar h2 { text-align: center; color: var(--primary-color); margin-bottom: 30px; font-size: 1.8rem; border-bottom: 1px solid rgba(0, 0, 0, 0.05); padding-bottom: 20px; }
-        .sidebar ul { list-style: none; padding: 0; margin: 0; }
-        .sidebar ul li a { display: flex; align-items: center; padding: 12px 20px; color: var(--sidebar-text-color); transition: background-color 0.3s ease; font-size: 1.1rem; text-decoration: none; }
-        .sidebar ul li a .material-icons { margin-right: 10px; color: var(--primary-color); }
-        .sidebar ul li a:hover, .sidebar ul li a.active { background-color: var(--sidebar-hover-bg); border-left: 5px solid var(--primary-color); padding-left: 15px; font-weight: 600; }
-        
-        /* Conteúdo Principal */
-        .main-content { flex-grow: 1; padding: 30px; overflow-y: auto; }
-        .content-section { display: none; }
-        .content-section.active { display: block; }
-        
-        /* CORREÇÃO APLICADA AQUI: Título da seção não fica fixo ao rolar */
-        .section-header { 
-            position: static !important; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 25px; 
-            padding-bottom: 15px; 
-            border-bottom: 2px solid var(--primary-color); 
-        }
-
-        .card { background-color: var(--card-bg-color); border-radius: 8px; box-shadow: var(--shadow); padding: 25px; margin-bottom: 25px; }
-        label { display: block; margin-bottom: 8px; font-weight: 600; }
-        select, input, textarea { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid var(--input-border); border-radius: 6px; box-sizing: border-box; font-size: 1rem; }
-        button { padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: background-color 0.3s ease, transform 0.1s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-primary { background-color: var(--primary-color); color: white; }
-        .btn-primary:hover { background-color: #e04a99; transform: translateY(-1px); }
-        .btn-success { background-color: var(--success-color); color: white; }
-        .btn-danger { background-color: var(--danger-color); color: white; }
-        .btn-secondary { background-color: var(--secondary-color); color: white; }
-        .form-row { display: flex; gap: 15px; }
-        .form-row > div { flex: 1; }
-        
-        /* Login */
-        #login-container { display: flex; justify-content: center; align-items: center; width: 100vw; height: 100vh; background-color: var(--sidebar-hover-bg); }
-        #login-card { width: 100%; max-width: 400px; padding: 40px; }
-        #login-card h2 { text-align: center; font-size: 2rem; color: var(--primary-color); }
-        
-        /* Estrutura do App */
-        #app-container { display: none; width: 100%; height: 100vh; }
-        .app-flex { display: flex; height: 100%; }
-        
-        /* Header */
-        #header { display: flex; justify-content: flex-end; align-items: center; padding: 10px 30px; background-color: white; border-bottom: 1px solid var(--border-color); }
-
-        /* Estilos de Tabela */
-        .data-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        .data-table th, .data-table td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border-color); }
-        .data-table th { background-color: var(--sidebar-hover-bg); color: var(--secondary-color); font-weight: 600; }
-        .data-table tr:hover { background-color: #f1f1f1; }
-        .action-buttons button { margin-right: 5px; padding: 8px 12px; font-size: 0.9rem; }
-
-        /* Notificações */
-        .notification { visibility: hidden; min-width: 250px; background-color: var(--secondary-color); color: #fff; text-align: center; border-radius: 4px; padding: 16px; position: fixed; z-index: 1000; bottom: 30px; left: 50%; transform: translateX(-50%); opacity: 0; transition: opacity 0.3s, visibility 0.3s; }
-        .notification.show { visibility: visible; opacity: 1; }
-        .notification.success { background-color: var(--success-color); }
-        .notification.error { background-color: var(--danger-color); }
-        .notification.info { background-color: var(--info-color); }
-        
-        /* NOVO: Estilo para o botão de menu (hambúrguer) */
-        #menu-toggle {
-            display: none; 
-            position: fixed;
-            top: 15px;
-            left: 15px;
-            z-index: 110; 
-            background: var(--primary-color);
-            color: white;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
+        /* Reset Básico */
+        * {
+            margin: 0;
             padding: 0;
-            justify-content: center;
-            align-items: center;
-            box-shadow: var(--shadow);
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            display: flex;
+            min-height: 100vh;
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            transition: margin-left 0.3s ease;
+        }
+
+        /* Sidebar (Menu Lateral) */
+        .sidebar {
+            width: 250px;
+            background-color: var(--sidebar-bg);
+            padding-top: 20px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            position: fixed;
+            height: 100%;
+            overflow-y: auto;
+            z-index: 10; 
+            transition: transform 0.3s ease;
         }
         
-        /* NOVO: Media Query para responsividade (Celulares e Tablets pequenos) */
+        /* Oculta a Sidebar por padrão no mobile */
+        .sidebar.closed {
+            transform: translateX(-100%);
+        }
+
+        .logo {
+            text-align: center;
+            padding: 0 20px 20px;
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        /* Estilos de menu */
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .sidebar ul li a {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: var(--sidebar-text-color);
+            transition: background-color 0.3s ease;
+            font-size: 1.1rem;
+            text-decoration: none;
+            overflow: hidden; /* Correção para o texto longo */
+            white-space: nowrap; /* Correção para o texto longo */
+            text-overflow: ellipsis; /* Adiciona '...' para o texto longo */
+        }
+
+        .sidebar ul li a:hover {
+            background-color: var(--active-bg);
+            color: var(--active-text);
+        }
+
+        .sidebar ul li a .material-icons {
+            margin-right: 10px;
+            font-size: 1.3rem;
+        }
+
+        .sidebar ul li.active a {
+            background-color: var(--active-bg);
+            color: var(--active-text);
+            font-weight: bold;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        /* Main Content */
+        .content {
+            flex-grow: 1;
+            margin-left: 250px; /* Espaço para a sidebar */
+            padding: 20px;
+            transition: margin-left 0.3s ease;
+        }
+
+        /* Header e Botão de Menu (Mobile) */
+        .header {
+            display: none; /* Escondido por padrão no desktop */
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: var(--header-bg);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 20;
+        }
+
+        .menu-toggle {
+            cursor: pointer;
+            color: var(--primary-color);
+            font-size: 2rem;
+        }
+        
+        .header .logo-mobile {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        /* Container da página */
+        .page-container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            margin-top: 20px; /* Para desktop */
+        }
+
+        /* Estilos de Abas */
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid var(--secondary-color);
+            margin-bottom: 20px;
+        }
+
+        .tab-button {
+            padding: 10px 15px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 1rem;
+            color: var(--text-color);
+            border-bottom: 2px solid transparent;
+            transition: border-bottom 0.3s ease, color 0.3s ease;
+        }
+
+        .tab-button.active {
+            border-bottom: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Formulário */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        .button-group {
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #ff6a8e;
+        }
+        
+        .btn-secondary {
+            background-color: #ccc;
+            color: var(--text-color);
+            margin-left: 10px;
+        }
+
+        /* Tabela de Agendamentos */
+        #agenda-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        #agenda-table th, #agenda-table td {
+            border: 1px solid #eee;
+            padding: 12px;
+            text-align: left;
+        }
+
+        #agenda-table th {
+            background-color: var(--secondary-color);
+            font-weight: bold;
+        }
+
+        #agenda-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        /* Media Query para responsividade (Celulares e Tablets pequenos) */
         @media (max-width: 768px) {
-            .app-flex {
-                display: block; /* Desativa o flexbox */
+            
+            .header {
+                display: flex; /* Mostra o header no mobile */
             }
 
-            /* Configura a sidebar para mobile */
-            .sidebar { 
-                transform: translateX(-100%); /* Esconde a sidebar */
-                position: fixed; 
-                height: 100%;
-                z-index: 100;
-                width: 220px; /* Largura menor no mobile */
+            .sidebar {
+                width: 230px; /* Largura um pouco maior para o texto */
+                z-index: 120; /* Z-index alto para cobrir o conteúdo */
+                box-shadow: 4px 0 6px rgba(0,0,0,0.2);
             }
-            .sidebar.open {
-                transform: translateX(0); /* Mostra a sidebar */
-            }
-            .sidebar h2 {
-                display: none; /* Esconde o título da sidebar */
+            
+            /* Quando a sidebar está aberta no mobile */
+            .sidebar.opened {
+                transform: translateX(0);
             }
 
-            /* Mostra o botão de menu */
-            #menu-toggle {
-                display: flex; 
+            .content {
+                margin-left: 0;
+                padding-top: 70px; /* Espaço para o header fixo */
+            }
+
+            /* Esconde o menu quando a sidebar está aberta no mobile */
+            body:has(.sidebar.opened) .content {
+                 overflow: hidden; 
             }
             
-            /* Ajusta o header para que o botão Sair não fique em cima do botão Menu */
-            #header {
-                justify-content: flex-end; 
-                padding: 10px 15px;
-                position: fixed;
-                width: 100%;
-                top: 0;
-                box-sizing: border-box;
-                z-index: 90;
-            }
-            
-            /* Ajusta o conteúdo principal para respeitar o header fixo */
-            .main-content {
-                padding: 20px; 
-                padding-top: 60px; /* Espaço para o header */
+            .page-container {
+                margin-top: 0;
             }
         }
     </style>
 </head>
 <body>
 
-    <button id="menu-toggle" class="btn-primary" type="button">
-        <span class="material-icons">menu</span>
-    </button>
+    <header class="header">
+        <span class="material-icons menu-toggle">menu</span>
+        <div class="logo-mobile">Tati Manicure</div>
+    </header>
 
-    <div id="notification-bar" class="notification"></div>
+    <nav class="sidebar closed">
+        <div class="logo">Tati Manicure</div>
+        <ul>
+            <li class="active" data-page="agenda"><a href="#"><span class="material-icons">calendar_today</span> Agenda</a></li>
+            <li data-page="clientes"><a href="#"><span class="material-icons">people</span> Clientes</a></li>
+            <li data-page="servicos"><a href="#"><span class="material-icons">content_cut</span> Serviços</a></li>
+            <li data-page="historico"><a href="#"><span class="material-icons">timeline</span> Histórico & Lucros</a></li>
+            <li data-page="configuracoes"><a href="#"><span class="material-icons">settings</span> Configurações</a></li>
+        </ul>
+    </nav>
 
-    <div id="login-container">
-        <div id="login-card" class="card">
-            <h2>Bem-vinda, Tati!</h2>
-            <p style="text-align: center; color: var(--secondary-color);">Acesse o sistema de agendamentos.</p>
-            <form id="login-form">
-                <label for="loginSenha">Senha Única:</label>
-                <input type="password" id="loginSenha" required placeholder="Digite a sua senha de acesso">
-                <button type="submit" class="btn-primary" style="width: 100%;">
-                    <span class="material-icons">lock_open</span> Entrar
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <div id="app-container">
-        <div class="app-flex">
-            <aside id="sidebar" class="sidebar">
-                <h2>Tati Manicure</h2>
-                <nav>
-                    <ul>
-                        <li><a href="#" data-section="agenda" class="active"><span class="material-icons">calendar_today</span> Agenda</a></li>
-                        <li><a href="#" data-section="clientes"><span class="material-icons">groups</span> Clientes</a></li>
-                        <li><a href="#" data-section="servicos"><span class="material-icons">nail_polish</span> Serviços & Preços</a></li>
-                        <li><a href="#" data-section="historico"><span class="material-icons">history</span> Histórico & Lucros</a></li>
-                        <li><a href="#" data-section="admin"><span class="material-icons">settings</span> Configurações</a></li>
-                    </ul>
-                </nav>
-            </aside>
-
-            <div style="display: flex; flex-direction: column; width: 100%;">
-                <header id="header">
-                    <div style="display: flex; align-items: center;">
-                        <p id="userInfo" style="margin-right: 20px; font-weight: 500; color: var(--secondary-color);">Olá, Tati!</p>
-                        <button id="logout-button" class="btn-danger"><span class="material-icons">logout</span> Sair</button>
-                    </div>
-                </header>
-                <main class="main-content">
-                    
-                    <section id="agenda-section" class="content-section active">
-                        <div class="section-header">
-                            <h2>Novo Agendamento</h2>
-                            <button class="btn-primary" onclick="resetAgendamentoForm()"><span class="material-icons">add_alarm</span> Agendar Horário</button>
-                        </div>
-
-                        <div class="card">
-                            <form id="agendamento-form">
-                                <input type="hidden" id="agendamento-id">
-                                <div class="form-row">
-                                    <div>
-                                        <label for="agenda-data">Data:</label>
-                                        <input type="date" id="agenda-data" required>
-                                    </div>
-                                    <div>
-                                        <label for="agenda-hora">Hora:</label>
-                                        <input type="time" id="agenda-hora" required>
-                                    </div>
-                                </div>
-                                
-                                <div class="form-row">
-                                    <div>
-                                        <label for="agenda-cliente-id">Cliente:</label>
-                                        <select id="agenda-cliente-id" required>
-                                            <option value="">-- Selecione o Cliente --</option>
-                                            </select>
-                                    </div>
-                                    <div>
-                                        <label for="agenda-servico-id">Serviço/Pacote:</label>
-                                        <select id="agenda-servico-id" required>
-                                            <option value="">-- Selecione o Serviço --</option>
-                                            </select>
-                                    </div>
-                                </div>
-                                
-                                <label for="agenda-observacoes">Observações do Agendamento:</label>
-                                <textarea id="agenda-observacoes" rows="2" placeholder="Ex: Atraso, confirmação de cor, etc."></textarea>
-
-                                <button type="submit" class="btn-success" id="btn-salvar-agendamento"><span class="material-icons">save</span> Salvar Agendamento</button>
-                                <button type="button" class="btn-secondary" onclick="resetAgendamentoForm()"><span class="material-icons">close</span> Cancelar</button>
-                            </form>
-                        </div>
-                        
-                        <div class="section-header" style="margin-top: 30px;">
-                            <h3>Próximos Agendamentos</h3>
-                        </div>
-
-                        <div class="card">
-                            <div style="max-height: 500px; overflow-y: auto;">
-                                <table class="data-table">
-                                    <thead>
-                                        <tr>
-                                            <th style="width: 15%;">Data/Hora</th>
-                                            <th style="width: 25%;">Cliente</th>
-                                            <th style="width: 25%;">Serviço</th>
-                                            <th>Status</th>
-                                            <th style="width: 150px;">Ações</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="lista-agendamentos">
-                                        </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </section>
-                    
-                    <section id="clientes-section" class="content-section">
-                        <div class="section-header">
-                            <h2>Cadastro de Clientes</h2>
-                            <button class="btn-primary" onclick="resetClienteForm()"><span class="material-icons">person_add</span> Novo Cliente</button>
-                        </div>
-
-                        <div class="card">
-                            <form id="cliente-form">
-                                <input type="hidden" id="cliente-id">
-                                <div class="form-row">
-                                    <div>
-                                        <label for="cliente-nome">Nome Completo:</label>
-                                        <input type="text" id="cliente-nome" required>
-                                    </div>
-                                    <div>
-                                        <label for="cliente-telefone">Telefone:</label>
-                                        <input type="tel" id="cliente-telefone" placeholder="(99) 99999-9999" required>
-                                    </div>
-                                </div>
-                                <div class="form-row">
-                                    <div>
-                                        <label for="cliente-email">E-mail:</label>
-                                        <input type="email" id="cliente-email" placeholder="email@exemplo.com">
-                                    </div>
-                                    <div>
-                                        <label for="cliente-endereco">Endereço:</label>
-                                        <input type="text" id="cliente-endereco" placeholder="Rua, Número, Bairro">
-                                    </div>
-                                </div>
-                                <label for="cliente-observacoes">Observações:</label>
-                                <textarea id="cliente-observacoes" rows="3" placeholder="Alergias, preferências ou informações importantes..."></textarea>
-
-                                <button type="submit" class="btn-success" id="btn-salvar-cliente"><span class="material-icons">save</span> Salvar Cliente</button>
-                                <button type="button" class="btn-secondary" onclick="resetClienteForm()"><span class="material-icons">close</span> Cancelar</button>
-                            </form>
-                        </div>
-                        
-                        <div class="section-header" style="margin-top: 30px;">
-                            <h3>Lista de Clientes Cadastrados</h3>
-                        </div>
-
-                        <div class="card">
-                            <input type="text" id="filtro-clientes" onkeyup="filtrarClientes()" placeholder="Filtrar por nome, telefone ou email...">
-                            <div style="max-height: 500px; overflow-y: auto;">
-                                <table class="data-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Nome</th>
-                                            <th>Telefone</th>
-                                            <th>E-mail</th>
-                                            <th style="width: 150px;">Ações</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="lista-clientes">
-                                        </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </section>
-                    
-                    <section id="servicos-section" class="content-section">
-                        <div class="section-header">
-                            <h2>Cadastro de Serviços & Promoções</h2>
-                            <button class="btn-primary" onclick="resetServicoForm()"><span class="material-icons">add_circle</span> Novo Serviço/Pacote</button>
-                        </div>
-
-                        <div class="card">
-                            <form id="servico-form">
-                                <input type="hidden" id="servico-id">
-                                <div class="form-row">
-                                    <div>
-                                        <label for="servico-nome">Nome do Serviço/Pacote:</label>
-                                        <input type="text" id="servico-nome" required>
-                                    </div>
-                                    <div>
-                                        <label for="servico-preco">Preço (R$):</label>
-                                        <input type="number" id="servico-preco" step="0.01" min="0" required placeholder="Ex: 40.00">
-                                    </div>
-                                </div>
-                                
-                                <label for="servico-descricao">Descrição:</label>
-                                <textarea id="servico-descricao" rows="2" placeholder="Ex: Mãos simples, Pacote Mãos e Pés, ou descrição do pacote de desconto."></textarea>
-                                
-                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
-                                    <input type="checkbox" id="servico-isPacote" style="width: auto; margin: 0;">
-                                    <label for="servico-isPacote" style="margin: 0; font-weight: normal;">Marcar como **Pacote de Serviço** ou **Promoção**?</label>
-                                </div>
-
-                                <button type="submit" class="btn-success" id="btn-salvar-servico"><span class="material-icons">save</span> Salvar Serviço</button>
-                                <button type="button" class="btn-secondary" onclick="resetServicoForm()"><span class="material-icons">close</span> Cancelar</button>
-                            </form>
-                        </div>
-                        
-                        <div class="section-header" style="margin-top: 30px;">
-                            <h3>Lista de Serviços e Pacotes Cadastrados</h3>
-                        </div>
-
-                        <div class="card">
-                            <div style="max-height: 500px; overflow-y: auto;">
-                                <table class="data-table">
-                                    <thead>
-                                        <tr>
-                                            <th style="width: 30%;">Nome</th>
-                                            <th>Tipo</th>
-                                            <th>Preço (R$)</th>
-                                            <th style="width: 150px;">Ações</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="lista-servicos">
-                                        </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section id="historico-section" class="content-section">
-                        <div class="section-header"><h2>Histórico de Atendimentos & Lucros</h2></div>
-
-                        <div class="form-row" style="margin-bottom: 20px;">
-                            <div class="card" style="flex: 1;">
-                                <h3>Lucro Total (Estimado)</h3>
-                                <p id="lucro-total" style="font-size: 2rem; color: var(--success-color); font-weight: bold;">R$ 0,00</p>
-                                <small>Soma dos atendimentos finalizados.</small>
-                            </div>
-                            <div class="card" style="flex: 1;">
-                                <h3>Atendimentos Finalizados</h3>
-                                <p id="total-atendimentos" style="font-size: 2rem; color: var(--info-color); font-weight: bold;">0</p>
-                                <small>Total de serviços concluídos.</small>
-                            </div>
-                        </div>
-                        
-                        <div class="section-header"><h3>Detalhes do Histórico</h3></div>
-
-                        <div class="card">
-                            <div style="max-height: 500px; overflow-y: auto;">
-                                <table class="data-table">
-                                    <thead>
-                                        <tr>
-                                            <th style="width: 15%;">Data</th>
-                                            <th style="width: 30%;">Cliente</th>
-                                            <th style="width: 30%;">Serviço</th>
-                                            <th>Valor (R$)</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="lista-historico">
-                                        </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section id="admin-section" class="content-section">
-                        <div class="section-header"><h2>Configurações do Sistema</h2></div>
-
-                        <div class="card">
-                            <h3>Alterar Senha de Acesso</h3>
-                            <p>Esta é a senha utilizada para entrar no aplicativo. **A senha atual é protegida.**</p>
-                            <form id="senha-form">
-                                <label for="nova-senha">Nova Senha Única:</label>
-                                <input type="password" id="nova-senha" required placeholder="Digite a nova senha">
-                                
-                                <label for="confirma-senha">Confirme a Nova Senha:</label>
-                                <input type="password" id="confirma-senha" required placeholder="Confirme a nova senha">
-
-                                <button type="submit" class="btn-primary"><span class="material-icons">vpn_key</span> Salvar Nova Senha</button>
-                            </form>
-                        </div>
-                    </section>
-
-                </main>
+    <main class="content">
+        
+        <section id="page-agenda" class="page-container active">
+            <h2>Agenda</h2>
+            <div class="tabs">
+                <button class="tab-button active" data-tab="novo-agendamento">Novo Agendamento</button>
+                <button class="tab-button" data-tab="lista-agendamentos">Lista de Agendamentos</button>
             </div>
-        </div>
-    </div>
+
+            <div id="tab-novo-agendamento" class="tab-content active">
+                <h3>Novo Agendamento</h3>
+                <form id="agendamentoForm">
+                    <div class="form-group">
+                        <label for="agendamentoData">Data e Hora:</label>
+                        <input type="datetime-local" id="agendamentoData" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="agendamentoCliente">Cliente:</label>
+                        <select id="agendamentoCliente" required>
+                            <option value="">-- Selecione o Cliente --</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="agendamentoServico">Serviço:</label>
+                        <select id="agendamentoServico" required>
+                            <option value="">-- Selecione o Serviço --</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="agendamentoObservacao">Observações:</label>
+                        <textarea id="agendamentoObservacao" rows="3"></textarea>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="submit" class="btn btn-primary">Salvar Agendamento</button>
+                        <button type="reset" class="btn btn-secondary">Limpar</button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="tab-lista-agendamentos" class="tab-content">
+                <h3>Agendamentos Futuros</h3>
+                <table id="agenda-table">
+                    <thead>
+                        <tr>
+                            <th>Data/Hora</th>
+                            <th>Cliente</th>
+                            <th>Serviço</th>
+                            <th>Valor</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="agenda-tbody">
+                        </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="page-clientes" class="page-container" style="display:none;">
+            <h2>Clientes</h2>
+            <p>Gerenciamento de Clientes (Em desenvolvimento)</p>
+        </section>
+
+        <section id="page-servicos" class="page-container" style="display:none;">
+            <h2>Serviços</h2>
+            <p>Gerenciamento de Serviços (Em desenvolvimento)</p>
+        </section>
+
+        <section id="page-historico" class="page-container" style="display:none;">
+            <h2>Histórico & Lucros</h2>
+            <p>Visualização de Histórico e Lucros (Em desenvolvimento)</p>
+        </section>
+        
+        <section id="page-configuracoes" class="page-container" style="display:none;">
+            <h2>Configurações</h2>
+            <p>Configurações Gerais (Em desenvolvimento)</p>
+        </section>
+
+    </main>
 
     <script type="module">
-        // =================================================================
-        //                 1. CONFIGURAÇÃO FIREBASE
-        // =================================================================
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-        import { getDatabase, ref, onValue, push, set, update, remove } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js";
-        
-        // Sua configuração do Firebase (dados enviados por você)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getDatabase, ref, onValue, set, push } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+        // Sua configuração do Firebase (Substitua por suas chaves)
         const firebaseConfig = {
-          apiKey: "AIzaSyBatp6e1NzevurpB2yS8eGErgSYC_t2-Nc",
-          authDomain: "tati-manicure.firebaseapp.com",
-          databaseURL: "https://tati-manicure-default-rtdb.firebaseio.com",
-          projectId: "tati-manicure",
-          storageBucket: "tati-manicure.firebasestorage.app",
-          messagingSenderId: "1061777323027",
-          appId: "1:1061777323027:web:7b54e5fdbb7f06ee293be6",
-          measurementId: "G-V3J5ZJ5XBT"
+            databaseURL: "https://tati-manicure-default-rtdb.firebaseio.com/", 
         };
 
-        // Inicialização do Firebase
         const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app); 
+        const db = getDatabase(app);
+
+        // Armazenamento em cache para clientes e serviços
+        let clientesArray = [];
+        let servicosArray = [];
         
-        // Referências aos nós (listas/tabelas) do seu banco de dados
-        const clientesRef = ref(db, 'clientes');
-        const servicosRef = ref(db, 'servicos'); 
-        const agendamentosRef = ref(db, 'agendamentos'); 
-        const settingsRef = ref(db, 'settings'); // NOVO: Referência para configurações
+        // --- FUNÇÕES DE CARREGAMENTO DE DADOS (Clientes e Serviços) ---
 
-        // Variável da Senha de Acesso (Carregada do Firebase)
-        let SENHA_UNICA = "tati123"; // **Valor inicial de fallback/primeiro acesso**
-        
-        // Função para carregar a senha e outras configurações
-        function carregarConfiguracoes() {
-            onValue(settingsRef, (snapshot) => {
-                const settings = snapshot.val();
-                if (settings && settings.senhaUnica) {
-                    SENHA_UNICA = settings.senhaUnica;
-                } else {
-                    // Se não existir no DB, cria o nó com a senha inicial
-                    set(settingsRef, { senhaUnica: SENHA_UNICA });
-                }
-            });
-        }
-        carregarConfiguracoes(); // Chamada no início
-        
-        // =================================================================
-        //                 1.1. CONFIGURAÇÃO EMAILJS
-        // =================================================================
-        // ⚠️ ATENÇÃO: COLOQUE AS SUAS CHAVES DO EMAILJS AQUI!
-        const EMAILJS_USER_ID = "[COLOQUE SUA CHAVE AQUI]"; 
-        const EMAILJS_SERVICE_ID = "[COLOQUE SUA CHAVE AQUI]";
-        const EMAILJS_TEMPLATE_ID = "[COLOQUE SUA CHAVE AQUI]";
-        
-        // Inicializa o EmailJS com seu User ID
-        if (typeof emailjs !== 'undefined' && EMAILJS_USER_ID !== "[COLOQUE SUA CHAVE AQUI]") {
-            emailjs.init(EMAILJS_USER_ID);
-        } else {
-             console.warn("EmailJS não inicializado. Chaves ausentes.");
-        }
-
-
-        // =================================================================
-        //                 2. LÓGICA DE LOGIN E NAVEGAÇÃO
-        // =================================================================
-        
-        const loginContainer = document.getElementById('login-container');
-        const appContainer = document.getElementById('app-container');
-        const loginForm = document.getElementById('login-form');
-        const logoutButton = document.getElementById('logout-button');
-        const navLinks = document.querySelectorAll('.sidebar ul li a');
-        const contentSections = document.querySelectorAll('.content-section');
-        const userInfoDisplay = document.getElementById('userInfo');
-        
-        // Referências para os elementos de Responsividade
-        const menuToggle = document.getElementById('menu-toggle');
-        const sidebar = document.getElementById('sidebar');
-
-        function showApp(userName = 'Tati') {
-            loginContainer.style.display = 'none';
-            appContainer.style.display = 'block';
-            userInfoDisplay.textContent = `Olá, ${userName}!`;
-            // Força a carga inicial das listas ao entrar no app
-            carregarClientes(); 
-            carregarServicos(); 
-            popularSelects(); 
-            carregarAgendamentos(); 
-            // Não chama carregarHistorico aqui, só quando a aba for clicada
-        }
-
-        function showLogin() {
-            loginContainer.style.display = 'flex';
-            appContainer.style.display = 'none';
-        }
-
-        loginForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const senha = document.getElementById('loginSenha').value;
-
-            if (senha === SENHA_UNICA) {
-                showApp();
-                showNotification(`Acesso liberado! Bem-vinda.`, 'success');
-            } else {
-                showNotification('Senha incorreta.', 'error');
-            }
-            document.getElementById('loginSenha').value = '';
-        });
-
-        logoutButton.addEventListener('click', () => {
-            showLogin();
-            showNotification('Você saiu do sistema.', 'info');
-        });
-
-        // Lógica de Responsividade (Menu Hambúrguer)
-        menuToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('open');
-        });
-
-        // Navegação entre Telas
-        navLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const targetSectionId = e.currentTarget.getAttribute('data-section');
-
-                // Recarrega as listas quando as abas são clicadas
-                if (targetSectionId === 'clientes') { carregarClientes(); }
-                if (targetSectionId === 'servicos') { carregarServicos(); }
-                if (targetSectionId === 'agenda') { 
-                    popularSelects(); 
-                    carregarAgendamentos(); 
-                }
-                if (targetSectionId === 'historico') {
-                    carregarHistorico();
-                }
-
-                navLinks.forEach(l => l.classList.remove('active'));
-                contentSections.forEach(s => s.classList.remove('active'));
-
-                e.currentTarget.classList.add('active');
-                document.getElementById(`${targetSectionId}-section`).classList.add('active');
-                
-                // Fecha a sidebar no mobile após clicar em um link
-                if (window.innerWidth <= 768) {
-                    sidebar.classList.remove('open');
-                }
-            });
-        });
-        
-        // Função de Notificação
-        function showNotification(message, type = 'success') {
-             const notificationBar = document.getElementById('notification-bar');
-             notificationBar.textContent = message;
-             notificationBar.className = `notification ${type} show`;
-             setTimeout(() => { notificationBar.classList.remove('show'); }, 3000);
-        }
-
-        // =================================================================
-        //              3. CRUD DE CLIENTES (NÓ: 'clientes')
-        // =================================================================
-
-        const clienteForm = document.getElementById('cliente-form');
-        const listaClientes = document.getElementById('lista-clientes');
-        const btnSalvarCliente = document.getElementById('btn-salvar-cliente');
-
-        window.resetClienteForm = function() {
-            clienteForm.reset();
-            document.getElementById('cliente-id').value = '';
-            btnSalvarCliente.innerHTML = '<span class="material-icons">save</span> Salvar Cliente';
-            btnSalvarCliente.classList.replace('btn-secondary', 'btn-success');
-        }
-
-        // 3.1. SALVAR/ATUALIZAR CLIENTE (Funcionalidade completa)
-        clienteForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-
-            const id = document.getElementById('cliente-id').value;
-            const novoCliente = {
-                nome: document.getElementById('cliente-nome').value,
-                telefone: document.getElementById('cliente-telefone').value,
-                email: document.getElementById('cliente-email').value, 
-                endereco: document.getElementById('cliente-endereco').value,
-                observacoes: document.getElementById('cliente-observacoes').value
-            };
-
-            if (id) {
-                update(ref(db, `clientes/${id}`), novoCliente)
-                    .then(() => {
-                        showNotification('Cliente atualizado com sucesso!', 'success');
-                        resetClienteForm();
-                    })
-                    .catch(error => {
-                        showNotification('Erro ao atualizar cliente: ' + error.message, 'error');
-                    });
-            } else {
-                push(clientesRef, novoCliente)
-                    .then(() => {
-                        showNotification('Cliente cadastrado com sucesso!', 'success');
-                        resetClienteForm();
-                    })
-                    .catch(error => {
-                        showNotification('Erro ao cadastrar cliente: ' + error.message, 'error');
-                    });
-            }
-        });
-
-        // 3.2. CARREGAR CLIENTES DO FIREBASE (Funcionalidade completa)
         function carregarClientes() {
+            const clientesRef = ref(db, 'clientes');
             onValue(clientesRef, (snapshot) => {
                 const clientes = snapshot.val();
-                listaClientes.innerHTML = '';
-                const clientesArray = [];
+                clientesArray = [];
+                const selectCliente = document.getElementById('agendamentoCliente');
+                selectCliente.innerHTML = '<option value="">-- Selecione o Cliente --</option>'; // Limpa
 
-                if (clientes) {
-                    for (let id in clientes) {
-                        clientesArray.push({ id, ...clientes[id] });
-                    }
-                    
-                    clientesArray.sort((a, b) => a.nome.localeCompare(b.nome));
-
-                    clientesArray.forEach(cliente => {
-                        const row = listaClientes.insertRow();
-                        row.dataset.clienteData = JSON.stringify(cliente); 
-                        
-                        row.insertCell().textContent = cliente.nome;
-                        row.insertCell().textContent = cliente.telefone;
-                        row.insertCell().textContent = cliente.email;
-                        
-                        const acoesCell = row.insertCell();
-                        acoesCell.className = 'action-buttons';
-                        
-                        const btnEditar = document.createElement('button');
-                        btnEditar.innerHTML = '<span class="material-icons" style="font-size: 18px;">edit</span>';
-                        btnEditar.className = 'btn-secondary';
-                        btnEditar.title = 'Editar';
-                        btnEditar.onclick = () => editarCliente(cliente);
-                        acoesCell.appendChild(btnEditar);
-                        
-                        const btnExcluir = document.createElement('button');
-                        btnExcluir.innerHTML = '<span class="material-icons" style="font-size: 18px;">delete</span>';
-                        btnExcluir.className = 'btn-danger';
-                        btnExcluir.title = 'Excluir';
-                        btnExcluir.onclick = () => confirmarExclusao(cliente.id, cliente.nome);
-                        acoesCell.appendChild(btnExcluir);
-                    });
-                } else {
-                    listaClientes.innerHTML = '<tr><td colspan="4" style="text-align: center;">Nenhum cliente cadastrado.</td></tr>';
+                for (let id in clientes) {
+                    clientesArray.push({ id, ...clientes[id] });
+                    const option = document.createElement('option');
+                    option.value = id;
+                    option.textContent = clientes[id].nome;
+                    selectCliente.appendChild(option);
                 }
             });
         }
 
-        // 3.3. PREENCHER FORMULÁRIO PARA EDIÇÃO (Funcionalidade completa)
-        function editarCliente(cliente) {
-            document.getElementById('cliente-id').value = cliente.id;
-            document.getElementById('cliente-nome').value = cliente.nome;
-            document.getElementById('cliente-telefone').value = cliente.telefone;
-            document.getElementById('cliente-email').value = cliente.email;
-            document.getElementById('cliente-endereco').value = cliente.endereco;
-            document.getElementById('cliente-observacoes').value = cliente.observacoes;
-
-            btnSalvarCliente.innerHTML = '<span class="material-icons">update</span> Atualizar Cliente';
-            btnSalvarCliente.classList.replace('btn-success', 'btn-secondary');
-
-            document.getElementById('clientes-section').classList.add('active');
-            navLinks.forEach(l => l.classList.remove('active'));
-            document.querySelector('[data-section="clientes"]').classList.add('active');
-            
-            document.getElementById('clientes-section').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        // 3.4. EXCLUIR CLIENTE (Funcionalidade completa)
-        function confirmarExclusao(id, nome) {
-            if (confirm(`Tem certeza que deseja excluir o cliente "${nome}"? Esta ação não pode ser desfeita.`)) {
-                remove(ref(db, `clientes/${id}`))
-                    .then(() => {
-                        showNotification(`Cliente "${nome}" excluído com sucesso.`, 'danger');
-                    })
-                    .catch(error => {
-                        showNotification('Erro ao excluir cliente: ' + error.message, 'error');
-                    });
-            }
-        }
-        
-        // 3.5. FILTRAR CLIENTES NA TABELA (Busca Local) (Funcionalidade completa)
-        window.filtrarClientes = function() {
-            const filtro = document.getElementById('filtro-clientes').value.toLowerCase();
-            const linhas = listaClientes.getElementsByTagName('tr');
-
-            for (let i = 0; i < linhas.length; i++) {
-                const row = linhas[i];
-                if (row.cells.length < 4) continue; 
-                
-                const clienteData = JSON.parse(row.dataset.clienteData);
-                const nome = clienteData.nome.toLowerCase();
-                const telefone = clienteData.telefone.toLowerCase();
-                const email = clienteData.email.toLowerCase();
-
-                if (nome.includes(filtro) || telefone.includes(filtro) || email.includes(filtro)) {
-                    row.style.display = "";
-                } else {
-                    row.style.display = "none";
-                }
-            }
-        }
-
-        // =================================================================
-        //              4. CRUD DE SERVIÇOS (NÓ: 'servicos')
-        // =================================================================
-
-        const servicoForm = document.getElementById('servico-form');
-        const listaServicos = document.getElementById('lista-servicos');
-        const btnSalvarServico = document.getElementById('btn-salvar-servico');
-
-        // Função para Resetar/Limpar o Formulário de Serviços
-        window.resetServicoForm = function() {
-            servicoForm.reset();
-            document.getElementById('servico-id').value = '';
-            btnSalvarServico.innerHTML = '<span class="material-icons">save</span> Salvar Serviço';
-            btnSalvarServico.classList.replace('btn-secondary', 'btn-success');
-        }
-
-        // 4.1. SALVAR/ATUALIZAR SERVIÇO (Funcionalidade completa)
-        servicoForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-
-            const id = document.getElementById('servico-id').value;
-            const novoServico = {
-                nome: document.getElementById('servico-nome').value,
-                descricao: document.getElementById('servico-descricao').value,
-                preco: parseFloat(document.getElementById('servico-preco').value).toFixed(2), 
-                isPacote: document.getElementById('servico-isPacote').checked
-            };
-
-            if (id) {
-                update(ref(db, `servicos/${id}`), novoServico)
-                    .then(() => {
-                        showNotification('Serviço/Pacote atualizado com sucesso!', 'success');
-                        resetServicoForm();
-                    })
-                    .catch(error => {
-                        showNotification('Erro ao atualizar serviço: ' + error.message, 'error');
-                    });
-            } else {
-                push(servicosRef, novoServico)
-                    .then(() => {
-                        showNotification('Serviço/Pacote cadastrado com sucesso!', 'success');
-                        resetServicoForm();
-                    })
-                    .catch(error => {
-                        showNotification('Erro ao cadastrar serviço: ' + error.message, 'error');
-                    });
-            }
-        });
-
-        // 4.2. CARREGAR SERVIÇOS DO FIREBASE (Funcionalidade completa)
         function carregarServicos() {
+            const servicosRef = ref(db, 'servicos');
             onValue(servicosRef, (snapshot) => {
                 const servicos = snapshot.val();
-                listaServicos.innerHTML = '';
-                const servicosArray = [];
+                servicosArray = [];
+                const selectServico = document.getElementById('agendamentoServico');
+                selectServico.innerHTML = '<option value="">-- Selecione o Serviço --</option>'; // Limpa
 
-                if (servicos) {
-                    for (let id in servicos) {
-                        servicosArray.push({ id, ...servicos[id] });
-                    }
+                for (let id in servicos) {
+                    servicosArray.push({ id, ...servicos[id] });
+                    const option = document.createElement('option');
+                    option.value = id;
+                    option.textContent = `${servicos[id].nome} (R$ ${servicos[id].preco.toFixed(2).replace('.', ',')})`;
+                    selectServico.appendChild(option);
+                }
+            });
+        }
+        
+        // --- FUNÇÃO DE CARREGAMENTO DE AGENDAMENTOS ---
+
+        function carregarAgendamentos() {
+            const agendamentosRef = ref(db, 'agendamentos');
+            onValue(agendamentosRef, (snapshot) => {
+                const agendamentos = snapshot.val();
+                const tbody = document.getElementById('agenda-tbody');
+                tbody.innerHTML = ''; // Limpa a tabela
+
+                // Pega a data atual (sem hora) para filtrar
+                const hoje = new Date();
+                hoje.setHours(0, 0, 0, 0);
+
+                for (let id in agendamentos) {
+                    const agendamento = agendamentos[id];
+                    const dataAgendamento = new Date(agendamento.dataHora);
                     
-                    servicosArray.sort((a, b) => a.nome.localeCompare(b.nome));
+                    // Mostra apenas agendamentos futuros ou do dia atual
+                    if (dataAgendamento >= hoje) { 
+                        const cliente = clientesArray.find(c => c.id === agendamento.clienteId);
+                        const servico = servicosArray.find(s => s.id === agendamento.servicoId);
+                        
+                        const row = tbody.insertRow();
+                        
+                        // Formatação de data e hora
+                        const dataFormatada = dataAgendamento.toLocaleDateString('pt-BR');
+                        const horaFormatada = dataAgendamento.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
-                    servicosArray.forEach(servico => {
-                        const row = listaServicos.insertRow();
-                        
-                        row.insertCell().textContent = servico.nome;
-                        
-                        const tipoCell = row.insertCell();
-                        if (servico.isPacote) {
-                            tipoCell.innerHTML = '<strong style="color: var(--primary-color);">Pacote/Promoção</strong>';
-                        } else {
-                            tipoCell.textContent = 'Serviço Único';
-                        }
-
-                        row.insertCell().textContent = `R$ ${parseFloat(servico.preco).toFixed(2).replace('.', ',')}`;
-                        
-                        const acoesCell = row.insertCell();
-                        acoesCell.className = 'action-buttons';
-                        
-                        const btnEditar = document.createElement('button');
-                        btnEditar.innerHTML = '<span class="material-icons" style="font-size: 18px;">edit</span>';
-                        btnEditar.className = 'btn-secondary';
-                        btnEditar.title = 'Editar';
-                        btnEditar.onclick = () => editarServico(servico);
-                        acoesCell.appendChild(btnEditar);
-                        
-                        const btnExcluir = document.createElement('button');
-                        btnExcluir.innerHTML = '<span class="material-icons" style="font-size: 18px;">delete</span>';
-                        btnExcluir.className = 'btn-danger';
-                        btnExcluir.title = 'Excluir';
-                        btnExcluir.onclick = () => confirmarExclusaoServico(servico.id, servico.nome);
-                        acoesCell.appendChild(btnExcluir);
-                    });
-                } else {
-                    listaServicos.innerHTML = '<tr><td colspan="4" style="text-align: center;">Nenhum serviço ou pacote cadastrado.</td></tr>';
+                        row.insertCell().textContent = `${dataFormatada} às ${horaFormatada}`;
+                        row.insertCell().textContent = cliente ? cliente.nome : 'Cliente Desconhecido';
+                        row.insertCell().textContent = servico ? servico.nome : 'Serviço Desconhecido';
+                        row.insertCell().textContent = servico ? `R$ ${servico.preco.toFixed(2).replace('.', ',')}` : 'N/A';
+                        row.insertCell().textContent = agendamento.status || 'Agendado';
+                    }
                 }
             });
         }
 
-        // 4.3. PREENCHER FORMULÁRIO PARA EDIÇÃO (Funcionalidade completa)
-        function editarServico(servico) {
-            document.getElementById('servico-id').value = servico.id;
-            document.getElementById('servico-nome').value = servico.nome;
-            document.getElementById('servico-descricao').value = servico.descricao;
-            document.getElementById('servico-preco').value = servico.preco;
-            document.getElementById('servico-isPacote').checked = servico.isPacote === true; 
+        // --- FUNÇÃO SALVAR AGENDAMENTO E ENVIAR E-MAIL (ATUALIZADA) ---
+        
+        // A função precisa ser global para ser acessada pelo script abaixo
+        window.salvarAgendamento = function() {
+            const dataHora = document.getElementById('agendamentoData').value;
+            const clienteId = document.getElementById('agendamentoCliente').value;
+            const servicoId = document.getElementById('agendamentoServico').value;
+            const observacao = document.getElementById('agendamentoObservacao').value;
 
-            btnSalvarServico.innerHTML = '<span class="material-icons">update</span> Atualizar Serviço';
-            btnSalvarServico.classList.replace('btn-success', 'btn-secondary');
-
-            document.querySelector('[data-section="servicos"]').click();
-            
-            document.getElementById('servicos-section').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        // 4.4. EXCLUIR SERVIÇO (Funcionalidade completa)
-        function confirmarExclusaoServico(id, nome) {
-            if (confirm(`Tem certeza que deseja excluir o serviço/pacote "${nome}"? Esta ação não pode ser desfeita.`)) {
-                remove(ref(db, `servicos/${id}`))
-                    .then(() => {
-                        showNotification(`Serviço/Pacote "${nome}" excluído com sucesso.`, 'danger');
-                    })
-                    .catch(error => {
-                        showNotification('Erro ao excluir serviço: ' + error.message, 'error');
-                    });
-            }
-        }
-
-        // =================================================================
-        //              5. CRUD DE AGENDAMENTOS (NÓ: 'agendamentos')
-        // =================================================================
-
-        const agendamentoForm = document.getElementById('agendamento-form');
-        const listaAgendamentos = document.getElementById('lista-agendamentos');
-        const btnSalvarAgendamento = document.getElementById('btn-salvar-agendamento');
-        const selectCliente = document.getElementById('agenda-cliente-id');
-        const selectServico = document.getElementById('agenda-servico-id');
-
-        // Objeto para armazenar clientes e serviços em memória para referência rápida
-        let clientesCache = {};
-        let servicosCache = {};
-
-        // 5.0. FUNÇÃO PARA POPULAR OS SELECTS
-        function popularSelects() {
-            // 5.0.1. Popular Clientes
-            onValue(clientesRef, (snapshot) => {
-                clientesCache = {};
-                selectCliente.innerHTML = '<option value="">-- Selecione o Cliente --</option>';
-                if (snapshot.exists()) {
-                    snapshot.forEach((childSnapshot) => {
-                        const cliente = childSnapshot.val();
-                        cliente.id = childSnapshot.key;
-                        clientesCache[cliente.id] = cliente;
-                        const option = new Option(cliente.nome, cliente.id);
-                        selectCliente.appendChild(option);
-                    });
-                }
-            });
-
-            // 5.0.2. Popular Serviços
-            onValue(servicosRef, (snapshot) => {
-                servicosCache = {};
-                selectServico.innerHTML = '<option value="">-- Selecione o Serviço --</option>';
-                if (snapshot.exists()) {
-                    snapshot.forEach((childSnapshot) => {
-                        const servico = childSnapshot.val();
-                        servico.id = childSnapshot.key;
-                        servicosCache[servico.id] = servico;
-                        const nomeServico = servico.isPacote ? `[Pacote] ${servico.nome}` : servico.nome;
-                        const option = new Option(`${nomeServico} (R$ ${parseFloat(servico.preco).toFixed(2).replace('.', ',')})`, servico.id);
-                        selectServico.appendChild(option);
-                    });
-                }
-            });
-        }
-
-        popularSelects();
-
-        // Função para Resetar/Limpar o Formulário de Agendamento
-        window.resetAgendamentoForm = function() {
-            agendamentoForm.reset();
-            document.getElementById('agendamento-id').value = '';
-            btnSalvarAgendamento.innerHTML = '<span class="material-icons">save</span> Salvar Agendamento';
-            btnSalvarAgendamento.classList.replace('btn-secondary', 'btn-success');
-        }
-
-        // 5.1. SALVAR/ATUALIZAR AGENDAMENTO
-        agendamentoForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-
-            const clienteId = document.getElementById('agenda-cliente-id').value;
-            const servicoId = document.getElementById('agenda-servico-id').value;
-
-            if (!clienteId || !servicoId) {
-                 showNotification('Por favor, selecione um Cliente e um Serviço.', 'error');
-                 return;
+            if (!dataHora || !clienteId || !servicoId) {
+                alert('Por favor, preencha a Data, Hora, Cliente e Serviço.');
+                return;
             }
 
-            const id = document.getElementById('agendamento-id').value;
-            const clienteInfo = clientesCache[clienteId] || { nome: 'Cliente Desconhecido', email: '' };
-            const servicoInfo = servicosCache[servicoId] || { nome: 'Serviço Desconhecido', preco: 0 };
+            // Busca os detalhes do cliente e serviço para o e-mail
+            const cliente = clientesArray.find(c => c.id === clienteId);
+            const servico = servicosArray.find(s => s.id === servicoId);
+
+            if (!cliente || !servico) {
+                alert('Erro ao encontrar detalhes do Cliente ou Serviço.');
+                return;
+            }
             
+            // Verifica se o cliente tem email antes de salvar (para evitar erro no envio)
+            if (!cliente.email || cliente.email.trim() === "") {
+                if (!confirm(`O cliente ${cliente.nome} não tem e-mail cadastrado. Deseja salvar o agendamento sem enviar a confirmação?`)) {
+                    return; // Cancela o salvamento
+                }
+            }
+
+
             const novoAgendamento = {
-                data: document.getElementById('agenda-data').value,
-                hora: document.getElementById('agenda-hora').value,
+                dataHora: dataHora,
                 clienteId: clienteId,
                 servicoId: servicoId,
-                clienteNome: clienteInfo.nome, 
-                servicoNome: servicoInfo.nome,
-                preco: servicoInfo.preco,
-                observacoes: document.getElementById('agenda-observacoes').value,
-                status: 'Agendado' // Status inicial
+                observacao: observacao,
+                status: 'agendado' // Novo campo de status
             };
 
-            if (id) {
-                // MODO EDIÇÃO
-                update(ref(db, `agendamentos/${id}`), novoAgendamento)
-                    .then(() => {
-                        showNotification('Agendamento atualizado com sucesso!', 'success');
-                        resetAgendamentoForm();
-                    })
-                    .catch(error => {
-                        showNotification('Erro ao atualizar agendamento: ' + error.message, 'error');
-                    });
-            } else {
-                // MODO CADASTRO (NOVO)
-                push(agendamentosRef, novoAgendamento)
-                    .then(() => {
-                        // Lógica de E-mail (Ainda como placeholder)
-                        const clienteEmail = clienteInfo.email;
-                        if (clienteEmail && clienteEmail.trim() !== '' && EMAILJS_USER_ID !== "[COLOQUE SUA CHAVE AQUI]") {
-                            const dataFormatada = novoAgendamento.data.split('-').reverse().join('/');
-                            const agendamentoDataHora = `${dataFormatada} às ${novoAgendamento.hora.substring(0, 5)}`;
-                            const servicoPreco = `R$ ${parseFloat(novoAgendamento.preco).toFixed(2).replace('.', ',')}`;
+            const novoAgendamentoRef = ref(db, 'agendamentos/' + push(ref(db, 'agendamentos')).key);
 
-                            sendEmailConfirmation({
-                                to: clienteEmail,
-                                cliente_nome: novoAgendamento.clienteNome,
-                                data_hora: agendamentoDataHora,
-                                servico_nome: novoAgendamento.servicoNome,
-                                servico_preco: servicoPreco
-                            });
-                        } else {
-                             showNotification('Agendamento salvo com sucesso!', 'success');
-                        }
-                        
-                        resetAgendamentoForm();
-                    })
-                    .catch(error => {
-                        showNotification('Erro ao salvar agendamento: ' + error.message, 'error');
-                    });
-            }
-        });
-        
-        // 5.2. CARREGAR AGENDAMENTOS (Apenas Pendentes/Futuros)
-        function carregarAgendamentos() {
-            onValue(agendamentosRef, (snapshot) => {
-                const agendamentos = snapshot.val();
-                listaAgendamentos.innerHTML = '';
-                const agendamentosArray = [];
-
-                if (agendamentos) {
-                    for (let id in agendamentos) {
-                        const agendamento = agendamentos[id];
-                        // FILTRA: Apenas agendamentos que estão 'Agendado' (pendentes)
-                        if (agendamento.status === 'Agendado') { 
-                            agendamentosArray.push({ id, ...agendamento });
-                        }
-                    }
-                    
-                    // Ordena por data e hora (do mais próximo ao mais distante)
-                    agendamentosArray.sort((a, b) => {
-                        const dateTimeA = new Date(`${a.data}T${a.hora}`);
-                        const dateTimeB = new Date(`${b.data}T${b.hora}`);
-                        return dateTimeA - dateTimeB;
-                    });
-
-                    agendamentosArray.forEach(agendamento => {
-                        const row = listaAgendamentos.insertRow();
-                        
-                        const dataFormatada = agendamento.data.split('-').reverse().join('/');
-                        row.insertCell().innerHTML = `<strong>${dataFormatada}</strong> às ${agendamento.hora.substring(0, 5)}`;
-                        
-                        row.insertCell().textContent = agendamento.clienteNome;
-                        
-                        const servico = servicosCache[agendamento.servicoId];
-                        const nomeServicoCompleto = (servico && servico.isPacote) ? 
-                            `[Pacote] ${agendamento.servicoNome}` : agendamento.servicoNome;
-                            
-                        row.insertCell().textContent = `${nomeServicoCompleto} (R$ ${parseFloat(agendamento.preco).toFixed(2).replace('.', ',')})`;
-
-                        // Status
-                        const statusCell = row.insertCell();
-                        statusCell.textContent = agendamento.status;
-                        if (agendamento.status === 'Agendado') {
-                            statusCell.style.fontWeight = 'bold';
-                            statusCell.style.color = '#17a2b8'; 
-                        }
-                        
-                        const acoesCell = row.insertCell();
-                        acoesCell.className = 'action-buttons';
-                        
-                        // NOVO: Botão Finalizar
-                        const btnFinalizar = document.createElement('button');
-                        btnFinalizar.innerHTML = '<span class="material-icons" style="font-size: 18px;">check_circle</span>';
-                        btnFinalizar.className = 'btn-success';
-                        btnFinalizar.title = 'Finalizar/Concluir';
-                        btnFinalizar.onclick = () => finalizarAgendamento(agendamento.id, agendamento.clienteNome);
-                        acoesCell.appendChild(btnFinalizar);
-
-                        // Botão Editar
-                        const btnEditar = document.createElement('button');
-                        btnEditar.innerHTML = '<span class="material-icons" style="font-size: 18px;">edit</span>';
-                        btnEditar.className = 'btn-secondary';
-                        btnEditar.title = 'Editar';
-                        btnEditar.onclick = () => editarAgendamento(agendamento);
-                        acoesCell.appendChild(btnEditar);
-                        
-                        // Botão Excluir
-                        const btnExcluir = document.createElement('button');
-                        btnExcluir.innerHTML = '<span class="material-icons" style="font-size: 18px;">delete</span>';
-                        btnExcluir.className = 'btn-danger';
-                        btnExcluir.title = 'Excluir';
-                        btnExcluir.onclick = () => confirmarExclusaoAgendamento(agendamento.id, agendamento.clienteNome);
-                        acoesCell.appendChild(btnExcluir);
-                    });
-                } else {
-                    listaAgendamentos.innerHTML = '<tr><td colspan="5" style="text-align: center;">Nenhum agendamento futuro cadastrado.</td></tr>';
-                }
-            });
-        }
-        
-        // 5.3. PREENCHER FORMULÁRIO PARA EDIÇÃO
-        function editarAgendamento(agendamento) {
-            document.getElementById('agendamento-id').value = agendamento.id;
-            document.getElementById('agenda-data').value = agendamento.data;
-            document.getElementById('agenda-hora').value = agendamento.hora;
-            document.getElementById('agenda-cliente-id').value = agendamento.clienteId;
-            document.getElementById('agenda-servico-id').value = agendamento.servicoId;
-            document.getElementById('agenda-observacoes').value = agendamento.observacoes;
-
-            btnSalvarAgendamento.innerHTML = '<span class="material-icons">update</span> Atualizar Agendamento';
-            btnSalvarAgendamento.classList.replace('btn-success', 'btn-secondary');
-
-            document.getElementById('agenda-section').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        // 5.4. EXCLUIR AGENDAMENTO
-        function confirmarExclusaoAgendamento(id, nomeCliente) {
-            if (confirm(`Tem certeza que deseja excluir o agendamento de "${nomeCliente}"? Esta ação não pode ser desfeita.`)) {
-                remove(ref(db, `agendamentos/${id}`))
-                    .then(() => {
-                        showNotification(`Agendamento de "${nomeCliente}" excluído com sucesso.`, 'danger');
-                    })
-                    .catch(error => {
-                        showNotification('Erro ao excluir agendamento: ' + error.message, 'error');
-                    });
-            }
-        }
-        
-        // NOVO: 5.5. FINALIZAR AGENDAMENTO
-        window.finalizarAgendamento = function(id, nomeCliente) {
-            if (confirm(`Confirmar que o atendimento de "${nomeCliente}" foi FINALIZADO e pago?`)) {
-                update(ref(db, `agendamentos/${id}`), { status: 'Finalizado' })
-                    .then(() => {
-                        showNotification(`Atendimento de "${nomeCliente}" finalizado e movido para o Histórico.`, 'success');
-                        carregarAgendamentos(); 
-                        carregarHistorico(); 
-                    })
-                    .catch(error => {
-                        showNotification('Erro ao finalizar agendamento: ' + error.message, 'error');
-                    });
-            }
-        }
-        
-        // 5.6. LÓGICA DE ENVIO DE E-MAIL (Usando EmailJS)
-        function sendEmailConfirmation(templateParams) {
-            if (!EMAILJS_USER_ID || !EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID || EMAILJS_USER_ID === "[COLOQUE SUA CHAVE AQUI]") {
-                showNotification('Agendamento salvo. ATENÇÃO: Chaves do EmailJS ausentes.', 'warning');
-                return;
-            }
-
-            emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
-                .then((response) => {
-                   console.log('E-mail enviado com sucesso!', response.status, response.text);
-                   showNotification('Agendamento salvo e e-mail de confirmação enviado!', 'success');
-                }, (error) => {
-                   console.error('Falha ao enviar e-mail:', error);
-                   showNotification('Agendamento salvo. ERRO ao enviar e-mail. Verifique o console.', 'error');
-                });
-        }
-        
-        // =================================================================
-        //              6. HISTÓRICO E LUCROS
-        // =================================================================
-        
-        function carregarHistorico() {
-            onValue(agendamentosRef, (snapshot) => {
-                const agendamentos = snapshot.val();
-                let lucroTotal = 0;
-                let totalAtendimentos = 0;
-                const listaHistoricoBody = document.getElementById('lista-historico');
-                listaHistoricoBody.innerHTML = '';
-                const historicoArray = [];
-
-                if (agendamentos) {
-                    for (let id in agendamentos) {
-                        const agendamento = agendamentos[id];
-                        // FILTRA: Apenas agendamentos com status 'Finalizado'
-                        if (agendamento.status === 'Finalizado') {
-                            historicoArray.push(agendamento);
-                            lucroTotal += parseFloat(agendamento.preco);
-                            totalAtendimentos++;
-                        }
-                    }
-                    
-                    // Ordena do mais recente para o mais antigo
-                    historicoArray.sort((a, b) => {
-                        const dateTimeA = new Date(`${a.data}T${a.hora}`);
-                        const dateTimeB = new Date(`${b.data}T${b.hora}`);
-                        return dateTimeB - dateTimeA; // B - A para decrescente
-                    });
-
-                    historicoArray.forEach(agendamento => {
-                        const row = listaHistoricoBody.insertRow();
-                        const dataFormatada = agendamento.data.split('-').reverse().join('/');
-                        const servico = servicosCache[agendamento.servicoId];
-                        
-                        const nomeServicoCompleto = (servico && servico.isPacote) ? 
-                            `[Pacote] ${agendamento.servicoNome}` : agendamento.servicoNome;
-                            
-                        row.insertCell().textContent = dataFormatada;
-                        row.insertCell().textContent = agendamento.clienteNome;
-                        row.insertCell().textContent = nomeServicoCompleto;
-                        row.insertCell().textContent = `R$ ${parseFloat(agendamento.preco).toFixed(2).replace('.', ',')}`;
-                    });
-                }
-                
-                // Atualiza os cartões de resumo
-                document.getElementById('lucro-total').textContent = `R$ ${lucroTotal.toFixed(2).replace('.', ',')}`;
-                document.getElementById('total-atendimentos').textContent = totalAtendimentos;
-
-                if (totalAtendimentos === 0) {
-                     listaHistoricoBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Nenhum atendimento finalizado no histórico.</td></tr>';
-                }
-            });
-        }
-        
-        // =================================================================
-        //              7. CONFIGURAÇÕES (Troca de Senha)
-        // =================================================================
-        
-        const senhaForm = document.getElementById('senha-form');
-        senhaForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-
-            const novaSenha = document.getElementById('nova-senha').value;
-            const confirmaSenha = document.getElementById('confirma-senha').value;
-
-            if (novaSenha.length < 5) {
-                showNotification('A senha deve ter pelo menos 5 caracteres.', 'error');
-                return;
-            }
-            
-            if (novaSenha !== confirmaSenha) {
-                showNotification('As senhas não coincidem.', 'error');
-                return;
-            }
-
-            update(settingsRef, { senhaUnica: novaSenha })
+            set(novoAgendamentoRef, novoAgendamento)
                 .then(() => {
-                    SENHA_UNICA = novaSenha; 
-                    showNotification('Senha de acesso atualizada com sucesso!', 'success');
-                    senhaForm.reset();
-                })
-                .catch(error => {
-                    showNotification('Erro ao salvar senha: ' + error.message, 'error');
-                });
-        });
+                    alert('Agendamento salvo com sucesso!');
+                    
+                    // --- INÍCIO DO CÓDIGO EMAILJS (SÓ TENTA ENVIAR SE TIVER E-MAIL) ---
+                    if (cliente.email && cliente.email.trim() !== "") {
+                        // Formatação da data para o e-mail
+                        const dataObj = new Date(dataHora);
+                        const dataFormatada = dataObj.toLocaleDateString('pt-BR', { dateStyle: 'long' });
+                        const horaFormatada = dataObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
+                        const templateParams = {
+                            // Variáveis que você configurou no template do EmailJS
+                            to: cliente.email, 
+                            cliente_nome: cliente.nome,
+                            servico_nome: servico.nome,
+                            servico_preco: 'R$ ' + servico.preco.toFixed(2).replace('.', ','),
+                            data_hora: `${dataFormatada} às ${horaFormatada}`
+                        };
+
+                        // SEUS IDs AQUI:
+                        const SERVICE_ID = 'service_pphgor9';
+                        const TEMPLATE_ID = 'template_t6tt9ap';
+                        const PUBLIC_KEY = 'NL4Gjxpd62V3HSEOC';
+
+                        emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams, {
+                            publicKey: PUBLIC_KEY,
+                        })
+                        .then((response) => {
+                            console.log('E-MAIL ENVIADO!', response.status, response.text);
+                        }, (error) => {
+                            console.error('ERRO AO ENVIAR E-MAIL:', error);
+                            // Notifica o usuário, mas não impede o salvamento
+                            alert('Agendamento salvo, mas houve um erro ao enviar o e-mail de confirmação. Cheque seu serviço Outlook no EmailJS.');
+                        });
+                    } else {
+                        console.log("Cliente sem e-mail, pulando envio de confirmação.");
+                    }
+                    // --- FIM DO CÓDIGO EMAILJS ---
+
+                    // Limpa o formulário e recarrega a agenda
+                    document.getElementById('agendamentoForm').reset();
+                    carregarAgendamentos(); 
+                })
+                .catch((error) => {
+                    console.error("Erro ao salvar agendamento:", error);
+                    alert('Erro ao salvar agendamento: ' + error.message);
+                });
+        }
+        
+        // --- INICIALIZAÇÃO E EVENTOS ---
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Carrega Clientes e Serviços e depois Agendamentos
+            carregarClientes();
+            carregarServicos();
+            // Um pequeno delay para garantir que os arrays estejam prontos
+            setTimeout(carregarAgendamentos, 500); 
+            
+            // Evento do Formulário
+            document.getElementById('agendamentoForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                window.salvarAgendamento();
+            });
+
+            // Evento de Navegação (Menu Lateral)
+            const sidebarLinks = document.querySelectorAll('.sidebar ul li');
+            const pageContainers = document.querySelectorAll('.page-container');
+            const sidebar = document.querySelector('.sidebar');
+
+            sidebarLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    
+                    // Remove a classe 'active' de todos os links e containers
+                    sidebarLinks.forEach(l => l.classList.remove('active'));
+                    pageContainers.forEach(p => p.style.display = 'none');
+                    
+                    // Adiciona a classe 'active' no link clicado
+                    link.classList.add('active');
+                    
+                    // Mostra o container da página correspondente
+                    const pageId = link.getAttribute('data-page');
+                    document.getElementById(`page-${pageId}`).style.display = 'block';
+
+                    // Fecha a sidebar no mobile após a navegação
+                    if (window.innerWidth <= 768) {
+                        sidebar.classList.remove('opened');
+                        sidebar.classList.add('closed');
+                    }
+                });
+            });
+
+            // Evento de Abas (Novo Agendamento vs Lista)
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const tabName = button.getAttribute('data-tab');
+
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabContents.forEach(content => content.classList.remove('active'));
+
+                    button.classList.add('active');
+                    document.getElementById(`tab-${tabName}`).classList.add('active');
+                });
+            });
+            
+            // Evento do Toggle do Menu Mobile
+            document.querySelector('.menu-toggle').addEventListener('click', () => {
+                sidebar.classList.toggle('closed');
+                sidebar.classList.toggle('opened');
+            });
+            
+            // Garante que a sidebar está fechada ao carregar no mobile
+            if (window.innerWidth <= 768) {
+                 sidebar.classList.add('closed');
+            } else {
+                 sidebar.classList.remove('closed');
+            }
+        });
     </script>
+    
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
 </body>
 </html>
