@@ -690,11 +690,11 @@
         </main>
     </div>
 
-    <script type="module">
+     <script type="module">
         
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
         import { getDatabase, ref, onValue, push, set, update, remove } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js";
-        import * as emailjs from "https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"; 
+        import emailjs from "https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"; // Linha Corrigida
          
         // =================================================================
         // 1.1. CONFIGURAÇÃO FIREBASE E VARIÁVEIS GLOBAIS
@@ -1607,3 +1607,4 @@
     </script>
 </body>
 </html>
+
