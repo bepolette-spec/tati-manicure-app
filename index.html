@@ -155,7 +155,7 @@
             font-size: 1.5rem;
         }
         
-        /* Novas cores para Status de Pacote */
+        /* Novas cores para Status de Pacote e Histórico */
         .status-package-paid {
              color: var(--success-color);
              font-weight: bold;
@@ -218,6 +218,12 @@
             box-sizing: border-box;
             font-size: 1rem;
             transition: border-color 0.2s;
+        }
+
+        /* Datalist input */
+        input[list] {
+            /* Estilo para garantir que o input datalist se pareça com um campo normal */
+            background-image: none; 
         }
 
         input[type="text"]:focus,
@@ -514,30 +520,29 @@
                 color: var(--primary-color);
             }
             
-            /* FIX: Organização dos botões de ação em mobile */
+            /* NOVO FIX V5: Organização dos botões de ação em mobile (Empilhados e Maiores) */
             .data-table td.action-buttons {
                 text-align: left;
                 padding-left: 10px !important;
-                display: flex; /* Adiciona flex para organizar botões */
-                flex-wrap: wrap; /* Permite quebras de linha se não couber */
-                gap: 5px; /* Espaçamento entre botões */
+                display: flex; 
+                flex-direction: column; /* Empilha os botões */
+                gap: 5px; 
             }
             
             .data-table td.action-buttons::before {
                 content: "Ações";
-                width: 100%; /* Rótulo ocupa a linha toda */
+                width: 100%; 
                 margin-bottom: 5px;
                 display: block;
             }
             
             .data-table td.action-buttons button {
-                margin-top: 0; /* Remove margem desnecessária */
-                width: auto; /* Deixa o botão se ajustar ao conteúdo */
-                flex-grow: 1; /* Permite que os botões cresçam para ocupar a linha */
-                max-width: calc(50% - 5px); /* Limita a largura para caber dois por linha */
+                margin: 0; 
+                width: 100%; /* Ocupa a largura toda */
+                max-width: 100%; 
                 box-sizing: border-box;
-                font-size: 0.8rem;
-                padding: 8px 10px;
+                font-size: 0.9rem; /* Levemente maior que 0.8rem para melhor leitura */
+                padding: 8px 5px;
             }
         }
     </style>
@@ -560,6 +565,8 @@
             </form>
         </div>
     </div>
+
+    <datalist id="clientes-datalist"></datalist>
 
     <div id="app-container">
         
@@ -685,8 +692,8 @@
                             <input type="date" id="filtro-agenda-data" onchange="carregarAgendamentos()">
                         </div>
                         <div style="flex-grow: 3;">
-                            <label for="filtro-agenda-cliente">Filtrar por Cliente (Busca por Nome)</label>
-                            <input type="text" id="filtro-agenda-cliente" placeholder="Digite o nome do cliente..." onkeyup="filtrarAgendamentos()">
+                            <label for="filtro-agenda-cliente">Filtrar por Cliente (Digite ou Selecione)</label>
+                            <input type="text" id="filtro-agenda-cliente" list="clientes-datalist" placeholder="Digite o nome do cliente..." onkeyup="filtrarAgendamentos()">
                         </div>
                         <button class="btn-secondary" onclick="resetFiltroAgenda()"><span class="material-icons">refresh</span> Resetar Filtro</button>
                     </div>
@@ -754,7 +761,7 @@
                 <div class="section-header">
                     <h3>Lista de Clientes Cadastrados</h3>
                     <div class="input-group" style="width: 300px;">
-                        <input type="text" id="filtro-clientes" placeholder="Filtrar por nome, tel ou email..." onkeyup="filtrarClientes()">
+                         <input type="text" id="filtro-clientes" list="clientes-datalist" placeholder="Filtrar por nome, tel ou email..." onkeyup="filtrarClientes()">
                     </div>
                 </div>
                 <div class="card">
@@ -888,7 +895,7 @@
         let cachePacotes = {}; 
         let agendamentosAtivos = []; 
         
-        // =V2.0.1 - CORREÇÃO DE BUGS E PACOTES V4.0
+        // =V2.0.1 - CORREÇÃO DE BUGS E PACOTES V5.0
         
         // =================================================================
         // 1. LÓGICA DE LOGIN, NAVEGAÇÃO E NOTIFICAÇÃO
@@ -902,6 +909,7 @@
         const contentSections = document.querySelectorAll('.content-section');
         const userInfoDisplay = document.getElementById('userInfo');
         const notificationBar = document.getElementById('notification-bar');
+        const clientesDatalist = document.getElementById('clientes-datalist'); // V5
 
         const today = new Date().toISOString().slice(0, 10);
 
@@ -952,6 +960,7 @@
                 if (targetSectionId === 'servicos') { carregarServicos(); }
                 if (targetSectionId === 'agenda') { 
                     popularSelects();
+                    // Garante que o datalist também seja populado (feito em carregarClientes)
                     if (!document.getElementById('filtro-agenda-data').value) {
                          document.getElementById('filtro-agenda-data').value = today;
                     }
@@ -979,6 +988,21 @@
         function varToColor(varName) {
             return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
         }
+        
+        // V5: Popula o Datalist de Clientes para uso nos filtros
+        function popularDatalistClientes() {
+            clientesDatalist.innerHTML = '';
+            
+            const clientesOrdenados = Object.values(cacheClientes).sort((a, b) => a.nome.localeCompare(b.nome));
+
+            clientesOrdenados.forEach(cliente => {
+                const option = document.createElement('option');
+                option.value = cliente.nome; // O valor do datalist é o que aparece no input
+                option.dataset.id = cliente.id; // Guarda o ID no dataset (útil para lookup, mas o filtro usa o valor)
+                clientesDatalist.appendChild(option);
+            });
+        }
+
 
         // =================================================================
         // 2. CRUD DE CLIENTES (NÓ: 'clientes')
@@ -1081,6 +1105,7 @@
                 }
 
                 popularSelects(); 
+                popularDatalistClientes(); // V5: Popula o datalist para os filtros
             });
         }
 
@@ -1113,6 +1138,7 @@
 
         // 2.5. FILTRAR CLIENTES NA TABELA (Busca Local)
         window.filtrarClientes = function() {
+            // V5: O filtro funciona no input text que tem o datalist
             const filtro = document.getElementById('filtro-clientes').value.toLowerCase();
             const linhas = listaClientes.getElementsByTagName('tr');
 
@@ -1432,7 +1458,7 @@
                 if (agendamentos) {
                     for (let id in agendamentos) {
                         // Filtra apenas agendamentos Ativos e que NÃO são uso de pacote
-                        if (agendamentos[id].status === 'Ativo' && !agendamentos[id].isPacoteUse) { 
+                        if (agendamentos[id].status === 'Ativo' && !agendamentos[id].isPacoteUse && !agendamentos[id].isPacotePayment) { 
                             agendamentosAtivos.push({ id, ...agendamentos[id] });
                         }
                     }
@@ -1557,6 +1583,7 @@
 
         // 4.9. FILTRAR AGENDAMENTOS INDIVIDUAIS NA TABELA (Mantido como busca por texto para filtrar)
         window.filtrarAgendamentos = function() {
+            // V5: O filtro funciona no input text que tem o datalist
             const filtro = document.getElementById('filtro-agenda-cliente').value.toLowerCase();
             const linhas = listaAgendamentos.getElementsByTagName('tr');
 
@@ -1727,7 +1754,7 @@
                     }
                     
                     if (!isPaid) {
-                        // 2. Botão Registrar Pagamento Total
+                        // 2. Botão Registrar Pagamento Total (V5: Registra transação no histórico)
                         const btnPagar = document.createElement('button');
                         btnPagar.innerHTML = '<span class="material-icons" style="font-size: 18px;">paid</span> Registrar Pagamento';
                         btnPagar.className = 'btn-warning';
@@ -1737,11 +1764,11 @@
                     }
                     
                     if (isVencido || restante === 0) {
-                        // 3. Botão Finalizar
+                        // 3. Botão Finalizar (V5: Apenas remove o pacote da lista ativa)
                         const btnFinalizar = document.createElement('button');
                         btnFinalizar.innerHTML = '<span class="material-icons" style="font-size: 18px;">archive</span> Finalizar';
                         btnFinalizar.className = 'btn-success';
-                        btnFinalizar.title = 'Finalizar o pacote (Contabiliza Lucro)';
+                        btnFinalizar.title = 'Finalizar e remover o pacote da lista ativa.';
                         btnFinalizar.onclick = () => finalizarPacote(pacote);
                         acoesCell.appendChild(btnFinalizar);
                     }
@@ -1760,20 +1787,44 @@
             }
         }
         
-        // 5.4. REGISTRAR PAGAMENTO TOTAL DO PACOTE
+        // 5.4. REGISTRAR PAGAMENTO TOTAL DO PACOTE (V5: Registra transação no histórico)
         window.registrarPagamentoTotal = function(id, clienteNome, servicoNome) {
-            const pacote = cachePacotes[id];
-            const precoFormatado = parseFloat(pacote.servicoPreco).toFixed(2).replace('.', ',');
-            if (confirm(`Confirmar o PAGAMENTO TOTAL (R$ ${precoFormatado}) do pacote **${servicoNome}** de **${clienteNome}**?`)) {
-                 update(ref(db, `pacotes_ativos/${id}`), { 
-                     isPaid: true
-                 })
-                    .then(() => {
-                        showNotification(`Pagamento total do pacote **${servicoNome}** de **${clienteNome}** registrado.`, 'success');
-                    })
-                    .catch(error => {
-                        showNotification('Erro ao registrar pagamento: ' + error.message, 'error');
-                    });
+             const pacote = cachePacotes[id];
+             const precoFormatado = parseFloat(pacote.servicoPreco).toFixed(2).replace('.', ',');
+             const dataPagamento = today; 
+
+             if (confirm(`Confirmar o PAGAMENTO TOTAL (R$ ${precoFormatado}) do pacote **${servicoNome}** de **${clienteNome}**?\n\nO lucro será contabilizado no Histórico na data de hoje.`)) {
+                
+                // 1. Cria um registro de transação no Agendamentos (Histórico)
+                const pagamentoTransacao = {
+                    clienteId: pacote.clienteId,
+                    clienteNome: pacote.clienteNome,
+                    clienteTelefone: pacote.clienteTelefone,
+                    servicoId: pacote.servicoId,
+                    servicoNome: `Pagamento Pacote: ${pacote.servicoNome}`, // NOVO NOME
+                    servicoPreco: pacote.servicoPreco, // Valor total do pacote
+                    data: dataPagamento, 
+                    hora: new Date().toTimeString().split(' ')[0].substring(0, 5),
+                    observacoes: `Registro do pagamento total do pacote.`,
+                    status: 'Pagamento Pacote Registrado', // NOVO STATUS
+                    isPacotePayment: true, // É um registro de pagamento
+                    isPacoteUse: false, 
+                    procedimento: 'Pagamento',
+                    isPaid: true
+                };
+
+                // 2. Atualiza o status do Pacote Ativo e Salva o registro de pagamento
+                Promise.all([
+                    update(ref(db, `pacotes_ativos/${id}`), { isPaid: true }),
+                    push(agendamentosRef, pagamentoTransacao)
+                ])
+                .then(() => {
+                    showNotification(`Pagamento total do pacote **${servicoNome}** de **${clienteNome}** registrado no Histórico.`, 'success');
+                    carregarPacotesAtivos(); 
+                })
+                .catch(error => {
+                    showNotification('Erro ao registrar pagamento: ' + error.message, 'error');
+                });
              }
         }
         
@@ -1793,13 +1844,14 @@
              let novoStatus = pacote.status;
              
              if (novaQuantidade === pacote.quantidadeTotal) {
-                  novoStatus = 'Finalizado'; 
+                  // O status muda, mas a finalização real é feita pelo botão "Finalizar"
+                  novoStatus = 'Quase Finalizado'; 
              }
              
              // 1. Atualiza contador do Pacote Ativo
              update(ref(db, `pacotes_ativos/${id}`), { 
                  quantidadeUtilizada: novaQuantidade, 
-                 status: novoStatus 
+                 status: (novaQuantidade === pacote.quantidadeTotal) ? 'Quase Finalizado' : pacote.status 
              })
                 .then(() => {
                     // 2. Registra o uso como um AGENDAMENTO CONCLUÍDO (Valor R$ 0,00)
@@ -1808,14 +1860,15 @@
                         clienteNome: pacote.clienteNome,
                         clienteTelefone: pacote.clienteTelefone,
                         servicoId: pacote.servicoId,
-                        servicoNome: `Uso Pacote: ${procedimentoTexto} - ${pacote.servicoNome}`, // NOVO CAMPO: Nome formatado
-                        servicoPreco: "0.00", // NOVO CAMPO: Valor 0,00 (Lucro é na finalização)
+                        servicoNome: `Uso Pacote: ${procedimentoTexto} - ${pacote.servicoNome}`, 
+                        servicoPreco: "0.00", 
                         data: today, 
                         hora: new Date().toTimeString().split(' ')[0].substring(0, 5),
                         observacoes: `Uso registrado do pacote ${pacote.servicoNome}. Restam ${pacote.quantidadeTotal - novaQuantidade}.`,
                         status: 'Concluído',
-                        isPacoteUse: true, // NOVO CAMPO: Marca como uso de pacote
-                        procedimento: procedimentoTexto // NOVO CAMPO: Mãos/Pés
+                        isPacoteUse: true, 
+                        isPacotePayment: false, 
+                        procedimento: procedimentoTexto 
                     };
                     
                     return push(agendamentosRef, usoAgendamento);
@@ -1828,21 +1881,17 @@
                 });
         }
         
-        // 5.6. FINALIZAR PACOTE (Mudar status para Finalizado - Lucro no histórico)
+        // 5.6. FINALIZAR PACOTE (Mudar status para Finalizado - V5: Remove da lista ativa)
         window.finalizarPacote = function(pacote) {
             
-            const lucroPacote = pacote.isPaid ? parseFloat(pacote.servicoPreco) : 0.00;
-            const precoFormatado = lucroPacote.toFixed(2).replace('.', ',');
-            const msgConfirmacao = pacote.isPaid 
-                 ? `Finalizar o pacote e registrar o lucro de **R$ ${precoFormatado}** no Histórico?`
-                 : `Finalizar o pacote. O valor de lucro será **R$ 0,00** pois ele está Pendente de Pagamento.`;
+            const msgConfirmacao = `Finalizar o pacote **${pacote.servicoNome}** de **${pacote.clienteNome}**? Ele será removido da lista de Pacotes Ativos.`;
             
             if (confirm(msgConfirmacao)) {
                  
                  // 1. Atualiza o status para Finalizado
                  update(ref(db, `pacotes_ativos/${pacote.id}`), { status: 'Finalizado', dataConclusao: today })
                     .then(() => {
-                        showNotification(`Pacote **${pacote.servicoNome}** finalizado. Lucro de R$ ${precoFormatado} registrado.`, 'info');
+                        showNotification(`Pacote **${pacote.servicoNome}** finalizado e removido da lista ativa.`, 'info');
                         carregarPacotesAtivos(); // Recarrega lista
                     })
                     .catch(error => {
@@ -1866,7 +1915,7 @@
 
 
         // =================================================================
-        // 6. HISTÓRICO E LUCROS (AGORA INCLUI PACOTES FINALIZADOS E USO DE PACOTES)
+        // 6. HISTÓRICO E LUCROS (AGORA INCLUI REGISTRO DE PAGAMENTO)
         // =================================================================
         
         function carregarHistorico() {
@@ -1883,8 +1932,8 @@
                             <input type="month" id="filtro-historico-mes" onchange="renderizarHistorico()">
                         </div>
                         <div style="flex-grow: 1;">
-                            <label for="filtro-historico-cliente">Filtrar por Cliente</label>
-                            <input type="text" id="filtro-historico-cliente" placeholder="Nome do cliente..." onkeyup="filtrarHistoricoTabela()">
+                            <label for="filtro-historico-cliente">Filtrar por Cliente (Digite ou Selecione)</label>
+                            <input type="text" id="filtro-historico-cliente" list="clientes-datalist" placeholder="Nome do cliente..." onkeyup="filtrarHistoricoTabela()">
                         </div>
                         <button class="btn-secondary" onclick="resetFiltroHistorico()"><span class="material-icons">refresh</span> Resetar Filtro</button>
                     </div>
@@ -1904,9 +1953,9 @@
                                 <tr>
                                     <th style="width: 10%;">Data</th>
                                     <th style="width: 25%;">Cliente</th>
-                                    <th style="width: 25%;">Serviço</th>
-                                    <th style="width: 15%;">Procedimento</th>
-                                    <th style="width: 10%;">Pago?</th>
+                                    <th style="width: 25%;">Transação</th>
+                                    <th style="width: 15%;">Detalhe</th>
+                                    <th style="width: 10%;">Contabilizado?</th>
                                     <th style="width: 10%;">Valor</th>
                                     <th style="width: 100px;">Ações</th>
                                 </tr>
@@ -1949,22 +1998,22 @@
                 let lucroTotal = 0;
                 let contagem = 0;
                 
-                // 1. Processa Agendamentos Concluídos (Individuais e Usos de Pacote)
+                // 1. Processa Agendamentos Concluídos (Individuais, Usos de Pacote e Pagamento de Pacote)
                 if (agendamentos) {
                      for (let id in agendamentos) {
                          const item = { id, source: 'agendamentos', ...agendamentos[id] };
                          
-                         if (item.status === 'Concluído') {
+                         if (item.status === 'Concluído' || item.status === 'Pagamento Pacote Registrado') {
                              const dataReferencia = item.dataConclusao || item.data; // Usa data de conclusão ou data agendada
                              if (filtroMes && dataReferencia.substring(0, 7) !== filtroMes) continue;
                              
-                             // Adiciona campos de pacote para compatibilidade no histórico
-                             item.procedimento = item.procedimento || ''; // Ex: Mãos, Pés, Vazio
-                             item.isPaid = !item.isPacoteUse; // Serviço individual é considerado pago
+                             item.procedimento = item.procedimento || ''; 
+                             item.isPaid = item.isPacotePayment || !item.isPacoteUse; // Pagamento de pacote é pago, e serviço individual é pago
                              
                              historicoCompleto.push(item);
                              
-                             if (!item.isPacoteUse) {
+                             // V5: Contabiliza o lucro se for Serviço Individual ou Pagamento de Pacote
+                             if (item.status === 'Pagamento Pacote Registrado' || (!item.isPacoteUse && item.status === 'Concluído')) {
                                  lucroTotal += parseFloat(item.servicoPreco || 0);
                              }
                              contagem++;
@@ -1972,30 +2021,30 @@
                      }
                 }
                 
-                // 2. Processa Pacotes Finalizados (Registro do Lucro Total)
+                // 2. Processa Pacotes Finalizados (APENAS PARA REFERÊNCIA NO HISTÓRICO - Lucro 0)
                 if (pacotes) {
                      for (let id in pacotes) {
                          const pacote = { id, source: 'pacotes_ativos', ...pacotes[id] };
                          if (pacote.status === 'Finalizado') {
-                             const dataReferencia = pacote.dataConclusao || pacote.dataFim; // Usa data de conclusão/final
+                             const dataReferencia = pacote.dataConclusao || pacote.dataFim; 
                              if (filtroMes && dataReferencia.substring(0, 7) !== filtroMes) continue;
 
-                             // Monta o item de lucro do pacote
+                             // Monta o item de lucro do pacote (Apenas referência, lucro 0)
                              const itemLucro = {
                                  id: pacote.id,
                                  source: 'pacotes_ativos',
                                  clienteNome: pacote.clienteNome,
                                  clienteTelefone: pacote.clienteTelefone,
-                                 servicoNome: `Pacote: ${pacote.servicoNome} (Lucro Total)`,
-                                 servicoPreco: pacote.isPaid ? pacote.servicoPreco : "0.00", // Valor total se Pago, senão 0
+                                 servicoNome: `Pacote Finalizado: ${pacote.servicoNome}`,
+                                 servicoPreco: "0.00", 
                                  data: dataReferencia,
-                                 isPacoteUse: false, // É o registro de lucro, não um uso
-                                 procedimento: 'Pacote Total',
-                                 isPaid: pacote.isPaid // Status de Pagamento do Pacote
+                                 isPacoteUse: false, 
+                                 isPacotePayment: false, 
+                                 procedimento: 'Finalização',
+                                 isPaid: pacote.isPaid 
                              };
                              
                              historicoCompleto.push(itemLucro);
-                             lucroTotal += parseFloat(itemLucro.servicoPreco || 0);
                          }
                      }
                 }
@@ -2009,7 +2058,7 @@
                 
                 // Atualiza o resumo
                 lucroTotalDisplay.textContent = `R$ ${lucroTotal.toFixed(2).replace('.', ',')}`;
-                contagemServicos.textContent = `${historicoCompleto.length} item(s) (serviço/uso/lucro) no período. Lucro total base (Pacote/Individual) contabilizado.`;
+                contagemServicos.textContent = `${historicoCompleto.length} item(s) (serviço/uso/pagamento/finalização) no período. Lucro total base (Serviço Individual/Pagamento Pacote) contabilizado.`;
                 
                 if (filtroMes) {
                      const [ano, mes] = filtroMes.split('-');
@@ -2028,8 +2077,10 @@
                          
                          const dataReferencia = item.dataConclusao || item.data;
                          const precoFormatado = parseFloat(item.servicoPreco || 0).toFixed(2).replace('.', ',');
-                         const isPaidText = item.isPaid ? 'SIM' : 'NÃO';
-                         const isPaidClass = item.isPaid ? 'status-package-paid' : 'status-package-pending';
+                         
+                         const contabilizado = (item.status === 'Pagamento Pacote Registrado' || (!item.isPacoteUse && item.status === 'Concluído'));
+                         const contabilizadoText = contabilizado ? 'SIM' : 'NÃO';
+                         const contabilizadoClass = contabilizado ? 'status-package-paid' : 'status-package-pending';
                          
                          // Coluna Data (data-label "Data")
                          row.insertCell().setAttribute('data-label', 'Data');
@@ -2039,17 +2090,17 @@
                          row.insertCell().setAttribute('data-label', 'Cliente');
                          row.cells[1].innerHTML = `<strong>${item.clienteNome}</strong><br><small>${item.clienteTelefone}</small>`;
                          
-                         // Coluna Serviço (data-label "Serviço")
-                         row.insertCell().setAttribute('data-label', 'Serviço');
+                         // Coluna Transação (data-label "Transação")
+                         row.insertCell().setAttribute('data-label', 'Transação');
                          row.cells[2].textContent = item.servicoNome;
                          
-                         // Coluna Procedimento (data-label "Procedimento")
-                         row.insertCell().setAttribute('data-label', 'Procedimento');
+                         // Coluna Detalhe (data-label "Detalhe")
+                         row.insertCell().setAttribute('data-label', 'Detalhe');
                          row.cells[3].textContent = item.procedimento || '-';
                          
-                         // Coluna Pago? (data-label "Pago?")
-                         row.insertCell().setAttribute('data-label', 'Pago?');
-                         row.cells[4].innerHTML = `<span class="${isPaidClass}">${isPaidText}</span>`;
+                         // Coluna Contabilizado (data-label "Contabilizado?")
+                         row.insertCell().setAttribute('data-label', 'Contabilizado?');
+                         row.cells[4].innerHTML = `<span class="${contabilizadoClass}">${contabilizadoText}</span>`;
                          
                          // Coluna Valor (data-label "Valor")
                          row.insertCell().setAttribute('data-label', 'Valor');
@@ -2063,7 +2114,7 @@
                          btnReverter.innerHTML = '<span class="material-icons" style="font-size: 18px;">undo</span> Reverter';
                          btnReverter.className = 'btn-danger';
                          btnReverter.title = 'Reverter Status';
-                         btnReverter.onclick = () => reverterHistorico(item.id, item.source, item.clienteNome);
+                         btnReverter.onclick = () => reverterHistorico(item.id, item.source, item.clienteNome, item.status);
                          acoesCell.appendChild(btnReverter);
                      });
                      
@@ -2075,17 +2126,31 @@
         }
         
         // 6.1. REVERTER AGENDAMENTO/PACOTE (Voltar para Ativo)
-        function reverterHistorico(id, source, clienteNome) {
+        function reverterHistorico(id, source, clienteNome, status) {
              let message = '';
              let dbPath = '';
              let updateData = {};
              let successMessage = '';
 
              if (source === 'agendamentos') {
-                 message = `Tem certeza que deseja reverter o registro de "${clienteNome}" de 'Concluído' para 'Ativo'?`;
-                 dbPath = `agendamentos/${id}`;
-                 updateData = { status: 'Ativo', dataConclusao: null };
-                 successMessage = 'Registro de uso revertido para Ativo.';
+                 if (status === 'Pagamento Pacote Registrado') {
+                     message = `Tem certeza que deseja EXCLUIR o registro de pagamento do pacote de "${clienteNome}"? O pacote voltará a ter status 'Pendente de Pagamento'.`;
+                     dbPath = `agendamentos/${id}`;
+                     updateData = null; // Ação de remover o registro de pagamento
+                     successMessage = 'Registro de pagamento excluído. O pacote associado voltou a ser Pendente de Pagamento.';
+                     
+                     // Encontra o pacote ativo associado ao ID do serviço/cliente para reverter o isPaid
+                     const pacoteAssociado = Object.values(cachePacotes).find(p => p.servicoId === cacheAgendamentos[id].servicoId && p.clienteId === cacheAgendamentos[id].clienteId);
+                     if (pacoteAssociado) {
+                          update(ref(db, `pacotes_ativos/${pacoteAssociado.id}`), { isPaid: false });
+                     }
+
+                 } else { // 'Concluído' (Serviço Individual ou Uso de Pacote)
+                     message = `Tem certeza que deseja reverter o registro de "${clienteNome}" de 'Concluído' para 'Ativo'?`;
+                     dbPath = `agendamentos/${id}`;
+                     updateData = { status: 'Ativo', dataConclusao: null };
+                     successMessage = 'Registro revertido para Ativo.';
+                 }
              } else if (source === 'pacotes_ativos') {
                  message = `Tem certeza que deseja reverter o pacote de "${clienteNome}" de 'Finalizado' para 'Ativo'?`;
                  dbPath = `pacotes_ativos/${id}`;
@@ -2096,16 +2161,29 @@
              }
 
              if (confirm(message)) {
-                 update(ref(db, dbPath), updateData)
+                if (updateData === null) { // Exclusão do registro de pagamento
+                    remove(ref(db, dbPath))
                     .then(() => {
-                        showNotification(successMessage, 'info');
-                        renderizarHistorico(); 
-                        carregarAgendamentos(); 
-                        carregarPacotesAtivos(); 
+                         showNotification(successMessage, 'info');
+                         renderizarHistorico(); 
+                         carregarAgendamentos(); 
+                         carregarPacotesAtivos(); 
                     })
                     .catch(error => {
-                        showNotification('Erro ao reverter: ' + error.message, 'error');
+                        showNotification('Erro ao reverter/excluir: ' + error.message, 'error');
                     });
+                } else { // Atualização de status
+                    update(ref(db, dbPath), updateData)
+                       .then(() => {
+                           showNotification(successMessage, 'info');
+                           renderizarHistorico(); 
+                           carregarAgendamentos(); 
+                           carregarPacotesAtivos(); 
+                       })
+                       .catch(error => {
+                           showNotification('Erro ao reverter: ' + error.message, 'error');
+                       });
+                }
             }
         }
         
