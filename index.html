@@ -181,6 +181,37 @@
             box-shadow: 0 2px 4px var(--shadow-color);
             margin-bottom: 20px;
         }
+        
+        /* NOVO V6: Abas dentro de uma seção */
+        .tab-menu {
+             display: flex;
+             border-bottom: 2px solid var(--border-color);
+             margin-bottom: 20px;
+        }
+        .tab-menu button {
+             padding: 10px 20px;
+             border: none;
+             background: transparent;
+             cursor: pointer;
+             font-size: 1rem;
+             color: var(--secondary-color);
+             border-bottom: 2px solid transparent;
+             transition: border-color 0.2s, color 0.2s;
+             font-weight: bold;
+        }
+        .tab-menu button.active {
+             color: var(--primary-color);
+             border-bottom: 2px solid var(--primary-color);
+        }
+        .tab-content {
+             padding-top: 10px;
+        }
+        .tab-pane {
+             display: none;
+        }
+        .tab-pane.active {
+             display: block;
+        }
 
         /* Formulários */
         .form-group {
@@ -391,6 +422,51 @@
             padding: 9px 15px; /* Ajuste para alinhar com o input */
         }
         
+        /* NOVO V6: Estilos para a Tabela de Visão Diária */
+        #tabela-visao-diaria {
+             border: 1px solid var(--border-color);
+             margin-top: 0;
+        }
+        #tabela-visao-diaria thead tr {
+             background-color: var(--secondary-color);
+        }
+        #tabela-visao-diaria td {
+             height: 40px; /* Altura padrão para cada intervalo de 30 min */
+             font-size: 0.9rem;
+             vertical-align: top;
+        }
+        .horario-celula {
+             width: 80px;
+             font-weight: bold;
+             background-color: var(--sidebar-hover-bg);
+             color: var(--text-color);
+             text-align: center;
+             vertical-align: middle !important;
+             border-right: 1px solid var(--border-color);
+        }
+        .agendamento-vago {
+             background-color: #f7fff7; /* Verde clarinho */
+             color: var(--success-color);
+             font-weight: bold;
+             font-style: italic;
+             text-align: center;
+             line-height: 40px;
+        }
+        .agendamento-ocupado {
+             background-color: #fff0eb; /* Fundo do hover de sidebar, suave */
+             color: var(--text-color);
+             font-weight: 500;
+             padding: 5px 10px !important;
+             vertical-align: middle !important;
+             line-height: 1.2;
+             border-left: 5px solid var(--primary-color);
+             cursor: pointer;
+        }
+        .agendamento-ocupado strong {
+             color: var(--primary-color);
+             font-weight: bold;
+        }
+        
         /* --------------------------------------------------- */
         /* RESPONSIVIDADE MOBILE (Mobile First - Portrait Mode)*/
         /* --------------------------------------------------- */
@@ -481,6 +557,18 @@
                 padding: 10px 15px !important;
             }
             
+            /* V6: Ajuste para a Tabela de Visão Diária */
+            .table-responsive {
+                 overflow-x: auto;
+            }
+            #tabela-visao-diaria {
+                 width: 100%;
+                 min-width: 300px; /* Garante que não fique muito esmagada */
+            }
+            #tabela-visao-diaria td {
+                 padding: 5px 10px !important;
+            }
+
             /* 2. Correção de Tabelas (Cartão-like View) */
             .data-table, .data-table tbody, .data-table td, .data-table tr {
                 display: block; /* Força elementos da tabela a empilhar */
@@ -520,7 +608,8 @@
                 color: var(--primary-color);
             }
             
-            /* NOVO FIX V5: Organização dos botões de ação em mobile (Empilhados e Maiores) */
+            /* FIX V6: Organização dos botões de ação em mobile */
+            /* Garante que o rótulo "Ações" não sobreponha o primeiro botão */
             .data-table td.action-buttons {
                 text-align: left;
                 padding-left: 10px !important;
@@ -541,7 +630,7 @@
                 width: 100%; /* Ocupa a largura toda */
                 max-width: 100%; 
                 box-sizing: border-box;
-                font-size: 0.9rem; /* Levemente maior que 0.8rem para melhor leitura */
+                font-size: 0.9rem; 
                 padding: 8px 5px;
             }
         }
@@ -592,128 +681,179 @@
 
             <div id="agenda-section" class="content-section active">
                 
-                <div class="section-header"><h2>Gerenciamento de Pacotes Ativos</h2></div>
-                <div class="card">
-                    <form id="pacote-inicio-form">
-                        <h3>Iniciar Novo Pacote de Serviços</h3>
-                        <div class="form-row">
-                            <div class="form-group" style="flex: 2;">
-                                <label for="pacote-cliente-id">Cliente</label>
-                                <select id="pacote-cliente-id" required></select>
-                            </div>
-                            <div class="form-group" style="flex: 2;">
-                                <label for="pacote-servico-id">Pacote (Serviços marcados como Pacote)</label>
-                                <select id="pacote-servico-id" required></select>
-                            </div>
-                            <div class="form-group" style="flex: 1;">
-                                <label for="pacote-data-inicio">Data Início (Geralmente Hoje)</label>
-                                <input type="date" id="pacote-data-inicio" required>
-                            </div>
-                        </div>
-
-                        <div class="flex-container">
-                            <button type="submit" class="btn-primary">
-                                <span class="material-icons">add_box</span> Iniciar/Vender Pacote
-                            </button>
-                        </div>
-                    </form>
+                <div class="tab-menu">
+                     <button class="tab-button active" onclick="showAgendaTab('pacotes-ativos')">Pacotes Ativos</button>
+                     <button class="tab-button" onclick="showAgendaTab('novo-agendamento')">Novo Agendamento</button>
+                     <button class="tab-button" onclick="showAgendaTab('lista-agendamentos')">Lista Agendamentos</button>
+                     <button class="tab-button" onclick="showAgendaTab('visao-diaria')">Visão Diária</button>
+                </div>
+                
+                <div class="tab-content">
                     
-                    <hr style="margin: 20px 0;">
+                    <div id="pacotes-ativos-pane" class="tab-pane active">
+                         <div class="section-header"><h2>Gerenciamento de Pacotes Ativos</h2></div>
+                         <div class="card">
+                            <form id="pacote-inicio-form">
+                                <h3>Iniciar Novo Pacote de Serviços</h3>
+                                <div class="form-row">
+                                    <div class="form-group" style="flex: 2;">
+                                        <label for="pacote-cliente-id">Cliente</label>
+                                        <select id="pacote-cliente-id" required></select>
+                                    </div>
+                                    <div class="form-group" style="flex: 2;">
+                                        <label for="pacote-servico-id">Pacote (Serviços marcados como Pacote)</label>
+                                        <select id="pacote-servico-id" required></select>
+                                    </div>
+                                    <div class="form-group" style="flex: 1;">
+                                        <label for="pacote-data-inicio">Data Início (Geralmente Hoje)</label>
+                                        <input type="date" id="pacote-data-inicio" required>
+                                    </div>
+                                </div>
 
-                    <h3>Pacotes Ativos e Utilização</h3>
-                    <div style="max-height: 500px; overflow-y: auto;">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th style="width: 20%;">Cliente</th>
-                                    <th style="width: 25%;">Pacote (Total/Usado)</th>
-                                    <th style="width: 15%;">Pagamento</th>
-                                    <th style="width: 15%;">Vencimento</th>
-                                    <th style="width: 200px;">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="lista-pacotes-ativos">
-                                <tr><td colspan="5" style="text-align: center;">Carregando pacotes ativos...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <hr style="margin: 30px 0;">
+                                <div class="flex-container">
+                                    <button type="submit" class="btn-primary">
+                                        <span class="material-icons">add_box</span> Iniciar/Vender Pacote
+                                    </button>
+                                </div>
+                            </form>
+                            
+                            <hr style="margin: 20px 0;">
 
-                <div class="section-header"><h2>Agendamento de Serviços Individuais (Não-Pacote)</h2></div>
-                <div class="card">
-                    <form id="agendamento-form">
-                        <input type="hidden" id="agendamento-id">
-                        
-                        <div class="form-row">
-                            <div class="form-group" style="flex: 2;">
-                                <label for="agenda-cliente-id">Cliente</label>
-                                <select id="agenda-cliente-id" required></select>
+                            <h3>Pacotes Ativos e Utilização</h3>
+                            <div style="max-height: 500px; overflow-y: auto;">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 20%;">Cliente</th>
+                                            <th style="width: 25%;">Pacote (Total/Usado)</th>
+                                            <th style="width: 15%;">Pagamento</th>
+                                            <th style="width: 15%;">Vencimento</th>
+                                            <th style="width: 200px;">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="lista-pacotes-ativos">
+                                        <tr><td colspan="5" style="text-align: center;">Carregando pacotes ativos...</td></tr>
+                                    </tbody>
+                                </table>
                             </div>
-                            <div class="form-group" style="flex: 2;">
-                                <label for="agenda-servico-id">Serviço Individual/Promoção</label>
-                                <select id="agenda-servico-id" required></select>
-                            </div>
-                            <div class="form-group" style="flex: 1;">
-                                <label for="agenda-data">Data</label>
-                                <input type="date" id="agenda-data" required>
-                            </div>
-                            <div class="form-group" style="flex: 1;">
-                                <label for="agenda-hora">Hora</label>
-                                <input type="time" id="agenda-hora" required>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="agenda-observacoes">Observações</label>
-                            <textarea id="agenda-observacoes" rows="2"></textarea>
-                        </div>
-
-                        <div class="flex-container">
-                            <div>
-                                <button type="submit" class="btn-success" id="btn-salvar-agendamento">
-                                    <span class="material-icons">save</span> Salvar Agendamento
-                                </button>
-                                <button type="button" class="btn-secondary" onclick="resetAgendamentoForm()">
-                                    <span class="material-icons">refresh</span> Limpar
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-
-                <div class="section-header">
-                    <h3>Próximos Agendamentos Individuais (Ativos)</h3>
-                </div>
-                <div class="card">
-                    <div class="filter-row">
-                        <div style="flex-grow: 1.5;">
-                            <label for="filtro-agenda-data">Filtrar por Data</label>
-                            <input type="date" id="filtro-agenda-data" onchange="carregarAgendamentos()">
-                        </div>
-                        <div style="flex-grow: 3;">
-                            <label for="filtro-agenda-cliente">Filtrar por Cliente (Digite ou Selecione)</label>
-                            <input type="text" id="filtro-agenda-cliente" list="clientes-datalist" placeholder="Digite o nome do cliente..." onkeyup="filtrarAgendamentos()">
-                        </div>
-                        <button class="btn-secondary" onclick="resetFiltroAgenda()"><span class="material-icons">refresh</span> Resetar Filtro</button>
+                         </div>
                     </div>
                     
-                    <div style="max-height: 500px; overflow-y: auto;">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th style="width: 15%;">Data/Hora</th>
-                                    <th style="width: 25%;">Cliente</th>
-                                    <th style="width: 25%;">Serviço</th>
-                                    <th>Status</th>
-                                    <th style="width: 150px;">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="lista-agendamentos">
-                                <tr><td colspan="5" style="text-align: center;">Carregando agendamentos...</td></tr>
-                            </tbody>
-                        </table>
+                    <div id="novo-agendamento-pane" class="tab-pane">
+                         <div class="section-header"><h2>Agendamento de Serviços Individuais (Não-Pacote)</h2></div>
+                         <div class="card">
+                            <form id="agendamento-form">
+                                <input type="hidden" id="agendamento-id">
+                                
+                                <div class="form-row">
+                                    <div class="form-group" style="flex: 2;">
+                                        <label for="agenda-cliente-id">Cliente</label>
+                                        <select id="agenda-cliente-id" required></select>
+                                    </div>
+                                    <div class="form-group" style="flex: 2;">
+                                        <label for="agenda-servico-id">Serviço Individual/Promoção</label>
+                                        <select id="agenda-servico-id" required></select>
+                                    </div>
+                                    <div class="form-group" style="flex: 1;">
+                                        <label for="agenda-data">Data</label>
+                                        <input type="date" id="agenda-data" required>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group" style="flex: 1;">
+                                        <label for="agenda-hora">Hora Início</label>
+                                        <input type="time" id="agenda-hora" required>
+                                    </div>
+                                    <div class="form-group" style="flex: 1;">
+                                        <label for="agenda-hora-fim">Hora Fim</label>
+                                        <input type="time" id="agenda-hora-fim" required>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="agenda-observacoes">Observações</label>
+                                    <textarea id="agenda-observacoes" rows="2"></textarea>
+                                </div>
+
+                                <div class="flex-container">
+                                    <div>
+                                        <button type="submit" class="btn-success" id="btn-salvar-agendamento">
+                                            <span class="material-icons">save</span> Salvar Agendamento
+                                        </button>
+                                        <button type="button" class="btn-secondary" onclick="resetAgendamentoForm()">
+                                            <span class="material-icons">refresh</span> Limpar
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
                     </div>
+                    
+                    <div id="lista-agendamentos-pane" class="tab-pane">
+                        <div class="section-header">
+                            <h3>Próximos Agendamentos Individuais (Ativos)</h3>
+                        </div>
+                        <div class="card">
+                            <div class="filter-row">
+                                <div style="flex-grow: 1.5;">
+                                    <label for="filtro-agenda-data">Filtrar por Data</label>
+                                    <input type="date" id="filtro-agenda-data" onchange="carregarAgendamentos()">
+                                </div>
+                                <div style="flex-grow: 3;">
+                                    <label for="filtro-agenda-cliente">Filtrar por Cliente (Digite ou Selecione)</label>
+                                    <input type="text" id="filtro-agenda-cliente" list="clientes-datalist" placeholder="Digite o nome do cliente..." onkeyup="filtrarAgendamentos()">
+                                </div>
+                                <button class="btn-secondary" onclick="resetFiltroAgenda()"><span class="material-icons">refresh</span> Resetar Filtro</button>
+                            </div>
+                            
+                            <div style="max-height: 500px; overflow-y: auto;">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 15%;">Data/Hora</th>
+                                            <th style="width: 25%;">Cliente</th>
+                                            <th style="width: 25%;">Serviço</th>
+                                            <th>Status</th>
+                                            <th style="width: 150px;">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="lista-agendamentos">
+                                        <tr><td colspan="5" style="text-align: center;">Carregando agendamentos...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="visao-diaria-pane" class="tab-pane">
+                        <div class="section-header">
+                            <h2>Visão Diária da Agenda</h2>
+                        </div>
+                        <div class="card">
+                             <div class="filter-row">
+                                <div style="flex-grow: 1;">
+                                     <label for="filtro-visao-diaria-data">Selecione a Data</label>
+                                     <input type="date" id="filtro-visao-diaria-data" onchange="renderizarVisaoDiaria()">
+                                </div>
+                                <button class="btn-secondary" onclick="renderizarVisaoDiaria(today)"><span class="material-icons">today</span> Ver Hoje</button>
+                             </div>
+                             
+                             <div class="table-responsive">
+                                 <table class="data-table" id="tabela-visao-diaria">
+                                     <thead>
+                                         <tr>
+                                             <th style="width: 100px;">Horário</th>
+                                             <th>Detalhes do Agendamento</th>
+                                         </tr>
+                                     </thead>
+                                     <tbody id="lista-visao-diaria">
+                                         <tr><td colspan="2" style="text-align: center;">Selecione uma data para visualizar.</td></tr>
+                                     </tbody>
+                                 </table>
+                             </div>
+                        </div>
+                    </div>
+                    
                 </div>
             </div>
 
@@ -761,7 +901,7 @@
                 <div class="section-header">
                     <h3>Lista de Clientes Cadastrados</h3>
                     <div class="input-group" style="width: 300px;">
-                         <input type="text" id="filtro-clientes" list="clientes-datalist" placeholder="Filtrar por nome, tel ou email..." onkeyup="filtrarClientes()">
+                        <input type="text" id="filtro-clientes" list="clientes-datalist" placeholder="Filtrar por nome, tel ou email..." onkeyup="filtrarClientes()">
                     </div>
                 </div>
                 <div class="card">
@@ -894,8 +1034,9 @@
         let cacheServicos = {};
         let cachePacotes = {}; 
         let agendamentosAtivos = []; 
+        let cacheAgendamentos = {}; // Cache de todos os agendamentos (para lookup em reverter)
         
-        // =V2.0.1 - CORREÇÃO DE BUGS E PACOTES V5.0
+        // =V6.0 - NOVA VISÃO DIÁRIA E FIX MOBILE
         
         // =================================================================
         // 1. LÓGICA DE LOGIN, NAVEGAÇÃO E NOTIFICAÇÃO
@@ -909,7 +1050,7 @@
         const contentSections = document.querySelectorAll('.content-section');
         const userInfoDisplay = document.getElementById('userInfo');
         const notificationBar = document.getElementById('notification-bar');
-        const clientesDatalist = document.getElementById('clientes-datalist'); // V5
+        const clientesDatalist = document.getElementById('clientes-datalist'); 
 
         const today = new Date().toISOString().slice(0, 10);
 
@@ -966,6 +1107,11 @@
                     }
                     carregarAgendamentos(); 
                     carregarPacotesAtivos(); 
+                    // V6: Reseta para o filtro de hoje na Visão Diária
+                    document.getElementById('filtro-visao-diaria-data').value = today;
+                    renderizarVisaoDiaria();
+                    // V6: Garante que o primeiro TAB seja o ativo
+                    showAgendaTab('pacotes-ativos');
                 }
                 if (targetSectionId === 'historico') { carregarHistorico(); }
         
@@ -976,6 +1122,18 @@
                 document.getElementById(`${targetSectionId}-section`).classList.add('active');
             });
         });
+        
+        // V6: Função para Navegação de Tabs dentro da Agenda
+        window.showAgendaTab = function(tabName) {
+            const tabs = document.querySelectorAll('.tab-pane');
+            const buttons = document.querySelectorAll('.tab-button');
+            
+            tabs.forEach(tab => tab.classList.remove('active'));
+            buttons.forEach(button => button.classList.remove('active'));
+            
+            document.getElementById(`${tabName}-pane`).classList.add('active');
+            document.querySelector(`.tab-menu button[onclick*="${tabName}"]`).classList.add('active');
+        }
          
         // Função de Notificação
         function showNotification(message, type = 'success') {
@@ -1324,6 +1482,9 @@
         const pacoteServicoSelect = document.getElementById('pacote-servico-id');
         const listaPacotesAtivos = document.getElementById('lista-pacotes-ativos');
 
+        // V6: Elementos para a Visão Diária
+        const listaVisaoDiaria = document.getElementById('lista-visao-diaria');
+
 
         // Função auxiliar para formatar a data para exibição
         function formatarDataHora(dataString, horaString) {
@@ -1386,6 +1547,8 @@
             
             // Define a data de início do pacote como hoje por padrão
             document.getElementById('pacote-data-inicio').value = today;
+            // V6: Define Hora Fim como 1h depois (padrão)
+            document.getElementById('agenda-hora-fim').value = '11:00'; 
         }
 
         // 4.2. RESETAR FORMULÁRIO DE AGENDAMENTO INDIVIDUAL
@@ -1394,6 +1557,7 @@
             document.getElementById('agendamento-id').value = '';
             document.getElementById('agenda-data').value = ''; 
             document.getElementById('agenda-hora').value = ''; 
+            document.getElementById('agenda-hora-fim').value = ''; // V6: Hora Fim
             btnSalvarAgendamento.innerHTML = '<span class="material-icons">save</span> Salvar Agendamento';
             btnSalvarAgendamento.classList.replace('btn-secondary', 'btn-success');
         }
@@ -1404,9 +1568,17 @@
             const id = document.getElementById('agendamento-id').value;
             const clienteId = document.getElementById('agenda-cliente-id').value;
             const servicoId = document.getElementById('agenda-servico-id').value;
-            
+            const horaInicio = document.getElementById('agenda-hora').value;
+            const horaFim = document.getElementById('agenda-hora-fim').value; // V6
+
             if (!clienteId || !servicoId) {
                  showNotification('Selecione um cliente e um serviço/promoção.', 'error');
+                 return;
+            }
+            
+            // V6: Validação da Hora Fim
+            if (horaFim <= horaInicio) {
+                 showNotification('A Hora Fim deve ser posterior à Hora Início.', 'error');
                  return;
             }
 
@@ -1426,11 +1598,12 @@
                 servicoNome: servico.nome,
                 servicoPreco: servico.preco, 
                 data: document.getElementById('agenda-data').value,
-                hora: document.getElementById('agenda-hora').value,
+                hora: horaInicio, // Hora Início
+                horaFim: horaFim, // V6: Hora Fim
                 observacoes: document.getElementById('agenda-observacoes').value.trim(),
                 status: 'Ativo',
                 isPacoteUse: false,
-                procedimento: '' // Campo extra para compatibilidade no histórico
+                procedimento: '' 
             };
 
             const dbRef = id ? ref(db, `agendamentos/${id}`) : push(agendamentosRef);
@@ -1445,7 +1618,7 @@
                 });
         });
 
-        // 4.4. CARREGAR AGENDAMENTOS INDIVIDUAIS
+        // 4.4. CARREGAR AGENDAMENTOS INDIVIDUAIS (E TODAS AS TRANSAÇÕES DE CACHE)
         function carregarAgendamentos() {
             const lista = document.getElementById('lista-agendamentos');
             const dataFiltro = document.getElementById('filtro-agenda-data').value;
@@ -1454,10 +1627,13 @@
             onValue(agendamentosRef, (snapshot) => {
                 const agendamentos = snapshot.val();
                 agendamentosAtivos = []; 
+                cacheAgendamentos = {};
                 
                 if (agendamentos) {
                     for (let id in agendamentos) {
-                        // Filtra apenas agendamentos Ativos e que NÃO são uso de pacote
+                        cacheAgendamentos[id] = { id, ...agendamentos[id] }; // V6: Popula cache completo
+                        
+                        // Filtra apenas agendamentos Ativos e que NÃO são uso de pacote ou pagamento
                         if (agendamentos[id].status === 'Ativo' && !agendamentos[id].isPacoteUse && !agendamentos[id].isPacotePayment) { 
                             agendamentosAtivos.push({ id, ...agendamentos[id] });
                         }
@@ -1465,6 +1641,7 @@
                 }
                 
                 renderizarListaAgendamentos(dataFiltro);
+                renderizarVisaoDiaria(); // V6: Recarrega a visão diária no background
             });
         }
         
@@ -1492,7 +1669,9 @@
                     row.dataset.agendamentoData = JSON.stringify(agendamento);
                     
                     row.insertCell().setAttribute('data-label', 'Data/Hora');
-                    row.cells[0].textContent = formatarDataHora(agendamento.data, agendamento.hora);
+                    // V6: Exibe Hora Início e Fim
+                    const horaFim = agendamento.horaFim ? ` - ${agendamento.horaFim.substring(0, 5)}` : '';
+                    row.cells[0].textContent = formatarDataHora(agendamento.data, agendamento.hora) + horaFim;
                     
                     const clienteCell = row.insertCell();
                     clienteCell.setAttribute('data-label', 'Cliente');
@@ -1548,10 +1727,13 @@
             document.getElementById('agenda-servico-id').value = agendamento.servicoId;
             document.getElementById('agenda-data').value = agendamento.data;
             document.getElementById('agenda-hora').value = agendamento.hora;
+            document.getElementById('agenda-hora-fim').value = agendamento.horaFim; // V6
             document.getElementById('agenda-observacoes').value = agendamento.observacoes;
 
             btnSalvarAgendamento.innerHTML = '<span class="material-icons">update</span> Atualizar Agendamento';
             btnSalvarAgendamento.classList.replace('btn-success', 'btn-secondary');
+            
+            showAgendaTab('novo-agendamento'); // V6: Muda para a aba de edição
             document.getElementById('agenda-section').scrollIntoView({ behavior: 'smooth' });
         }
         
@@ -1612,6 +1794,85 @@
             carregarAgendamentos();
         }
         
+        // V6.1: RENDERIZAR VISÃO DIÁRIA POR HORÁRIO
+        window.renderizarVisaoDiaria = function(data) {
+             const dataFiltro = data || document.getElementById('filtro-visao-diaria-data').value;
+             listaVisaoDiaria.innerHTML = '';
+             
+             if (!dataFiltro) {
+                 listaVisaoDiaria.innerHTML = '<tr><td colspan="2" style="text-align: center;">Selecione uma data para visualizar.</td></tr>';
+                 return;
+             }
+             
+             const agendamentosDoDia = agendamentosAtivos.filter(a => a.data === dataFiltro);
+             
+             // Geração dos Horários de Meia em Meia Hora (07:00 a 21:00)
+             for (let h = 7; h <= 21; h++) {
+                 for (let m = 0; m < 60; m += 30) {
+                     const horaStr = String(h).padStart(2, '0');
+                     const minStr = String(m).padStart(2, '0');
+                     const horario = `${horaStr}:${minStr}`;
+
+                     let agendamentoNaJanela = null;
+                     
+                     // Verifica se algum agendamento ativo cai nesta janela de 30 minutos
+                     for (const agendamento of agendamentosDoDia) {
+                         const start = agendamento.hora;
+                         const end = agendamento.horaFim || start; 
+
+                         // Critério de Ocupação: Se a janela de 30 minutos (início: horario, fim: horario + 30 min)
+                         // estiver **dentro** ou **interseccionar** o agendamento (start, end)
+                         // Para simplificar, verificamos se o `horario` de início da nossa célula
+                         // está entre `start` (inclusive) e `end` (exclusive).
+                         if (horario >= start && horario < end) {
+                              agendamentoNaJanela = agendamento;
+                              break;
+                         }
+                     }
+                     
+                     const row = listaVisaoDiaria.insertRow();
+                     row.insertCell().textContent = horario;
+                     row.cells[0].className = 'horario-celula';
+                     
+                     const detalheCell = row.insertCell();
+                     
+                     if (agendamentoNaJanela) {
+                         // Horário Ocupado
+                         detalheCell.className = 'agendamento-ocupado';
+                         detalheCell.innerHTML = `
+                            <strong>${agendamentoNaJanela.clienteNome}</strong> - ${agendamentoNaJanela.servicoNome}
+                            <br><small>(${agendamentoNaJanela.hora.substring(0, 5)} - ${agendamentoNaJanela.horaFim ? agendamentoNaJanela.horaFim.substring(0, 5) : '???'})</small>
+                         `;
+                         // Permite clicar para editar
+                         detalheCell.onclick = () => editarAgendamento(agendamentoNaJanela);
+                     } else {
+                         // Horário Vago
+                         detalheCell.className = 'agendamento-vago';
+                         detalheCell.textContent = 'Livre';
+                         detalheCell.title = `Marcar agendamento para ${horario}`;
+                         // Permite clicar para ir para a aba de novo agendamento com a data/hora pré-preenchida
+                         detalheCell.onclick = () => {
+                             document.getElementById('agenda-data').value = dataFiltro;
+                             document.getElementById('agenda-hora').value = horario;
+                             // Define a hora fim como 30 min depois (padrão)
+                             const timeParts = horario.split(':').map(Number);
+                             let newHour = timeParts[0];
+                             let newMin = timeParts[1] + 30;
+                             if (newMin >= 60) {
+                                 newHour += 1;
+                                 newMin -= 60;
+                             }
+                             document.getElementById('agenda-hora-fim').value = `${String(newHour).padStart(2, '0')}:${String(newMin).padStart(2, '0')}`;
+                             showAgendaTab('novo-agendamento');
+                         };
+                     }
+                     
+                     // Se for a última meia hora (21:30), o loop para
+                     if (h === 21 && m === 30) break;
+                 }
+             }
+        }
+        
         // =================================================================
         // 5. LÓGICA DE GERENCIAMENTO DE PACOTES (NOVO NÓ: 'pacotes_ativos')
         // =================================================================
@@ -1658,7 +1919,7 @@
                 quantidadeTotal: pacoteServico.quantidadeTotalProcedimentos,
                 quantidadeUtilizada: 0,
                 status: 'Ativo',
-                isPaid: false // NOVO CAMPO: Pago ou não.
+                isPaid: false 
             };
 
             push(pacotesAtivosRef, novoPacoteAtivo)
@@ -1805,6 +2066,7 @@
                     servicoPreco: pacote.servicoPreco, // Valor total do pacote
                     data: dataPagamento, 
                     hora: new Date().toTimeString().split(' ')[0].substring(0, 5),
+                    horaFim: new Date(new Date().getTime() + 60000).toTimeString().split(' ')[0].substring(0, 5), // V6: Hora Fim (apenas para registro)
                     observacoes: `Registro do pagamento total do pacote.`,
                     status: 'Pagamento Pacote Registrado', // NOVO STATUS
                     isPacotePayment: true, // É um registro de pagamento
@@ -1855,6 +2117,7 @@
              })
                 .then(() => {
                     // 2. Registra o uso como um AGENDAMENTO CONCLUÍDO (Valor R$ 0,00)
+                    const horaRegistro = new Date().toTimeString().split(' ')[0].substring(0, 5);
                     const usoAgendamento = {
                         clienteId: pacote.clienteId,
                         clienteNome: pacote.clienteNome,
@@ -1863,7 +2126,8 @@
                         servicoNome: `Uso Pacote: ${procedimentoTexto} - ${pacote.servicoNome}`, 
                         servicoPreco: "0.00", 
                         data: today, 
-                        hora: new Date().toTimeString().split(' ')[0].substring(0, 5),
+                        hora: horaRegistro, 
+                        horaFim: horaRegistro, // V6: Hora Fim (apenas para registro)
                         observacoes: `Uso registrado do pacote ${pacote.servicoNome}. Restam ${pacote.quantidadeTotal - novaQuantidade}.`,
                         status: 'Concluído',
                         isPacoteUse: true, 
@@ -2140,7 +2404,8 @@
                      successMessage = 'Registro de pagamento excluído. O pacote associado voltou a ser Pendente de Pagamento.';
                      
                      // Encontra o pacote ativo associado ao ID do serviço/cliente para reverter o isPaid
-                     const pacoteAssociado = Object.values(cachePacotes).find(p => p.servicoId === cacheAgendamentos[id].servicoId && p.clienteId === cacheAgendamentos[id].clienteId);
+                     const agendamentoRevertido = cacheAgendamentos[id]; // V6: Busca no cache completo
+                     const pacoteAssociado = Object.values(cachePacotes).find(p => p.servicoId === agendamentoRevertido.servicoId && p.clienteId === agendamentoRevertido.clienteId);
                      if (pacoteAssociado) {
                           update(ref(db, `pacotes_ativos/${pacoteAssociado.id}`), { isPaid: false });
                      }
