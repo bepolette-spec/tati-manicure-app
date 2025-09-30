@@ -2178,16 +2178,16 @@
         }
         
         document.getElementById('login-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const senha = document.getElementById('loginSenha').value;
-            
-            if (senha === senhaAcesso) {
-                 showApp();
-                 showNotification('Login realizado com sucesso!', 'success');
-            } else {
-                 showNotification('Senha incorreta. Tente novamente.', 'error');
-            }
-        });
+    e.preventDefault();
+    const senha = document.getElementById('loginSenha').value;
+    
+    if (senha === senhaAcesso) {
+         showApp();
+         // A notificação de sucesso foi removida temporariamente
+    } else {
+         // A notificação de erro foi removida temporariamente
+    }
+});
         
         document.getElementById('logout-button').addEventListener('click', () => {
             showLogin();
@@ -2205,5 +2205,6 @@
     </script>
 </body>
 </html>
+
 
 
