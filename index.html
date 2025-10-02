@@ -1240,8 +1240,7 @@ button, input, select {
 
             document.querySelectorAll('#agenda-section .tab-button').forEach(button => {
                 button.classList.remove('active');
-            });
-            if (event) {
+            };
                 event.currentTarget.classList.add('active');
             } else {
                  // Caso seja chamado programaticamente
@@ -1541,32 +1540,70 @@ button, input, select {
             }
         });
 
-        window.usarPacote = function(){ showNotification('Use a função "Usar Pacote" na lista de Pacotes Ativos: clique em Usar Pacote para agendar.', 'info'); }if (pacote.quantidadeUsada >= pacote.quantidadeTotal) {
-                showNotification('Este pacote já atingiu o limite de uso.', 'error');
-                return;
-            }
-            
-            const cliente = cacheClientes[clienteId];
-            
-            if (confirm(`Registrar uso do Pacote ${pacote.servicoNome} para ${cliente.nome} hoje?`)) {
-                 // 1. Criar agendamento com status "finalizado" e tipo "pacote"
-                const dataAtual = new Date().toISOString().slice(0, 10);
-                const horaAtual = new Date().toTimeString().slice(0, 5);
-                
-                const novoAgendamento = {
-                    clienteId: clienteId,
-                    clienteNome: cliente.nome,
-                    servicoId: servicoId,
-                    servicoNome: servico.nome,
-                    data: dataAtual,
-                    hora: horaAtual,
-                    horaFim: horaAtual, 
-                    observacoes: `Uso do Pacote: ${pacote.servicoNome} (Procedimento ${pacote.quantidadeUsada + 1} de ${pacote.quantidadeTotal})`,
-                    valor: 0.00, // Valor é 0, pois já foi pago no pacote
-                    status: 'finalizado', // Já finaliza o agendamento
-                    tipo: 'pacote',
-                    pacoteId: pacoteId
-                };
+        
+window.usarPacote = async function(pacoteId) {
+    try {
+        // Busca pacote no cache
+        let pacote = pacotesAtivosList.find(p => p.id === pacoteId);
+        if (!pacote) {
+            // tenta buscar diretamente no DB
+            const pkgRef = ref(db, 'pacotes_ativos/' + pacoteId);
+            let found = null;
+            await new Promise((res, rej) => {
+                onValue(pkgRef, snap => { found = snap.val(); res(); }, { onlyOnce: true }, err => rej(err));
+            }).catch(()=>{});
+            pacote = found || pacote;
+        }
+        if (!pacote) {
+            showNotification('Pacote não encontrado.', 'error');
+            return;
+        }
+        if ((pacote.quantidadeUsada || 0) >= (pacote.quantidadeTotal || 0)) {
+            showNotification('Este pacote já atingiu o limite de uso.', 'warning');
+            return;
+        }
+
+        // Solicita data e horários (prompt rápido; pode ser trocado por modal)
+        const hoje = new Date().toISOString().slice(0,10);
+        const data = prompt('Digite a data do agendamento (YYYY-MM-DD):', hoje);
+        if (!data) return;
+        const horaInicio = prompt('Hora início (HH:MM):', '09:00');
+        if (!horaInicio) return;
+        const horaFim = prompt('Hora fim (HH:MM):', '10:00');
+        if (!horaFim) return;
+
+        // Cria objeto de agendamento vinculado ao pacote
+        const novoAgendamento = {
+            clienteId: pacote.clienteId || '',
+            clienteNome: pacote.clienteNome || '',
+            servicoId: pacote.servicoId || '',
+            servicoNome: pacote.servicoNome || '',
+            data: data,
+            hora: horaInicio,
+            horaFim: horaFim,
+            observacoes: 'Uso de pacote: ' + (pacote.servicoNome || ''),
+            valor: 0,
+            status: 'ativo',
+            tipo: 'pacote',
+            pacoteId: pacoteId
+        };
+
+        // Salva agendamento (aparece na visão diária por causa dos listeners)
+        await push(agendamentosRef, novoAgendamento);
+
+        // Incrementa quantidadeUsada do pacote
+        const pacoteRef = ref(db, 'pacotes_ativos/' + pacoteId);
+        const novoUso = (pacote.quantidadeUsada || 0) + 1;
+        const novoStatus = novoUso >= (pacote.quantidadeTotal || 0) ? 'finalizado' : 'ativo';
+        await update(pacoteRef, { quantidadeUsada: novoUso, status: novoStatus });
+
+        showNotification('Agendamento criado a partir do pacote e registrado na Visão Diária.', 'success');
+    } catch (err) {
+        console.error('Erro usarPacote:', err);
+        showNotification('Erro ao usar pacote: ' + (err.message || err), 'error');
+    }
+};
+
                 
                 // 2. Atualizar o uso do pacote
                 const novoUso = pacote.quantidadeUsada + 1;
@@ -1625,32 +1662,49 @@ button, input, select {
             }
         };
 
-        window.marcarPacotePago = async function(pacoteId) {
-            if (!confirm('Marcar este pacote como PAGO?')) return;
-            try {
-                let pacote = pacotesAtivosList.find(p => p.id === pacoteId) || null;
-                if (!pacote && typeof allPacotesAtivos !== 'undefined') pacote = allPacotesAtivos[pacoteId] || pacote;
+        
+window.marcarPacotePago = async function(pacoteId) {
+    if (!confirm('Marcar este pacote como PAGO?')) return;
+    try {
+        let pacote = pacotesAtivosList.find(p => p.id === pacoteId) || null;
+        if (!pacote) {
+            // tenta buscar direto
+            await new Promise((res) => {
+                onValue(ref(db, 'pacotes_ativos/' + pacoteId), snap => { pacote = snap.val(); res(); }, { onlyOnce: true });
+            });
+        }
+        if (!pacote) { showNotification('Pacote não encontrado', 'error'); return; }
 
-                const dataHoje = new Date().toISOString().split('T')[0];
-                await update(ref(db, 'pacotes_ativos/' + pacoteId), {
-                    statusPagamento: 'pago',
-                    dataPagamento: dataHoje
-                });
+        const dataHoje = new Date().toISOString().split('T')[0];
+        await update(ref(db, 'pacotes_ativos/' + pacoteId), {
+            statusPagamento: 'pago',
+            dataPagamento: dataHoje
+        });
 
-                const pagamento = {
-                    clienteId: pacote ? pacote.clienteId : '',
-                    clienteNome: pacote ? pacote.clienteNome : '',
-                    servicoId: pacote ? pacote.servicoId : '',
-                    servicoNome: pacote ? `Pagamento Pacote: ${pacote.servicoNome || ''}` : 'Pagamento Pacote',
-                    data: dataHoje,
-                    hora: new Date().toTimeString().slice(0,5),
-                    horaFim: new Date().toTimeString().slice(0,5),
-                    observacoes: `Pagamento do pacote ${pacote ? pacote.servicoNome : ''}`,
-                    valor: pacote ? (pacote.valorTotal || pacote.valor || 0) : 0,
-                    status: 'finalizado',
-                    tipo: 'pacote_pagamento',
-                    pacoteId: pacoteId
-                };
+        // Cria registro de pagamento no nó de agendamentos (tipo pacote_pagamento) para histórico e contabilização
+        const pagamento = {
+            clienteId: pacote.clienteId || '',
+            clienteNome: pacote.clienteNome || '',
+            servicoId: pacote.servicoId || '',
+            servicoNome: `Pagamento Pacote: ${pacote.servicoNome || ''}`,
+            data: dataHoje,
+            hora: new Date().toTimeString().slice(0,5),
+            horaFim: new Date().toTimeString().slice(0,5),
+            observacoes: `Pagamento do pacote ${pacote.servicoNome || ''}`,
+            valor: pacote.valorTotal || pacote.valor || 0,
+            status: 'finalizado',
+            tipo: 'pacote_pagamento',
+            pacoteId: pacoteId
+        };
+        await push(agendamentosRef, pagamento);
+
+        showNotification('Pacote marcado como PAGO e registrado no Histórico!', 'success');
+    } catch (err) {
+        console.error('Erro marcarPacotePago:', err);
+        showNotification('Erro ao marcar pacote como pago: ' + (err.message || err), 'error');
+    }
+};
+
                 await push(agendamentosRef, pagamento);
 
                 showNotification('Status de pagamento atualizado para PAGO e registrado no Histórico!', 'success');
@@ -1749,9 +1803,7 @@ button, input, select {
                 try {
                     await update(ref(db, 'agendamentos/' + id), {
                         status: 'finalizado'
-                    });
-
-                    if (agendamento.tipo === 'pacote' && agendamento.pacoteId) {
+                    };
                         const pacoteRef = ref(db, 'pacotes_ativos/' + agendamento.pacoteId);
                         onValue(pacoteRef, async (snapshot) => {
                             const pacote = snapshot.val();
