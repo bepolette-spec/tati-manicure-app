@@ -673,7 +673,7 @@ button, input, select {
 
 </style>
 </head>
-<body><div id="login-container" style="display: block; text-align: center; margin-top: 50px;"><form id="login-form"><input id="loginSenha" placeholder="Digite a senha" style="margin-right: 10px;" type="password"/><button type="submit">Entrar</button></form></div>
+<body>
 <div id="notification-bar"></div>
 <div id="login-container">
 <div class="login-card">
@@ -2325,5 +2325,46 @@ button, input, select {
             
         });
     </script>
-<div id="app-container" style="display: none; text-align: center; margin-top: 50px;">Conteúdo do sistema aqui...</div></body>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBatp6e1NzevurpB2yS8eGErgSYC_t2-Nc",
+    authDomain: "tati-manicure.firebaseapp.com",
+    databaseURL: "https://tati-manicure-default-rtdb.firebaseio.com/",
+    projectId: "tati-manicure",
+    storageBucket: "tati-manicure.firebasestorage.app",
+    messagingSenderId: "1061777323027",
+    appId: "1:1061777323027:web:7b54e5fdbb7f06ee293be6",
+    measurementId: "G-V3J5ZJ5XBT"
+  };
+
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+  const db = firebase.database();
+
+  document.getElementById('login-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const senhaDigitada = document.getElementById('loginSenha').value.trim();
+
+    db.ref('settings/senhaUnica').once('value')
+      .then(snapshot => {
+        const senhaAcesso = snapshot.val() ? snapshot.val().trim() : "";
+        if (senhaDigitada === senhaAcesso) {
+          document.getElementById('login-form').style.display = 'none';
+          document.body.style.overflow = 'auto';
+        } else {
+          alert("Senha incorreta. Tente novamente.");
+        }
+      })
+      .catch(error => {
+        console.error("Erro Firebase:", error);
+        alert("Erro ao validar login.");
+      });
+  });
+</script>
+</body>
 </html>
