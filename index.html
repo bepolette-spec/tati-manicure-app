@@ -1741,20 +1741,50 @@
             }
         });
 
+        // 4.3. CORREÇÃO FINAL: Marcar Pacote como Pago
         window.marcarPacotePago = async function(pacoteId) {
             if (confirm('Marcar este pacote como PAGO?')) {
-                 try {
+                try {
+                    const pacote = pacotesAtivosList.find(p => p.id === pacoteId);
+                    
+                    if (!pacote) {
+                        showNotification('Pacote não encontrado.', 'error');
+                        return;
+                    }
+
+                    // 1. Atualizar status de pagamento do pacote
                     await update(ref(db, 'pacotes_ativos/' + pacoteId), {
                         statusPagamento: 'pago'
                     });
-                    showNotification('Status de pagamento atualizado para PAGO!', 'success');
+
+                    // 2. Registrar no histórico com o valor total do pacote
+                    const historicoItem = {
+                        clienteId: pacote.clienteId,
+                        clienteNome: pacote.clienteNome,
+                        servicoId: pacote.servicoId,
+                        servicoNome: pacote.servicoNome,
+                        data: pacote.dataInicio, // Data de início do pacote
+                        hora: '00:00', // Hora padrão para pacotes
+                        horaFim: '00:00',
+                        valor: pacote.valorTotal,
+                        status: 'pago',
+                        tipo: 'pacote_pagamento',
+                        pacoteId: pacoteId,
+                        observacoes: `Pagamento do pacote ${pacote.servicoNome} - ${pacote.quantidadeUsada}/${pacote.quantidadeTotal} procedimentos utilizados`
+                    };
+
+                    await push(agendamentosRef, historicoItem);
+
+                    showNotification('Pacote marcado como PAGO e registrado no histórico!', 'success');
+                    
                 } catch (error) {
-                    showNotification('Erro ao atualizar status de pagamento: ' + error.message, 'error');
+                    console.error("Erro ao marcar pacote como pago:", error);
+                    showNotification('Erro ao marcar pacote como pago: ' + error.message, 'error');
                 }
             }
         }
         
-        // 4.3. Salvar Agendamento (Individual) - MANTIDO IGUAL
+        // 4.4. Salvar Agendamento (Individual) - MANTIDO IGUAL
         document.getElementById('agendamento-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = document.getElementById('agendamento-id').value;
@@ -2018,19 +2048,20 @@
             });
         }
 
-        // 5.4. RENDERIZAR PACOTES ATIVOS (Tabela) - MANTIDO IGUAL
+        // 5.4. RENDERIZAR PACOTES ATIVOS (Tabela) - CORREÇÃO FINAL
         function renderizarPacotesAtivos() {
             const tabela = document.getElementById('lista-pacotes-ativos');
             tabela.innerHTML = '';
 
-            const pacotesAtivosEpendentes = pacotesAtivosList.filter(p => p.status === 'ativo');
+            // CORREÇÃO: Mostrar TODOS os pacotes que não estão pagos (ativos E finalizados mas não pagos)
+            const pacotesNaoPagos = pacotesAtivosList.filter(p => p.statusPagamento !== 'pago');
             
-            if (pacotesAtivosEpendentes.length === 0) {
-                 tabela.innerHTML = '<tr><td colspan="5" style="text-align: center;">Nenhum pacote ativo ou pendente.</td></tr>';
+            if (pacotesNaoPagos.length === 0) {
+                 tabela.innerHTML = '<tr><td colspan="5" style="text-align: center;">Nenhum pacote pendente.</td></tr>';
                  return;
             }
 
-            pacotesAtivosEpendentes.forEach(p => {
+            pacotesNaoPagos.forEach(p => {
                 const row = tabela.insertRow();
                 
                 // Cliente
@@ -2070,6 +2101,8 @@
                 actionCell.setAttribute('data-label', 'Ações');
                 
                 let actionButtons = '';
+                
+                // Botão Usar Pacote - só aparece se ainda houver procedimentos disponíveis
                 if (p.quantidadeUsada < p.quantidadeTotal) {
                      actionButtons += `<button class="btn-primary" onclick="abrirModalUsarPacote('${p.id}', '${p.servicoId}', '${p.clienteId}')">
                          <span class="material-icons">event_available</span> Usar Pacote
@@ -2078,6 +2111,7 @@
                      actionButtons += `<button class="btn-secondary" disabled><span class="material-icons">event_busy</span> Esgotado</button>`;
                 }
                 
+                // CORREÇÃO: Botão Marcar Pago - sempre aparece se não estiver pago
                 if (p.statusPagamento !== 'pago') {
                      actionButtons += `<button class="btn-success" onclick="marcarPacotePago('${p.id}')">
                          <span class="material-icons">payments</span> Marcar Pago
