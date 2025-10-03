@@ -40,8 +40,6 @@
             width: 100%;
             background-color: var(--primary-color);
             min-height: 100vh;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path fill="%23ffffff" opacity="0.1" d="M30,20 L70,20 L80,40 L70,60 L30,60 L20,40 Z M35,30 C37,30 38,31 38,33 C38,35 37,36 35,36 C33,36 32,35 32,33 C32,31 33,30 35,30 Z M45,30 C47,30 48,31 48,33 C48,35 47,36 45,36 C43,36 42,35 42,33 C42,31 43,30 45,30 Z M55,30 C57,30 58,31 58,33 C58,35 57,36 55,36 C53,36 52,35 52,33 C52,31 53,30 55,30 Z M65,30 C67,30 68,31 68,33 C68,35 67,36 65,36 C63,36 62,35 62,33 C62,31 63,30 65,30 Z M40,45 C42,45 43,46 43,48 C43,50 42,51 40,51 C38,51 37,50 37,48 C37,46 38,45 40,45 Z M50,45 C52,45 53,46 53,48 C53,50 52,51 50,51 C48,51 47,50 47,48 C47,46 48,45 50,45 Z M60,45 C62,45 63,46 63,48 C63,50 62,51 60,51 C58,51 57,50 57,48 C57,46 58,45 60,45 Z"/></svg>');
-            background-size: 200px;
         }
 
         .login-card {
@@ -60,16 +58,10 @@
             font-size: 1.8rem;
         }
 
-        .login-icon {
-            font-size: 60px;
-            color: var(--primary-color);
-            margin-bottom: 20px;
-        }
-
         #app-container {
             display: none; /* Escondido por padrão, mostrado após o login */
             width: 100%;
-            display: flex;
+            /* display: flex; REMOVIDO PARA SER ATIVADO VIA JS APÓS LOGIN */
         }
 
         /* Barra Lateral (Sidebar) */
@@ -180,7 +172,17 @@
             color: var(--danger-color);
             font-weight: bold;
         }
-
+        
+        /* Status do Agendamento */
+        .status-pago {
+            color: var(--success-color);
+            font-weight: bold;
+        }
+        .status-pendente {
+            color: var(--warning-color);
+            font-weight: bold;
+        }
+        
         /* Cartão (Card) */
         .card {
             background: #fff;
@@ -190,11 +192,29 @@
             margin-bottom: 20px;
         }
         
+        /* BEM-VINDA (IMAGEM) - MELHORIA 1 */
+        #welcome-banner {
+            background: url('https://i.imgur.com/k9D7X4S.jpg') center center / cover no-repeat; /* Placeholder de Manicure */
+            height: 150px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+            font-weight: bold;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
         /* NOVO V6: Abas dentro de uma seção */
         .tab-menu {
              display: flex;
              border-bottom: 2px solid var(--border-color);
              margin-bottom: 20px;
+             overflow-x: auto; /* Para mobile */
+             flex-wrap: nowrap;
         }
         .tab-menu button {
              padding: 10px 20px;
@@ -206,6 +226,7 @@
              border-bottom: 2px solid transparent;
              transition: border-color 0.2s, color 0.2s;
              font-weight: bold;
+             flex-shrink: 0; /* Para mobile */
         }
         .tab-menu button.active {
              color: var(--primary-color);
@@ -261,7 +282,6 @@
 
         /* Datalist input */
         input[list] {
-            /* Estilo para garantir que o input datalist se pareça com um campo normal */
             background-image: none;
         }
 
@@ -340,14 +360,6 @@
             background-color: #ffb547;
         }
 
-        .btn-info {
-            background-color: var(--info-color);
-            color: white;
-        }
-
-        .btn-info:hover {
-            background-color: #138496;
-        }
 
         /* Tabelas */
         .data-table {
@@ -438,16 +450,20 @@
             padding: 9px 15px; /* Ajuste para alinhar com o input */
         }
         
-        /* NOVO V6: Estilos para a Tabela de Visão Diária */
+        /* NOVO V7: Estilos para a Tabela de Visão Diária */
+        .table-responsive {
+            overflow-x: auto;
+        }
         #tabela-visao-diaria {
              border: 1px solid var(--border-color);
              margin-top: 0;
+             min-width: 450px; /* Garante que os detalhes não fiquem esmagados */
         }
         #tabela-visao-diaria thead tr {
              background-color: var(--secondary-color);
         }
         #tabela-visao-diaria td {
-             height: 40px; /* Altura padrão para cada intervalo de 30 min */
+             height: 40px;
              font-size: 0.9rem;
              vertical-align: top;
         }
@@ -478,55 +494,17 @@
              border-left: 5px solid var(--primary-color);
              cursor: pointer;
         }
+        .agendamento-ocupado.pacote-session {
+            border-left: 5px solid var(--info-color);
+        }
         .agendamento-ocupado strong {
              color: var(--primary-color);
              font-weight: bold;
         }
-        
-        /* Modal para usar pacote */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
+        .agendamento-ocupado.pacote-session strong {
+             color: var(--info-color);
         }
-        
-        .modal-content {
-            background-color: white;
-            padding: 25px;
-            border-radius: 8px;
-            width: 90%;
-            max-width: 500px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        }
-        
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--border-color);
-        }
-        
-        .modal-header h3 {
-            margin: 0;
-            color: var(--primary-color);
-        }
-        
-        .close-modal {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: var(--secondary-color);
-        }
+
         
         /* --------------------------------------------------- */
         /* RESPONSIVIDADE MOBILE (Mobile First - Portrait Mode)*/
@@ -552,7 +530,7 @@
             /* Navegação Horizontal */
             .sidebar ul {
                 display: flex;
-                flex-wrap: nowrap; /* Tenta manter em uma linha, mas permite rolagem */
+                flex-wrap: nowrap;
                 overflow-x: auto;
                 justify-content: flex-start;
                 border-bottom: 1px solid var(--border-color);
@@ -624,7 +602,7 @@
             }
             #tabela-visao-diaria {
                  width: 100%;
-                 min-width: 300px; /* Garante que não fique muito esmagada */
+                 min-width: 400px; /* Garante que não fique muito esmagada */
             }
             #tabela-visao-diaria td {
                  padding: 5px 10px !important;
@@ -670,7 +648,6 @@
             }
             
             /* FIX V6: Organização dos botões de ação em mobile */
-            /* Garante que o rótulo "Ações" não sobreponha o primeiro botão */
             .data-table td.action-buttons {
                 text-align: left;
                 padding-left: 10px !important;
@@ -694,12 +671,46 @@
                 font-size: 0.9rem; 
                 padding: 8px 5px;
             }
-            
-            /* Modal em mobile */
-            .modal-content {
-                width: 95%;
-                padding: 15px;
-            }
+        }
+        
+        /* Modal Style */
+        .modal {
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            display: none;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 90%;
+            max-width: 400px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close-button:hover,
+        .close-button:focus {
+            color: #000;
+            text-decoration: none;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -707,56 +718,40 @@
 
     <div id="notification-bar"></div>
 
-    <!-- Modal para usar pacote -->
-    <div id="modal-usar-pacote" class="modal-overlay">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Agendar Uso de Pacote</h3>
-                <button class="close-modal">&times;</button>
+    <div id="usarPacoteModal" class="modal">
+      <div class="modal-content">
+        <span class="close-button" onclick="closeModal('usarPacoteModal')">&times;</span>
+        <h3>Registrar Uso do Pacote</h3>
+        <p>Cliente: <strong id="modal-pacote-cliente-nome"></strong></p>
+        <p>Pacote: <strong id="modal-pacote-servico-nome"></strong></p>
+        
+        <form id="pacote-uso-form">
+            <input type="hidden" id="modal-pacote-id">
+            
+            <div class="form-group">
+                <label for="pacote-uso-data">Data</label>
+                <input type="date" id="pacote-uso-data" required>
             </div>
-            <form id="form-usar-pacote">
-                <input type="hidden" id="modal-pacote-id">
-                <input type="hidden" id="modal-pacote-servico-id">
-                <input type="hidden" id="modal-pacote-cliente-id">
-                
+            <div class="form-row">
                 <div class="form-group">
-                    <label for="modal-pacote-data">Data</label>
-                    <input type="date" id="modal-pacote-data" required>
+                    <label for="pacote-uso-hora-inicio">Hora Início</label>
+                    <input type="time" id="pacote-uso-hora-inicio" required>
                 </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="modal-pacote-hora">Hora Início</label>
-                        <input type="time" id="modal-pacote-hora" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="modal-pacote-hora-fim">Hora Fim</label>
-                        <input type="time" id="modal-pacote-hora-fim" required>
-                    </div>
-                </div>
-                
                 <div class="form-group">
-                    <label for="modal-pacote-observacoes">Observações</label>
-                    <textarea id="modal-pacote-observacoes" rows="2"></textarea>
+                    <label for="pacote-uso-hora-fim">Hora Fim</label>
+                    <input type="time" id="pacote-uso-hora-fim" required>
                 </div>
-                
-                <div class="flex-container">
-                    <button type="submit" class="btn-success">
-                        <span class="material-icons">check_circle</span> Confirmar Uso
-                    </button>
-                    <button type="button" class="btn-secondary" id="cancelar-usar-pacote">
-                        <span class="material-icons">cancel</span> Cancelar
-                    </button>
-                </div>
-            </form>
-        </div>
+            </div>
+            
+            <button type="submit" class="btn-primary" style="width: 100%;">
+                <span class="material-icons">check_circle</span> Registrar Uso
+            </button>
+        </form>
+      </div>
     </div>
 
     <div id="login-container">
         <div class="login-card">
-            <div class="login-icon">
-                <span class="material-icons">spa</span>
-            </div>
             <h1>Tati Manicure - Acesso</h1>
             <form id="login-form">
                 <div class="form-group">
@@ -793,21 +788,26 @@
         </aside>
 
         <main class="main-content">
+            
+            <div id="welcome-banner">
+                <span>Bem-Vinda, Tati! Sua Agenda Digital.</span>
+            </div>
 
             <div id="agenda-section" class="content-section active">
                 
                 <div class="tab-menu">
-                     <button class="tab-button active" onclick="showAgendaTab('pacotes-ativos', event)">Pacotes Ativos</button>
-                     <button class="tab-button" onclick="showAgendaTab('novo-agendamento', event)">Novo Agendamento</button>
-                     <button class="tab-button" onclick="showAgendaTab('lista-agendamentos', event)">Lista Agendamentos</button>
-                     <button class="tab-button" onclick="showAgendaTab('visao-diaria', event)">Visão Diária</button>
+                    <button class="tab-button active" onclick="showAgendaTab('pacotes-ativos', event)">Pacotes Ativos</button>
+                    <button class="tab-button" onclick="showAgendaTab('novo-agendamento', event)">Novo Agendamento</button>
+                    <button class="tab-button" onclick="showAgendaTab('lista-agendamentos', event)">Lista Agendamentos</button>
+                    <button class="tab-button" onclick="showAgendaTab('visao-diaria', event)">Visão Diária</button>
                 </div>
                 
                 <div class="tab-content">
                     
                     <div id="pacotes-ativos-pane" class="tab-pane active">
-                         <div class="section-header"><h2>Gerenciamento de Pacotes Ativos</h2></div>
-                         <div class="card">
+                        <div class="section-header"><h2>Gerenciamento de Pacotes Ativos</h2></div>
+                        
+                        <div class="card">
                             <form id="pacote-inicio-form">
                                 <h3>Iniciar Novo Pacote de Serviços</h3>
                                 <div class="form-row">
@@ -856,7 +856,7 @@
                     
                     <div id="novo-agendamento-pane" class="tab-pane">
                         <div class="section-header"><h2>Agendamento de Serviços Individuais (Não-Pacote)</h2></div>
-                         <div class="card">
+                        <div class="card">
                             <form id="agendamento-form">
                                 <input type="hidden" id="agendamento-id">
                                 
@@ -876,7 +876,7 @@
                                 </div>
 
                                 <div class="form-row">
-                                     <div class="form-group" style="flex: 1;">
+                                    <div class="form-group" style="flex: 1;">
                                         <label for="agenda-hora">Hora Início</label>
                                         <input type="time" id="agenda-hora" required>
                                     </div>
@@ -885,7 +885,7 @@
                                         <input type="time" id="agenda-hora-fim" required>
                                     </div>
                                 </div>
-                                
+
                                 <div class="form-group">
                                     <label for="agenda-observacoes">Observações</label>
                                     <textarea id="agenda-observacoes" rows="2"></textarea>
@@ -904,12 +904,12 @@
                             </form>
                         </div>
                     </div>
-
+                    
                     <div id="lista-agendamentos-pane" class="tab-pane">
-                         <div class="section-header">
-                             <h3>Próximos Agendamentos Individuais (Ativos)</h3>
-                         </div>
-                         <div class="card">
+                        <div class="section-header">
+                            <h3>Próximos Agendamentos Individuais (Ativos)</h3>
+                        </div>
+                        <div class="card">
                             <div class="filter-row">
                                 <div style="flex-grow: 1.5;">
                                     <label for="filtro-agenda-data">Filtrar por Data</label>
@@ -921,7 +921,6 @@
                                 </div>
                                 <button class="btn-secondary" onclick="resetFiltroAgenda()"><span class="material-icons">refresh</span> Resetar Filtro</button>
                             </div>
-
                             <div style="max-height: 500px; overflow-y: auto;">
                                 <table class="data-table">
                                     <thead>
@@ -940,7 +939,7 @@
                             </div>
                         </div>
                     </div>
-
+                    
                     <div id="visao-diaria-pane" class="tab-pane">
                         <div class="section-header">
                             <h2>Visão Diária da Agenda</h2>
@@ -953,7 +952,6 @@
                                 </div>
                                 <button class="btn-secondary" onclick="renderizarVisaoDiaria(true)"><span class="material-icons">today</span> Ver Hoje</button>
                             </div>
-
                             <div class="table-responsive">
                                 <table class="data-table" id="tabela-visao-diaria">
                                     <thead>
@@ -969,7 +967,7 @@
                             </div>
                         </div>
                     </div>
-
+                    
                 </div>
             </div>
 
@@ -984,23 +982,21 @@
                                 <input type="text" id="cliente-nome" required>
                             </div>
                             <div class="form-group" style="flex: 1;">
-                                <label for="cliente-telefone">Telefone</label>
+                                <label for="cliente-telefone">Telefone (Whatsapp)</label>
                                 <input type="tel" id="cliente-telefone">
                             </div>
                         </div>
-                        <div class="form-row">
-                            <div class="form-group" style="flex: 2;">
-                                <label for="cliente-email">E-mail</label>
-                                <input type="email" id="cliente-email">
-                            </div>
-                            <div class="form-group" style="flex: 1;">
-                                <label for="cliente-aniversario">Data de Nascimento</label>
-                                <input type="date" id="cliente-aniversario">
-                            </div>
+                        <div class="form-group">
+                            <label for="cliente-email">E-mail (Opcional)</label>
+                            <input type="email" id="cliente-email">
                         </div>
                         <div class="form-group">
-                            <label for="cliente-observacoes">Observações</label>
-                            <textarea id="cliente-observacoes" rows="3"></textarea>
+                            <label for="cliente-endereco">Endereço (Opcional)</label>
+                            <input type="text" id="cliente-endereco">
+                        </div>
+                        <div class="form-group">
+                            <label for="cliente-observacoes">Observações (Alergias, Preferências)</label>
+                            <textarea id="cliente-observacoes" rows="2"></textarea>
                         </div>
                         <div class="flex-container">
                             <div>
@@ -1014,30 +1010,25 @@
                         </div>
                     </form>
                 </div>
-
-                <div class="section-header"><h3>Lista de Clientes</h3></div>
-                <div class="card">
-                    <div class="filter-row">
-                        <div style="flex-grow: 1;">
-                            <label for="filtro-cliente-nome">Filtrar por Nome</label>
-                            <input type="text" id="filtro-cliente-nome" placeholder="Digite o nome do cliente..." onkeyup="filtrarClientes()">
-                        </div>
-                        <button class="btn-secondary" onclick="resetFiltroCliente()"><span class="material-icons">refresh</span> Resetar Filtro</button>
+                <div class="section-header">
+                    <h3>Lista de Clientes Cadastrados</h3>
+                    <div class="input-group" style="width: 300px;">
+                        <input type="text" id="filtro-clientes" list="clientes-datalist" placeholder="Filtrar por nome, tel ou email..." onkeyup="filtrarClientes()">
                     </div>
-
+                </div>
+                <div class="card">
                     <div style="max-height: 500px; overflow-y: auto;">
                         <table class="data-table">
                             <thead>
                                 <tr>
                                     <th style="width: 30%;">Nome</th>
                                     <th style="width: 20%;">Telefone</th>
-                                    <th style="width: 25%;">E-mail</th>
-                                    <th style="width: 15%;">Nascimento</th>
+                                    <th style="width: 30%;">E-mail</th>
                                     <th style="width: 150px;">Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="lista-clientes">
-                                <tr><td colspan="5" style="text-align: center;">Carregando clientes...</td></tr>
+                                <tr><td colspan="4" style="text-align: center;">Carregando clientes...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -1050,35 +1041,29 @@
                     <form id="servico-form">
                         <input type="hidden" id="servico-id">
                         <div class="form-row">
-                            <div class="form-group" style="flex: 3;">
-                                <label for="servico-nome">Nome do Serviço/Pacote</label>
+                            <div class="form-group" style="flex: 2;">
+                                <label for="servico-nome">Nome do Serviço</label>
                                 <input type="text" id="servico-nome" required>
                             </div>
                             <div class="form-group" style="flex: 1;">
                                 <label for="servico-preco">Preço (R$)</label>
-                                <input type="number" id="servico-preco" min="0" step="0.01" required>
+                                <input type="number" id="servico-preco" step="0.01" min="0" required value="0.00">
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group" style="flex: 1;">
-                                <label for="servico-duracao">Duração (minutos)</label>
-                                <input type="number" id="servico-duracao" min="1" required>
+                                <label>
+                                    <input type="checkbox" id="servico-isPacote"> É um **Pacote Mensal**?
+                                </label>
                             </div>
-                            <div class="form-group" style="flex: 1;">
-                                <label for="servico-tipo">Tipo</label>
-                                <select id="servico-tipo" required>
-                                    <option value="individual">Serviço Individual</option>
-                                    <option value="pacote">Pacote (Vários Serviços)</option>
-                                </select>
-                            </div>
-                            <div class="form-group" style="flex: 1;">
-                                <label for="servico-sessoes">Sessões (se Pacote)</label>
-                                <input type="number" id="servico-sessoes" min="1" value="1">
+                            <div class="form-group" id="group-quantidade-total" style="flex: 1; display: none;">
+                                <label for="servico-quantidade-total">Total de Procedimentos no Pacote (ex: 6)</label>
+                                <input type="number" id="servico-quantidade-total" min="1" value="1">
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="servico-descricao">Descrição</label>
-                            <textarea id="servico-descricao" rows="3"></textarea>
+                            <label for="servico-descricao">Descrição Detalhada (ex: 4 Mãos e 2 Pés)</label>
+                            <textarea id="servico-descricao" rows="2"></textarea>
                         </div>
                         <div class="flex-container">
                             <div>
@@ -1092,33 +1077,18 @@
                         </div>
                     </form>
                 </div>
-
-                <div class="section-header"><h3>Lista de Serviços e Pacotes</h3></div>
+                <div class="section-header">
+                    <h3>Lista de Serviços e Preços</h3>
+                </div>
                 <div class="card">
-                    <div class="filter-row">
-                        <div style="flex-grow: 1;">
-                            <label for="filtro-servico-nome">Filtrar por Nome</label>
-                            <input type="text" id="filtro-servico-nome" placeholder="Digite o nome do serviço..." onkeyup="filtrarServicos()">
-                        </div>
-                        <div style="flex-grow: 1;">
-                            <label for="filtro-servico-tipo">Filtrar por Tipo</label>
-                            <select id="filtro-servico-tipo" onchange="filtrarServicos()">
-                                <option value="">Todos</option>
-                                <option value="individual">Serviços Individuais</option>
-                                <option value="pacote">Pacotes</option>
-                            </select>
-                        </div>
-                        <button class="btn-secondary" onclick="resetFiltroServico()"><span class="material-icons">refresh</span> Resetar Filtro</button>
-                    </div>
-
                     <div style="max-height: 500px; overflow-y: auto;">
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th style="width: 30%;">Nome</th>
-                                    <th style="width: 15%;">Preço</th>
-                                    <th style="width: 15%;">Duração</th>
+                                    <th style="width: 40%;">Serviço</th>
                                     <th style="width: 15%;">Tipo</th>
+                                    <th style="width: 15%;">Total Proc.</th>
+                                    <th style="width: 15%;">Preço</th>
                                     <th style="width: 150px;">Ações</th>
                                 </tr>
                             </thead>
@@ -1131,52 +1101,54 @@
             </div>
 
             <div id="historico-section" class="content-section">
-                <div class="section-header"><h2>Histórico e Controle de Lucros</h2></div>
+                <div class="section-header"><h2>Histórico de Agendamentos e Lucros Mensais</h2></div>
+                <div class="card" style="margin-bottom: 30px;">
+                    <h3>Resumo de Lucros</h3>
+                    <table class="data-table" id="tabela-lucros-mensais">
+                        <thead>
+                            <tr>
+                                <th style="width: 25%;">Mês/Ano</th>
+                                <th style="width: 25%;">Total Agendamentos</th>
+                                <th style="width: 25%;">Lucro Total (R$)</th>
+                                <th style="width: 25%;">Detalhes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-lucros-mensais">
+                            <tr><td colspan="4" style="text-align: center;">Carregando resumo financeiro...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="section-header">
+                    <h3>Histórico Completo</h3>
+                </div>
                 <div class="card">
                     <div class="filter-row">
                         <div style="flex-grow: 1;">
-                            <label for="filtro-historico-mes">Filtrar por Mês/Ano</label>
-                            <input type="month" id="filtro-historico-mes" onchange="carregarHistorico()">
+                            <label for="filtro-historico-mes">Filtrar por Mês (Lucros)</label>
+                            <input type="month" id="filtro-historico-mes" onchange="renderizarHistorico()">
+                        </div>
+                        <div style="flex-grow: 2;">
+                            <label for="filtro-historico-cliente">Filtrar Cliente</label>
+                            <input type="text" id="filtro-historico-cliente" list="clientes-datalist" placeholder="Digite o nome do cliente..." onkeyup="filtrarHistoricoTabela()">
                         </div>
                         <button class="btn-secondary" onclick="resetFiltroHistorico()"><span class="material-icons">refresh</span> Resetar Filtro</button>
                     </div>
-
                     <div style="max-height: 500px; overflow-y: auto;">
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th style="width: 15%;">Data</th>
+                                    <th style="width: 15%;">Data/Hora</th>
                                     <th style="width: 25%;">Cliente</th>
                                     <th style="width: 25%;">Serviço</th>
-                                    <th style="width: 15%;">Valor</th>
-                                    <th style="width: 10%;">Status</th>
+                                    <th style="width: 10%;">Valor (R$)</th>
                                     <th style="width: 150px;">Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="lista-historico">
-                                <tr><td colspan="6" style="text-align: center;">Carregando histórico...</td></tr>
+                                <tr><td colspan="5" style="text-align: center;">Carregando histórico...</td></tr>
                             </tbody>
                         </table>
-                    </div>
-                </div>
-
-                <div class="section-header" style="margin-top: 30px;">
-                    <h3>Resumo Financeiro</h3>
-                </div>
-                <div class="card">
-                    <div class="form-row">
-                        <div class="form-group" style="flex: 1; text-align: center;">
-                            <h4>Total Recebido</h4>
-                            <p id="total-recebido" style="font-size: 1.5rem; color: var(--success-color); font-weight: bold;">R$ 0,00</p>
-                        </div>
-                        <div class="form-group" style="flex: 1; text-align: center;">
-                            <h4>Total Pendente</h4>
-                            <p id="total-pendente" style="font-size: 1.5rem; color: var(--warning-color); font-weight: bold;">R$ 0,00</p>
-                        </div>
-                        <div class="form-group" style="flex: 1; text-align: center;">
-                            <h4>Total do Mês</h4>
-                            <p id="total-mes" style="font-size: 1.5rem; color: var(--primary-color); font-weight: bold;">R$ 0,00</p>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -1184,1268 +1156,1196 @@
         </main>
     </div>
 
-    <script>
-        // =============================================
-        // CONFIGURAÇÃO E INICIALIZAÇÃO
-        // =============================================
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+        import { getDatabase, ref, onValue, push, set, update, remove, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-database.js";
+
+        // ==================================================================================
+        // CONFIGURAÇÃO FIREBASE E VARIÁVEIS GLOBAIS
+        // ==================================================================================
         
-        // Configuração do Firebase
+        // **IMPORTANTE**: Substitua com a sua configuração real do Firebase
         const firebaseConfig = {
-            apiKey: "AIzaSyCJQ8hV8V8V8V8V8V8V8V8V8V8V8V8V8V8",
-            authDomain: "tati-manicure-app.firebaseapp.com",
-            databaseURL: "https://tati-manicure-app-default-rtdb.firebaseio.com",
-            projectId: "tati-manicure-app",
-            storageBucket: "tati-manicure-app.appspot.com",
-            messagingSenderId: "123456789",
-            appId: "1:123456789:web:abcdef123456"
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        
+        // Inicializa o Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // NÓS DO BANCO DE DADOS
+        const DB_NODES = {
+            CLIENTES: 'clientes',
+            SERVICOS: 'servicos',
+            AGENDAMENTOS: 'agendamentos', // Agendamentos Individuais
+            PACOTES_ATIVOS: 'pacotes_ativos',
+            PACOTE_SESSOES: 'pacote_sessoes', // Novo: Uso de Pacotes
+            HISTORICO: 'historico', // Recebe Agendamentos Pagos e Pagamento de Pacotes
+            LOGIN: 'login' // Nó para a senha de acesso
         };
 
-        // Inicialização do Firebase (simulação para demonstração)
-        let firebaseInitialized = false;
-        let database;
-        
-        // Inicializar Firebase (simulação)
-        function initializeFirebase() {
-            // Em um ambiente real, isso inicializaria o Firebase
-            firebaseInitialized = true;
-            console.log("Firebase inicializado (simulação)");
-            
-            // Carregar dados iniciais
-            carregarDadosIniciais();
+        // Dados Locais (Caches)
+        let clientes = {};
+        let servicos = {};
+        let agendamentosIndividuais = {};
+        let pacotesAtivos = {};
+        let pacoteSessoes = {};
+        let historicoCompleto = {};
+
+        // Variável da Senha
+        const SENHA_DE_ACESSO = "tati123"; // Senha default se não estiver no Firebase
+
+        // ==================================================================================
+        // FUNÇÕES DE UTILIDADE
+        // ==================================================================================
+
+        function showNotification(message, type = 'info', duration = 3000) {
+            const bar = document.getElementById('notification-bar');
+            bar.textContent = message;
+            bar.className = `notification show ${type}`;
+            setTimeout(() => {
+                bar.classList.remove('show');
+            }, duration);
         }
 
-        // =============================================
-        // VARIÁVEIS GLOBAIS E ESTADO DO APP
-        // =============================================
-        let clientes = [];
-        let servicos = [];
-        let agendamentos = [];
-        let pacotesAtivos = [];
-        let historico = [];
-        
-        // =============================================
-        // FUNÇÕES DE INICIALIZAÇÃO E CARREGAMENTO
-        // =============================================
-        
-        // Carregar dados iniciais do Firebase
-        function carregarDadosIniciais() {
-            // Simulação de carregamento de dados
-            console.log("Carregando dados iniciais...");
+        function formatarMoeda(valor) {
+            return parseFloat(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        function formatarData(data) {
+            if (!data) return '';
+            const [year, month, day] = data.split('-');
+            return `${day}/${month}/${year}`;
+        }
+
+        function getHoje() {
+            return new Date().toISOString().slice(0, 10);
+        }
+
+        // ==================================================================================
+        // CONTROLE DE SEÇÕES E TABS
+        // ==================================================================================
+
+        function showLogin() {
+            document.getElementById('login-container').style.display = 'flex';
+            document.getElementById('app-container').style.display = 'none';
+        }
+
+        function showApp() {
+            document.getElementById('login-container').style.display = 'none';
+            document.getElementById('app-container').style.display = 'flex';
             
-            // Carregar dados de exemplo para demonstração
-            carregarDadosExemplo();
-            
-            // Atualizar interfaces
-            atualizarSelectClientes();
-            atualizarSelectServicos();
-            carregarAgendamentos();
-            carregarPacotesAtivos();
-            carregarHistorico();
-            
-            // Configurar data atual nos campos de data
-            const hoje = new Date().toISOString().split('T')[0];
-            document.getElementById('agenda-data').value = hoje;
-            document.getElementById('pacote-data-inicio').value = hoje;
+            // Inicializa a Visão Diária para a data atual
+            const hoje = getHoje();
             document.getElementById('filtro-visao-diaria-data').value = hoje;
-            
-            // Configurar horários de início e fim padrão
-            document.getElementById('agenda-hora').value = '09:00';
-            document.getElementById('agenda-hora-fim').value = '10:00';
-            
-            // Configurar datalist de clientes
-            atualizarDatalistClientes();
-            
-            // Renderizar visão diária inicial
             renderizarVisaoDiaria();
+            
+            // Tenta carregar a seção 'agenda' (pacotes ativos) por padrão
+            showSection('agenda-section');
         }
-        
-        // Carregar dados de exemplo para demonstração
-        function carregarDadosExemplo() {
-            // Clientes de exemplo
-            clientes = [
-                { id: '1', nome: 'Maria Silva', telefone: '(11) 99999-9999', email: 'maria@email.com', aniversario: '1990-05-15', observacoes: 'Cliente fiel' },
-                { id: '2', nome: 'Joana Santos', telefone: '(11) 88888-8888', email: 'joana@email.com', aniversario: '1985-10-20', observacoes: 'Gosta de esmalte vermelho' }
-            ];
-            
-            // Serviços de exemplo
-            servicos = [
-                { id: '1', nome: 'Manicure Simples', preco: 25.00, duracao: 30, tipo: 'individual', sessoes: 1, descricao: 'Corte, lixa e esmaltação simples' },
-                { id: '2', nome: 'Pedicure Completa', preco: 40.00, duracao: 60, tipo: 'individual', sessoes: 1, descricao: 'Pedicure completa com hidratação' },
-                { id: '3', nome: 'Pacote Mensal (4 sessões)', preco: 80.00, duracao: 30, tipo: 'pacote', sessoes: 4, descricao: 'Pacote mensal com 4 sessões de manicure' }
-            ];
-            
-            // Agendamentos de exemplo
-            agendamentos = [
-                { id: '1', clienteId: '1', servicoId: '1', data: new Date().toISOString().split('T')[0], hora: '09:00', horaFim: '09:30', observacoes: '', status: 'agendado' },
-                { id: '2', clienteId: '2', servicoId: '2', data: new Date().toISOString().split('T')[0], hora: '10:00', horaFim: '11:00', observacoes: 'Trazer esmalte vermelho', status: 'agendado' }
-            ];
-            
-            // Pacotes ativos de exemplo
-            pacotesAtivos = [
-                { id: '1', clienteId: '1', servicoId: '3', dataInicio: new Date().toISOString().split('T')[0], sessoesTotal: 4, sessoesUsadas: 0, status: 'ativo', pagamento: 'pendente' }
-            ];
-            
-            // Histórico de exemplo
-            historico = [
-                { id: '1', clienteId: '1', servicoId: '1', data: '2023-10-01', valor: 25.00, status: 'pago', tipo: 'individual' },
-                { id: '2', clienteId: '2', servicoId: '2', data: '2023-10-02', valor: 40.00, status: 'pago', tipo: 'individual' }
-            ];
-        }
-        
-        // =============================================
-        // FUNÇÕES DE INTERFACE E NAVEGAÇÃO
-        // =============================================
-        
-        // Alternar entre seções do app
-        document.querySelectorAll('.sidebar a').forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                
-                // Remover classe active de todos os links
-                document.querySelectorAll('.sidebar a').forEach(item => {
-                    item.classList.remove('active');
-                });
-                
-                // Adicionar classe active ao link clicado
-                this.classList.add('active');
-                
-                // Esconder todas as seções
-                document.querySelectorAll('.content-section').forEach(section => {
-                    section.classList.remove('active');
-                });
-                
-                // Mostrar a seção correspondente
-                const sectionId = this.getAttribute('data-section') + '-section';
-                document.getElementById(sectionId).classList.add('active');
+
+        function showSection(sectionId) {
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
             });
-        });
-        
-        // Alternar entre abas da agenda
+            document.getElementById(sectionId).classList.add('active');
+
+            document.querySelectorAll('.sidebar ul li a').forEach(link => {
+                link.classList.remove('active');
+            });
+            document.querySelector(`.sidebar ul li a[data-section="${sectionId.replace('-section', '')}"]`).classList.add('active');
+            
+            // Ações específicas ao mudar de seção
+            if (sectionId === 'agenda-section') {
+                // Ao entrar em agenda, garante que a primeira tab (pacotes ativos) está ativa e renderiza
+                showAgendaTab('pacotes-ativos');
+            } else if (sectionId === 'historico-section') {
+                renderizarHistorico();
+            }
+        }
+
         function showAgendaTab(tabId, event) {
-            // Remover classe active de todos os botões de aba
-            document.querySelectorAll('.tab-button').forEach(button => {
-                button.classList.remove('active');
-            });
-            
-            // Adicionar classe active ao botão clicado
-            event.target.classList.add('active');
-            
-            // Esconder todos os painéis de aba
-            document.querySelectorAll('.tab-pane').forEach(pane => {
+            if (event) event.preventDefault();
+
+            document.querySelectorAll('#agenda-section .tab-pane').forEach(pane => {
                 pane.classList.remove('active');
             });
-            
-            // Mostrar o painel correspondente
             document.getElementById(tabId + '-pane').classList.add('active');
-        }
-        
-        // =============================================
-        // FUNÇÕES DE FORMULÁRIOS E CRUD
-        // =============================================
-        
-        // Formulário de Cliente
-        document.getElementById('cliente-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const clienteId = document.getElementById('cliente-id').value;
-            const clienteData = {
-                nome: document.getElementById('cliente-nome').value,
-                telefone: document.getElementById('cliente-telefone').value,
-                email: document.getElementById('cliente-email').value,
-                aniversario: document.getElementById('cliente-aniversario').value,
-                observacoes: document.getElementById('cliente-observacoes').value
-            };
-            
-            if (clienteId) {
-                // Editar cliente existente
-                editarCliente(clienteId, clienteData);
+
+            document.querySelectorAll('#agenda-section .tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            if (event) {
+                 event.currentTarget.classList.add('active');
             } else {
-                // Adicionar novo cliente
-                adicionarCliente(clienteData);
+                 document.querySelector(`#agenda-section button[onclick*='${tabId}']`).classList.add('active');
             }
-        });
-        
-        // Formulário de Serviço
-        document.getElementById('servico-form').addEventListener('submit', function(e) {
+            
+            if (tabId === 'visao-diaria') {
+                renderizarVisaoDiaria();
+            } else if (tabId === 'lista-agendamentos') {
+                 carregarAgendamentos(); // Garante que a lista de agendamentos individuais está atualizada
+            } else if (tabId === 'pacotes-ativos') {
+                 carregarPacotesAtivos(); // Garante que a lista de pacotes está atualizada
+            }
+        }
+
+        function openModal(modalId, pacoteId = null) {
+             const modal = document.getElementById(modalId);
+             modal.style.display = 'block';
+             if (pacoteId) {
+                 document.getElementById('modal-pacote-id').value = pacoteId;
+                 const pacote = pacotesAtivos[pacoteId];
+                 if (pacote) {
+                     document.getElementById('modal-pacote-cliente-nome').textContent = pacote.clienteNome;
+                     document.getElementById('modal-pacote-servico-nome').textContent = pacote.servicoNome;
+                     document.getElementById('pacote-uso-data').value = getHoje();
+                 }
+             }
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // ==================================================================================
+        // LÓGICA DE AUTENTICAÇÃO
+        // ==================================================================================
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            const servicoId = document.getElementById('servico-id').value;
-            const servicoData = {
-                nome: document.getElementById('servico-nome').value,
-                preco: parseFloat(document.getElementById('servico-preco').value),
-                duracao: parseInt(document.getElementById('servico-duracao').value),
-                tipo: document.getElementById('servico-tipo').value,
-                sessoes: parseInt(document.getElementById('servico-sessoes').value) || 1,
-                descricao: document.getElementById('servico-descricao').value
-            };
-            
-            if (servicoId) {
-                // Editar serviço existente
-                editarServico(servicoId, servicoData);
+            const senhaInput = document.getElementById('loginSenha').value;
+
+            // Busca a senha no Firebase (se existir)
+            const loginRef = ref(database, DB_NODES.LOGIN);
+            onValue(loginRef, (snapshot) => {
+                const data = snapshot.val();
+                let senhaCorreta = SENHA_DE_ACESSO; // Default
+                if (data && data.senha) {
+                    senhaCorreta = data.senha;
+                }
+
+                if (senhaInput === senhaCorreta) {
+                    showApp();
+                    showNotification('Login realizado com sucesso!', 'success');
+                } else {
+                    showNotification('Senha incorreta.', 'error');
+                }
+            }, { onlyOnce: true });
+        });
+
+        document.getElementById('logout-button').addEventListener('click', showLogin);
+
+        // ==================================================================================
+        // CLIENTES (CRUD e Filtro)
+        // ==================================================================================
+
+        const clientesRef = ref(database, DB_NODES.CLIENTES);
+
+        function carregarClientes() {
+            onValue(clientesRef, (snapshot) => {
+                clientes = {};
+                const datalist = document.getElementById('clientes-datalist');
+                datalist.innerHTML = ''; // Limpa antes de carregar
+
+                if (snapshot.exists()) {
+                    snapshot.forEach((childSnapshot) => {
+                        const cliente = childSnapshot.val();
+                        cliente.id = childSnapshot.key;
+                        clientes[cliente.id] = cliente;
+                        
+                        // Popula Datalist para filtros
+                        const option = document.createElement('option');
+                        option.value = cliente.nome;
+                        datalist.appendChild(option);
+                    });
+                }
+                renderizarClientes();
+                popularSelectsClientes();
+                // A carregarClientes() é essencial para carregarAgendamentos/Pacotes
+            });
+        }
+
+        document.getElementById('cliente-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            salvarCliente();
+        });
+
+        function salvarCliente() {
+            const id = document.getElementById('cliente-id').value;
+            const nome = document.getElementById('cliente-nome').value;
+            const telefone = document.getElementById('cliente-telefone').value;
+            const email = document.getElementById('cliente-email').value;
+            const endereco = document.getElementById('cliente-endereco').value;
+            const observacoes = document.getElementById('cliente-observacoes').value;
+
+            const clienteData = { nome, telefone, email, endereco, observacoes };
+
+            if (id) {
+                // Edição
+                update(ref(database, `${DB_NODES.CLIENTES}/${id}`), clienteData)
+                    .then(() => {
+                        showNotification('Cliente atualizado com sucesso!', 'success');
+                        resetClienteForm();
+                    })
+                    .catch(error => showNotification('Erro ao atualizar cliente: ' + error.message, 'error'));
             } else {
-                // Adicionar novo serviço
-                adicionarServico(servicoData);
-            }
-        });
-        
-        // Formulário de Agendamento
-        document.getElementById('agendamento-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const agendamentoId = document.getElementById('agendamento-id').value;
-            const agendamentoData = {
-                clienteId: document.getElementById('agenda-cliente-id').value,
-                servicoId: document.getElementById('agenda-servico-id').value,
-                data: document.getElementById('agenda-data').value,
-                hora: document.getElementById('agenda-hora').value,
-                horaFim: document.getElementById('agenda-hora-fim').value,
-                observacoes: document.getElementById('agenda-observacoes').value,
-                status: 'agendado'
-            };
-            
-            if (agendamentoId) {
-                // Editar agendamento existente
-                editarAgendamento(agendamentoId, agendamentoData);
-            } else {
-                // Adicionar novo agendamento
-                adicionarAgendamento(agendamentoData);
-            }
-        });
-        
-        // Formulário de Pacote
-        document.getElementById('pacote-inicio-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const pacoteData = {
-                clienteId: document.getElementById('pacote-cliente-id').value,
-                servicoId: document.getElementById('pacote-servico-id').value,
-                dataInicio: document.getElementById('pacote-data-inicio').value,
-                sessoesTotal: servicos.find(s => s.id === document.getElementById('pacote-servico-id').value).sessoes,
-                sessoesUsadas: 0,
-                status: 'ativo',
-                pagamento: 'pendente'
-            };
-            
-            adicionarPacote(pacoteData);
-        });
-        
-        // Formulário de Usar Pacote (Modal)
-        document.getElementById('form-usar-pacote').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const pacoteId = document.getElementById('modal-pacote-id').value;
-            const servicoId = document.getElementById('modal-pacote-servico-id').value;
-            const clienteId = document.getElementById('modal-pacote-cliente-id').value;
-            
-            const usoPacoteData = {
-                pacoteId: pacoteId,
-                clienteId: clienteId,
-                servicoId: servicoId,
-                data: document.getElementById('modal-pacote-data').value,
-                hora: document.getElementById('modal-pacote-hora').value,
-                horaFim: document.getElementById('modal-pacote-hora-fim').value,
-                observacoes: document.getElementById('modal-pacote-observacoes').value,
-                status: 'realizado',
-                tipo: 'pacote',
-                valor: 0 // Valor zero pois já foi pago no pacote
-            };
-            
-            usarPacote(pacoteId, usoPacoteData);
-        });
-        
-        // =============================================
-        // FUNÇÕES CRUD PARA CLIENTES
-        // =============================================
-        
-        function adicionarCliente(clienteData) {
-            // Gerar ID único
-            const id = 'cliente_' + Date.now();
-            clienteData.id = id;
-            
-            // Adicionar à lista
-            clientes.push(clienteData);
-            
-            // Atualizar interface
-            atualizarListaClientes();
-            atualizarSelectClientes();
-            atualizarDatalistClientes();
-            
-            // Limpar formulário
-            resetClienteForm();
-            
-            // Mostrar notificação
-            mostrarNotificacao('Cliente adicionado com sucesso!', 'success');
-        }
-        
-        function editarCliente(id, clienteData) {
-            // Encontrar índice do cliente
-            const index = clientes.findIndex(c => c.id === id);
-            
-            if (index !== -1) {
-                // Atualizar dados
-                clientes[index] = { ...clientes[index], ...clienteData };
-                
-                // Atualizar interface
-                atualizarListaClientes();
-                atualizarSelectClientes();
-                atualizarDatalistClientes();
-                
-                // Limpar formulário
-                resetClienteForm();
-                
-                // Mostrar notificação
-                mostrarNotificacao('Cliente atualizado com sucesso!', 'success');
+                // Novo Cadastro
+                push(clientesRef, clienteData)
+                    .then(() => {
+                        showNotification('Cliente salvo com sucesso!', 'success');
+                        resetClienteForm();
+                    })
+                    .catch(error => showNotification('Erro ao salvar cliente: ' + error.message, 'error'));
             }
         }
-        
-        function excluirCliente(id) {
-            if (confirm('Tem certeza que deseja excluir este cliente?')) {
-                // Remover da lista
-                clientes = clientes.filter(c => c.id !== id);
-                
-                // Atualizar interface
-                atualizarListaClientes();
-                atualizarSelectClientes();
-                atualizarDatalistClientes();
-                
-                // Mostrar notificação
-                mostrarNotificacao('Cliente excluído com sucesso!', 'success');
-            }
-        }
-        
-        function preencherFormCliente(id) {
-            const cliente = clientes.find(c => c.id === id);
-            
-            if (cliente) {
-                document.getElementById('cliente-id').value = cliente.id;
-                document.getElementById('cliente-nome').value = cliente.nome;
-                document.getElementById('cliente-telefone').value = cliente.telefone || '';
-                document.getElementById('cliente-email').value = cliente.email || '';
-                document.getElementById('cliente-aniversario').value = cliente.aniversario || '';
-                document.getElementById('cliente-observacoes').value = cliente.observacoes || '';
-                
-                // Rolar para o topo do formulário
-                document.getElementById('clientes-section').scrollTop = 0;
-            }
-        }
-        
-        function resetClienteForm() {
-            document.getElementById('cliente-form').reset();
-            document.getElementById('cliente-id').value = '';
-        }
-        
-        function atualizarListaClientes() {
+
+        function renderizarClientes(filtro = '') {
             const tbody = document.getElementById('lista-clientes');
-            const filtro = document.getElementById('filtro-cliente-nome').value.toLowerCase();
-            
-            // Filtrar clientes
-            let clientesFiltrados = clientes;
-            if (filtro) {
-                clientesFiltrados = clientes.filter(c => 
-                    c.nome.toLowerCase().includes(filtro)
-                );
-            }
-            
-            // Limpar tabela
             tbody.innerHTML = '';
-            
-            // Preencher tabela
-            clientesFiltrados.forEach(cliente => {
-                const tr = document.createElement('tr');
-                
-                // Adicionar data-label para responsividade
-                tr.innerHTML = `
+            const clientesArray = Object.values(clientes);
+
+            const filteredClientes = clientesArray.filter(cliente => 
+                cliente.nome.toLowerCase().includes(filtro) ||
+                (cliente.telefone && cliente.telefone.includes(filtro)) ||
+                (cliente.email && cliente.email.toLowerCase().includes(filtro))
+            );
+
+            if (filteredClientes.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Nenhum cliente encontrado.</td></tr>';
+                return;
+            }
+
+            filteredClientes.forEach(cliente => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
                     <td data-label="Nome">${cliente.nome}</td>
                     <td data-label="Telefone">${cliente.telefone || '-'}</td>
                     <td data-label="E-mail">${cliente.email || '-'}</td>
-                    <td data-label="Nascimento">${cliente.aniversario ? formatarData(cliente.aniversario) : '-'}</td>
                     <td data-label="Ações" class="action-buttons">
-                        <button class="btn-warning" onclick="preencherFormCliente('${cliente.id}')">
-                            <span class="material-icons">edit</span> Editar
-                        </button>
-                        <button class="btn-danger" onclick="excluirCliente('${cliente.id}')">
-                            <span class="material-icons">delete</span> Excluir
-                        </button>
+                        <button class="btn-warning" onclick="editCliente('${cliente.id}')"><span class="material-icons">edit</span> Editar</button>
+                        <button class="btn-danger" onclick="deleteCliente('${cliente.id}', '${cliente.nome}')"><span class="material-icons">delete</span> Excluir</button>
                     </td>
                 `;
-                
-                tbody.appendChild(tr);
             });
-            
-            // Se não houver clientes, mostrar mensagem
-            if (clientesFiltrados.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Nenhum cliente encontrado.</td></tr>';
+        }
+
+        function editCliente(id) {
+            const cliente = clientes[id];
+            if (!cliente) return;
+
+            document.getElementById('cliente-id').value = id;
+            document.getElementById('cliente-nome').value = cliente.nome;
+            document.getElementById('cliente-telefone').value = cliente.telefone || '';
+            document.getElementById('cliente-email').value = cliente.email || '';
+            document.getElementById('cliente-endereco').value = cliente.endereco || '';
+            document.getElementById('cliente-observacoes').value = cliente.observacoes || '';
+            document.getElementById('btn-salvar-cliente').innerHTML = '<span class="material-icons">update</span> Atualizar Cliente';
+        }
+
+        function deleteCliente(id, nome) {
+            if (confirm(`Tem certeza que deseja excluir o cliente ${nome}?`)) {
+                remove(ref(database, `${DB_NODES.CLIENTES}/${id}`))
+                    .then(() => showNotification('Cliente excluído com sucesso!', 'success'))
+                    .catch(error => showNotification('Erro ao excluir cliente: ' + error.message, 'error'));
             }
+        }
+
+        function resetClienteForm() {
+            document.getElementById('cliente-form').reset();
+            document.getElementById('cliente-id').value = '';
+            document.getElementById('btn-salvar-cliente').innerHTML = '<span class="material-icons">save</span> Salvar Cliente';
         }
         
         function filtrarClientes() {
-            atualizarListaClientes();
+            const filtro = document.getElementById('filtro-clientes').value.toLowerCase();
+            renderizarClientes(filtro);
         }
-        
-        function resetFiltroCliente() {
-            document.getElementById('filtro-cliente-nome').value = '';
-            atualizarListaClientes();
-        }
-        
-        function atualizarSelectClientes() {
-            const selectAgenda = document.getElementById('agenda-cliente-id');
-            const selectPacote = document.getElementById('pacote-cliente-id');
+
+        function popularSelectsClientes() {
+            const selects = ['pacote-cliente-id', 'agenda-cliente-id'];
             
-            // Limpar selects
-            selectAgenda.innerHTML = '<option value="">Selecione um cliente</option>';
-            selectPacote.innerHTML = '<option value="">Selecione um cliente</option>';
-            
-            // Preencher com clientes
-            clientes.forEach(cliente => {
-                const option = document.createElement('option');
-                option.value = cliente.id;
-                option.textContent = cliente.nome;
+            selects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                if (!select) return;
+                select.innerHTML = '<option value="" disabled selected>Selecione um cliente...</option>';
                 
-                selectAgenda.appendChild(option.cloneNode(true));
-                selectPacote.appendChild(option);
+                Object.values(clientes).forEach(cliente => {
+                    const option = document.createElement('option');
+                    option.value = cliente.id;
+                    option.textContent = cliente.nome;
+                    select.appendChild(option);
+                });
             });
         }
-        
-        function atualizarDatalistClientes() {
-            const datalist = document.getElementById('clientes-datalist');
-            
-            // Limpar datalist
-            datalist.innerHTML = '';
-            
-            // Preencher com clientes
-            clientes.forEach(cliente => {
-                const option = document.createElement('option');
-                option.value = cliente.nome;
-                option.setAttribute('data-id', cliente.id);
-                
-                datalist.appendChild(option);
+
+
+        // ==================================================================================
+        // SERVIÇOS/PACOTES (CRUD)
+        // ==================================================================================
+
+        const servicosRef = ref(database, DB_NODES.SERVICOS);
+
+        function carregarServicos() {
+            onValue(servicosRef, (snapshot) => {
+                servicos = {};
+                if (snapshot.exists()) {
+                    snapshot.forEach((childSnapshot) => {
+                        const servico = childSnapshot.val();
+                        servico.id = childSnapshot.key;
+                        servicos[servico.id] = servico;
+                    });
+                }
+                renderizarServicos();
+                popularSelectsServicos();
             });
         }
+
+        document.getElementById('servico-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            salvarServico();
+        });
         
-        // =============================================
-        // FUNÇÕES CRUD PARA SERVIÇOS
-        // =============================================
-        
-        function adicionarServico(servicoData) {
-            // Gerar ID único
-            const id = 'servico_' + Date.now();
-            servicoData.id = id;
+        document.getElementById('servico-isPacote').addEventListener('change', (e) => {
+             document.getElementById('group-quantidade-total').style.display = e.target.checked ? 'block' : 'none';
+        });
+
+        function salvarServico() {
+            const id = document.getElementById('servico-id').value;
+            const nome = document.getElementById('servico-nome').value;
+            const preco = parseFloat(document.getElementById('servico-preco').value);
+            const isPacote = document.getElementById('servico-isPacote').checked;
+            const quantidadeTotal = isPacote ? parseInt(document.getElementById('servico-quantidade-total').value) : 1;
+            const descricao = document.getElementById('servico-descricao').value;
+
+            if (isPacote && quantidadeTotal < 1) {
+                showNotification('Pacotes devem ter no mínimo 1 procedimento.', 'warning');
+                return;
+            }
+
+            const servicoData = { nome, preco, isPacote, quantidadeTotal, descricao };
             
-            // Adicionar à lista
-            servicos.push(servicoData);
-            
-            // Atualizar interface
-            atualizarListaServicos();
-            atualizarSelectServicos();
-            
-            // Limpar formulário
-            resetServicoForm();
-            
-            // Mostrar notificação
-            mostrarNotificacao('Serviço adicionado com sucesso!', 'success');
+            const dbRef = id ? ref(database, `${DB_NODES.SERVICOS}/${id}`) : push(servicosRef);
+
+            set(dbRef, servicoData)
+                .then(() => {
+                    showNotification(`Serviço/Pacote ${id ? 'atualizado' : 'salvo'} com sucesso!`, 'success');
+                    resetServicoForm();
+                })
+                .catch(error => showNotification('Erro ao salvar serviço/pacote: ' + error.message, 'error'));
         }
-        
-        function editarServico(id, servicoData) {
-            // Encontrar índice do serviço
-            const index = servicos.findIndex(s => s.id === id);
+
+        function renderizarServicos() {
+            const tbody = document.getElementById('lista-servicos');
+            tbody.innerHTML = '';
             
-            if (index !== -1) {
-                // Atualizar dados
-                servicos[index] = { ...servicos[index], ...servicoData };
-                
-                // Atualizar interface
-                atualizarListaServicos();
-                atualizarSelectServicos();
-                
-                // Limpar formulário
-                resetServicoForm();
-                
-                // Mostrar notificação
-                mostrarNotificacao('Serviço atualizado com sucesso!', 'success');
+            if (Object.keys(servicos).length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Nenhum serviço ou pacote cadastrado.</td></tr>';
+                return;
+            }
+
+            Object.values(servicos).forEach(servico => {
+                const tipo = servico.isPacote ? 'Pacote' : 'Individual';
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td data-label="Serviço">${servico.nome}</td>
+                    <td data-label="Tipo">${tipo}</td>
+                    <td data-label="Total Proc.">${servico.isPacote ? servico.quantidadeTotal : '-'}</td>
+                    <td data-label="Preço">${formatarMoeda(servico.preco)}</td>
+                    <td data-label="Ações" class="action-buttons">
+                        <button class="btn-warning" onclick="editServico('${servico.id}')"><span class="material-icons">edit</span> Editar</button>
+                        <button class="btn-danger" onclick="deleteServico('${servico.id}', '${servico.nome}')"><span class="material-icons">delete</span> Excluir</button>
+                    </td>
+                `;
+            });
+        }
+
+        function editServico(id) {
+            const servico = servicos[id];
+            if (!servico) return;
+
+            document.getElementById('servico-id').value = id;
+            document.getElementById('servico-nome').value = servico.nome;
+            document.getElementById('servico-preco').value = servico.preco;
+            document.getElementById('servico-descricao').value = servico.descricao || '';
+            document.getElementById('servico-isPacote').checked = servico.isPacote || false;
+            
+            // Lógica do Pacote
+            document.getElementById('group-quantidade-total').style.display = servico.isPacote ? 'block' : 'none';
+            document.getElementById('servico-quantidade-total').value = servico.quantidadeTotal || 1;
+            
+            document.getElementById('btn-salvar-servico').innerHTML = '<span class="material-icons">update</span> Atualizar Serviço';
+        }
+
+        function deleteServico(id, nome) {
+            if (confirm(`Tem certeza que deseja excluir o serviço/pacote ${nome}?`)) {
+                remove(ref(database, `${DB_NODES.SERVICOS}/${id}`))
+                    .then(() => showNotification('Serviço/Pacote excluído com sucesso!', 'success'))
+                    .catch(error => showNotification('Erro ao excluir serviço/pacote: ' + error.message, 'error'));
             }
         }
-        
-        function excluirServico(id) {
-            if (confirm('Tem certeza que deseja excluir este serviço?')) {
-                // Remover da lista
-                servicos = servicos.filter(s => s.id !== id);
-                
-                // Atualizar interface
-                atualizarListaServicos();
-                atualizarSelectServicos();
-                
-                // Mostrar notificação
-                mostrarNotificacao('Serviço excluído com sucesso!', 'success');
-            }
-        }
-        
-        function preencherFormServico(id) {
-            const servico = servicos.find(s => s.id === id);
-            
-            if (servico) {
-                document.getElementById('servico-id').value = servico.id;
-                document.getElementById('servico-nome').value = servico.nome;
-                document.getElementById('servico-preco').value = servico.preco;
-                document.getElementById('servico-duracao').value = servico.duracao;
-                document.getElementById('servico-tipo').value = servico.tipo;
-                document.getElementById('servico-sessoes').value = servico.sessoes;
-                document.getElementById('servico-descricao').value = servico.descricao || '';
-                
-                // Rolar para o topo do formulário
-                document.getElementById('servicos-section').scrollTop = 0;
-            }
-        }
-        
+
         function resetServicoForm() {
             document.getElementById('servico-form').reset();
             document.getElementById('servico-id').value = '';
-            document.getElementById('servico-sessoes').value = '1';
+            document.getElementById('group-quantidade-total').style.display = 'none';
+            document.getElementById('btn-salvar-servico').innerHTML = '<span class="material-icons">save</span> Salvar Serviço';
         }
-        
-        function atualizarListaServicos() {
-            const tbody = document.getElementById('lista-servicos');
-            const filtroNome = document.getElementById('filtro-servico-nome').value.toLowerCase();
-            const filtroTipo = document.getElementById('filtro-servico-tipo').value;
-            
-            // Filtrar serviços
-            let servicosFiltrados = servicos;
-            if (filtroNome) {
-                servicosFiltrados = servicosFiltrados.filter(s => 
-                    s.nome.toLowerCase().includes(filtroNome)
-                );
-            }
-            if (filtroTipo) {
-                servicosFiltrados = servicosFiltrados.filter(s => s.tipo === filtroTipo);
-            }
-            
-            // Limpar tabela
-            tbody.innerHTML = '';
-            
-            // Preencher tabela
-            servicosFiltrados.forEach(servico => {
-                const tr = document.createElement('tr');
-                
-                // Adicionar data-label para responsividade
-                tr.innerHTML = `
-                    <td data-label="Nome">${servico.nome}</td>
-                    <td data-label="Preço">R$ ${servico.preco.toFixed(2)}</td>
-                    <td data-label="Duração">${servico.duracao} min</td>
-                    <td data-label="Tipo">${servico.tipo === 'individual' ? 'Individual' : 'Pacote'}</td>
-                    <td data-label="Ações" class="action-buttons">
-                        <button class="btn-warning" onclick="preencherFormServico('${servico.id}')">
-                            <span class="material-icons">edit</span> Editar
-                        </button>
-                        <button class="btn-danger" onclick="excluirServico('${servico.id}')">
-                            <span class="material-icons">delete</span> Excluir
-                        </button>
-                    </td>
-                `;
-                
-                tbody.appendChild(tr);
-            });
-            
-            // Se não houver serviços, mostrar mensagem
-            if (servicosFiltrados.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Nenhum serviço encontrado.</td></tr>';
-            }
-        }
-        
-        function filtrarServicos() {
-            atualizarListaServicos();
-        }
-        
-        function resetFiltroServico() {
-            document.getElementById('filtro-servico-nome').value = '';
-            document.getElementById('filtro-servico-tipo').value = '';
-            atualizarListaServicos();
-        }
-        
-        function atualizarSelectServicos() {
-            const selectAgenda = document.getElementById('agenda-servico-id');
+
+        function popularSelectsServicos() {
+            const selectAgendamento = document.getElementById('agenda-servico-id');
             const selectPacote = document.getElementById('pacote-servico-id');
             
-            // Limpar selects
-            selectAgenda.innerHTML = '<option value="">Selecione um serviço</option>';
-            selectPacote.innerHTML = '<option value="">Selecione um pacote</option>';
-            
-            // Preencher com serviços
-            servicos.forEach(servico => {
+            selectAgendamento.innerHTML = '<option value="" disabled selected>Selecione um serviço individual...</option>';
+            selectPacote.innerHTML = '<option value="" disabled selected>Selecione um pacote...</option>';
+
+            Object.values(servicos).forEach(servico => {
                 const option = document.createElement('option');
                 option.value = servico.id;
-                option.textContent = `${servico.nome} - R$ ${servico.preco.toFixed(2)}`;
+                option.textContent = `${servico.nome} (${formatarMoeda(servico.preco)})`;
                 
-                // Serviços individuais para agendamento
-                if (servico.tipo === 'individual') {
-                    selectAgenda.appendChild(option.cloneNode(true));
-                }
-                
-                // Pacotes para seleção de pacotes
-                if (servico.tipo === 'pacote') {
+                if (servico.isPacote) {
                     selectPacote.appendChild(option);
+                } else {
+                    selectAgendamento.appendChild(option);
                 }
             });
         }
-        
-        // =============================================
-        // FUNÇÕES CRUD PARA AGENDAMENTOS
-        // =============================================
-        
-        function adicionarAgendamento(agendamentoData) {
-            // Gerar ID único
-            const id = 'agendamento_' + Date.now();
-            agendamentoData.id = id;
-            
-            // Adicionar à lista
-            agendamentos.push(agendamentoData);
-            
-            // Atualizar interface
-            carregarAgendamentos();
-            renderizarVisaoDiaria();
-            
-            // Limpar formulário
-            resetAgendamentoForm();
-            
-            // Mostrar notificação
-            mostrarNotificacao('Agendamento realizado com sucesso!', 'success');
-        }
-        
-        function editarAgendamento(id, agendamentoData) {
-            // Encontrar índice do agendamento
-            const index = agendamentos.findIndex(a => a.id === id);
-            
-            if (index !== -1) {
-                // Atualizar dados
-                agendamentos[index] = { ...agendamentos[index], ...agendamentoData };
-                
-                // Atualizar interface
-                carregarAgendamentos();
-                renderizarVisaoDiaria();
-                
-                // Limpar formulário
-                resetAgendamentoForm();
-                
-                // Mostrar notificação
-                mostrarNotificacao('Agendamento atualizado com sucesso!', 'success');
-            }
-        }
-        
-        function excluirAgendamento(id) {
-            if (confirm('Tem certeza que deseja excluir este agendamento?')) {
-                // Remover da lista
-                agendamentos = agendamentos.filter(a => a.id !== id);
-                
-                // Atualizar interface
-                carregarAgendamentos();
-                renderizarVisaoDiaria();
-                
-                // Mostrar notificação
-                mostrarNotificacao('Agendamento excluído com sucesso!', 'success');
-            }
-        }
-        
-        function finalizarAgendamento(id) {
-            const agendamento = agendamentos.find(a => a.id === id);
-            
-            if (agendamento) {
-                // Mover para histórico
-                const historicoItem = {
-                    id: 'historico_' + Date.now(),
-                    clienteId: agendamento.clienteId,
-                    servicoId: agendamento.servicoId,
-                    data: agendamento.data,
-                    valor: servicos.find(s => s.id === agendamento.servicoId).preco,
-                    status: 'pendente',
-                    tipo: 'individual'
-                };
-                
-                historico.push(historicoItem);
-                
-                // Remover da lista de agendamentos
-                agendamentos = agendamentos.filter(a => a.id !== id);
-                
-                // Atualizar interfaces
-                carregarAgendamentos();
-                carregarHistorico();
-                renderizarVisaoDiaria();
-                
-                // Mostrar notificação
-                mostrarNotificacao('Agendamento finalizado com sucesso!', 'success');
-            }
-        }
-        
-        function preencherFormAgendamento(id) {
-            const agendamento = agendamentos.find(a => a.id === id);
-            
-            if (agendamento) {
-                document.getElementById('agendamento-id').value = agendamento.id;
-                document.getElementById('agenda-cliente-id').value = agendamento.clienteId;
-                document.getElementById('agenda-servico-id').value = agendamento.servicoId;
-                document.getElementById('agenda-data').value = agendamento.data;
-                document.getElementById('agenda-hora').value = agendamento.hora;
-                document.getElementById('agenda-hora-fim').value = agendamento.horaFim;
-                document.getElementById('agenda-observacoes').value = agendamento.observacoes || '';
-                
-                // Mudar para a aba de novo agendamento
-                document.querySelectorAll('.tab-button').forEach(button => {
-                    button.classList.remove('active');
-                });
-                document.querySelectorAll('.tab-pane').forEach(pane => {
-                    pane.classList.remove('active');
-                });
-                document.querySelector('[onclick*="novo-agendamento"]').classList.add('active');
-                document.getElementById('novo-agendamento-pane').classList.add('active');
-                
-                // Rolar para o topo do formulário
-                document.getElementById('agenda-section').scrollTop = 0;
-            }
-        }
-        
-        function resetAgendamentoForm() {
-            document.getElementById('agendamento-form').reset();
-            document.getElementById('agendamento-id').value = '';
-            
-            // Restaurar data e hora padrão
-            const hoje = new Date().toISOString().split('T')[0];
-            document.getElementById('agenda-data').value = hoje;
-            document.getElementById('agenda-hora').value = '09:00';
-            document.getElementById('agenda-hora-fim').value = '10:00';
-        }
-        
+
+
+        // ==================================================================================
+        // AGENDAMENTOS INDIVIDUAIS (CRUD e Listagem)
+        // ==================================================================================
+
+        const agendamentosRef = query(ref(database, DB_NODES.AGENDAMENTOS), orderByChild('data'));
+
         function carregarAgendamentos() {
+            onValue(agendamentosRef, (snapshot) => {
+                agendamentosIndividuais = {};
+                if (snapshot.exists()) {
+                    snapshot.forEach((childSnapshot) => {
+                        const agendamento = childSnapshot.val();
+                        agendamento.id = childSnapshot.key;
+                        agendamentosIndividuais[agendamento.id] = agendamento;
+                    });
+                }
+                renderizarAgendamentos();
+            });
+        }
+
+        document.getElementById('agendamento-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            salvarAgendamento();
+        });
+
+        function salvarAgendamento() {
+            const id = document.getElementById('agendamento-id').value;
+            const clienteId = document.getElementById('agenda-cliente-id').value;
+            const servicoId = document.getElementById('agenda-servico-id').value;
+            const data = document.getElementById('agenda-data').value;
+            const hora = document.getElementById('agenda-hora').value;
+            const horaFim = document.getElementById('agenda-hora-fim').value;
+            const observacoes = document.getElementById('agenda-observacoes').value;
+            
+            if (!clienteId || !servicoId || !data || !hora || !horaFim) {
+                 showNotification('Preencha todos os campos obrigatórios (Cliente, Serviço, Data e Hora).', 'warning');
+                 return;
+            }
+
+            const cliente = clientes[clienteId];
+            const servico = servicos[servicoId];
+            
+            if (!cliente || !servico) {
+                showNotification('Cliente ou Serviço inválido.', 'error');
+                return;
+            }
+            
+            // Status: 'agendado' (inicial), 'realizado', 'cancelado'
+            const agendamentoData = {
+                clienteId,
+                clienteNome: cliente.nome,
+                servicoId,
+                servicoNome: servico.nome,
+                data,
+                hora, // Hora Início
+                horaFim,
+                preco: servico.preco,
+                observacoes,
+                status: 'agendado', 
+                pago: false,
+                tipo: 'Individual'
+            };
+
+            const dbRef = id ? ref(database, `${DB_NODES.AGENDAMENTOS}/${id}`) : push(ref(database, DB_NODES.AGENDAMENTOS));
+
+            set(dbRef, agendamentoData)
+                .then(() => {
+                    showNotification(`Agendamento ${id ? 'atualizado' : 'salvo'} com sucesso!`, 'success');
+                    resetAgendamentoForm();
+                })
+                .catch(error => showNotification('Erro ao salvar agendamento: ' + error.message, 'error'));
+        }
+
+        function renderizarAgendamentos(filtroData = null, filtroCliente = '') {
             const tbody = document.getElementById('lista-agendamentos');
-            const filtroData = document.getElementById('filtro-agenda-data').value;
-            const filtroCliente = document.getElementById('filtro-agenda-cliente').value.toLowerCase();
+            tbody.innerHTML = '';
             
-            // Filtrar agendamentos
-            let agendamentosFiltrados = agendamentos.filter(a => a.status === 'agendado');
+            const hoje = getHoje();
+            let agendamentosArray = Object.values(agendamentosIndividuais);
             
+            // 1. Filtrar
             if (filtroData) {
-                agendamentosFiltrados = agendamentosFiltrados.filter(a => a.data === filtroData);
+                 agendamentosArray = agendamentosArray.filter(a => a.data === filtroData);
+            } else {
+                 // Por padrão, só mostra agendamentos futuros
+                 agendamentosArray = agendamentosArray.filter(a => a.data >= hoje && a.status === 'agendado');
             }
             
             if (filtroCliente) {
-                agendamentosFiltrados = agendamentosFiltrados.filter(a => {
-                    const cliente = clientes.find(c => c.id === a.clienteId);
-                    return cliente && cliente.nome.toLowerCase().includes(filtroCliente);
-                });
+                 agendamentosArray = agendamentosArray.filter(a => a.clienteNome.toLowerCase().includes(filtroCliente.toLowerCase()));
             }
             
-            // Ordenar por data e hora
-            agendamentosFiltrados.sort((a, b) => {
-                const dataA = new Date(a.data + ' ' + a.hora);
-                const dataB = new Date(b.data + ' ' + b.hora);
-                return dataA - dataB;
+            // 2. Ordenar por Data e Hora
+            agendamentosArray.sort((a, b) => {
+                 if (a.data !== b.data) return a.data.localeCompare(b.data);
+                 return a.hora.localeCompare(b.hora);
             });
-            
-            // Limpar tabela
-            tbody.innerHTML = '';
-            
-            // Preencher tabela
-            agendamentosFiltrados.forEach(agendamento => {
-                const cliente = clientes.find(c => c.id === agendamento.clienteId);
-                const servico = servicos.find(s => s.id === agendamento.servicoId);
+
+
+            if (agendamentosArray.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Nenhum agendamento ativo encontrado.</td></tr>';
+                return;
+            }
+
+            // 3. Renderizar
+            agendamentosArray.forEach(agendamento => {
+                const statusClass = agendamento.pago ? 'status-pago' : 'status-pendente';
+                const statusText = agendamento.pago ? 'Pago' : 'Pendente';
                 
-                const tr = document.createElement('tr');
-                
-                // Adicionar data-label para responsividade
-                tr.innerHTML = `
-                    <td data-label="Data/Hora">${formatarData(agendamento.data)} ${agendamento.hora}</td>
-                    <td data-label="Cliente">${cliente ? cliente.nome : 'Cliente não encontrado'}</td>
-                    <td data-label="Serviço">${servico ? servico.nome : 'Serviço não encontrado'}</td>
-                    <td data-label="Status">
-                        <span class="status-package-active">Agendado</span>
-                    </td>
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td data-label="Data/Hora">${formatarData(agendamento.data)} às ${agendamento.hora}</td>
+                    <td data-label="Cliente"><strong>${agendamento.clienteNome}</strong></td>
+                    <td data-label="Serviço">${agendamento.servicoNome}</td>
+                    <td data-label="Status"><span class="${statusClass}">${statusText}</span></td>
                     <td data-label="Ações" class="action-buttons">
-                        <button class="btn-warning" onclick="preencherFormAgendamento('${agendamento.id}')">
-                            <span class="material-icons">edit</span> Editar
-                        </button>
-                        <button class="btn-success" onclick="finalizarAgendamento('${agendamento.id}')">
-                            <span class="material-icons">check_circle</span> Finalizar
-                        </button>
-                        <button class="btn-danger" onclick="excluirAgendamento('${agendamento.id}')">
-                            <span class="material-icons">delete</span> Excluir
-                        </button>
+                        <button class="btn-info" onclick="marcarAgendamentoPago('${agendamento.id}', ${agendamento.preco})"><span class="material-icons">payments</span> Marcar Pago</button>
+                        <button class="btn-warning" onclick="editAgendamento('${agendamento.id}')"><span class="material-icons">edit</span> Editar</button>
+                        <button class="btn-danger" onclick="deleteAgendamento('${agendamento.id}', '${agendamento.clienteNome}')"><span class="material-icons">delete</span> Excluir</button>
                     </td>
                 `;
-                
-                tbody.appendChild(tr);
             });
-            
-            // Se não houver agendamentos, mostrar mensagem
-            if (agendamentosFiltrados.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Nenhum agendamento encontrado.</td></tr>';
-            }
+        }
+        
+        function marcarAgendamentoPago(agendamentoId, preco) {
+             const agendamento = agendamentosIndividuais[agendamentoId];
+             if (!agendamento) return;
+             
+             if (agendamento.pago) {
+                 showNotification('Este agendamento já foi marcado como pago!', 'info');
+                 return;
+             }
+             
+             // 1. Atualiza o status do agendamento
+             const updateData = { pago: true, status: 'realizado' };
+             update(ref(database, `${DB_NODES.AGENDAMENTOS}/${agendamentoId}`), updateData)
+                .then(() => {
+                    // 2. Lança o valor no Histórico/Lucros (NÓ HISTORICO)
+                    const historicoData = {
+                        data: agendamento.data,
+                        clienteNome: agendamento.clienteNome,
+                        descricao: agendamento.servicoNome,
+                        valor: preco,
+                        tipo: 'Agendamento Individual',
+                        agendamentoId: agendamentoId
+                    };
+                    return push(ref(database, DB_NODES.HISTORICO), historicoData);
+                })
+                .then(() => {
+                    showNotification(`Agendamento de ${agendamento.clienteNome} marcado como PAGO e Lucro contabilizado!`, 'success');
+                })
+                .catch(error => showNotification('Erro ao marcar como pago/contabilizar: ' + error.message, 'error'));
+        }
+
+        function resetAgendamentoForm() {
+            document.getElementById('agendamento-form').reset();
+            document.getElementById('agendamento-id').value = '';
+            document.getElementById('agenda-data').value = getHoje();
+            document.getElementById('btn-salvar-agendamento').innerHTML = '<span class="material-icons">save</span> Salvar Agendamento';
         }
         
         function filtrarAgendamentos() {
-            carregarAgendamentos();
+            const data = document.getElementById('filtro-agenda-data').value;
+            const cliente = document.getElementById('filtro-agenda-cliente').value;
+            renderizarAgendamentos(data, cliente);
         }
         
         function resetFiltroAgenda() {
-            document.getElementById('filtro-agenda-data').value = '';
-            document.getElementById('filtro-agenda-cliente').value = '';
-            carregarAgendamentos();
+             document.getElementById('filtro-agenda-data').value = '';
+             document.getElementById('filtro-agenda-cliente').value = '';
+             carregarAgendamentos();
+        }
+
+        function editAgendamento(id) {
+             const agendamento = agendamentosIndividuais[id];
+             if (!agendamento) return;
+
+             showAgendaTab('novo-agendamento'); // Mudar para a aba de formulário
+
+             document.getElementById('agendamento-id').value = id;
+             document.getElementById('agenda-cliente-id').value = agendamento.clienteId;
+             document.getElementById('agenda-servico-id').value = agendamento.servicoId;
+             document.getElementById('agenda-data').value = agendamento.data;
+             document.getElementById('agenda-hora').value = agendamento.hora;
+             document.getElementById('agenda-hora-fim').value = agendamento.horaFim;
+             document.getElementById('agenda-observacoes').value = agendamento.observacoes || '';
+             
+             document.getElementById('btn-salvar-agendamento').innerHTML = '<span class="material-icons">update</span> Atualizar Agendamento';
         }
         
-        // =============================================
-        // FUNÇÕES PARA PACOTES ATIVOS
-        // =============================================
-        
-        function adicionarPacote(pacoteData) {
-            // Gerar ID único
-            const id = 'pacote_' + Date.now();
-            pacoteData.id = id;
-            
-            // Adicionar à lista
-            pacotesAtivos.push(pacoteData);
-            
-            // Atualizar interface
-            carregarPacotesAtivos();
-            
-            // Limpar formulário
-            document.getElementById('pacote-inicio-form').reset();
-            
-            // Restaurar data padrão
-            const hoje = new Date().toISOString().split('T')[0];
-            document.getElementById('pacote-data-inicio').value = hoje;
-            
-            // Mostrar notificação
-            mostrarNotificacao('Pacote iniciado com sucesso!', 'success');
+        function deleteAgendamento(id, nome) {
+             if (confirm(`Tem certeza que deseja excluir o agendamento de ${nome}?`)) {
+                 remove(ref(database, `${DB_NODES.AGENDAMENTOS}/${id}`))
+                     .then(() => showNotification('Agendamento excluído com sucesso!', 'success'))
+                     .catch(error => showNotification('Erro ao excluir agendamento: ' + error.message, 'error'));
+             }
         }
-        
-        function usarPacote(pacoteId, usoPacoteData) {
-            // Encontrar o pacote
-            const pacoteIndex = pacotesAtivos.findIndex(p => p.id === pacoteId);
-            
-            if (pacoteIndex !== -1) {
-                const pacote = pacotesAtivos[pacoteIndex];
-                
-                // Verificar se ainda há sessões disponíveis
-                if (pacote.sessoesUsadas < pacote.sessoesTotal) {
-                    // Incrementar sessões usadas
-                    pacotesAtivos[pacoteIndex].sessoesUsadas += 1;
-                    
-                    // Se todas as sessões foram usadas, marcar como finalizado
-                    if (pacotesAtivos[pacoteIndex].sessoesUsadas >= pacotesAtivos[pacoteIndex].sessoesTotal) {
-                        pacotesAtivos[pacoteIndex].status = 'finalizado';
-                    }
-                    
-                    // Adicionar ao histórico com valor zero (já foi pago no pacote)
-                    historico.push(usoPacoteData);
-                    
-                    // Atualizar interfaces
-                    carregarPacotesAtivos();
-                    carregarHistorico();
-                    renderizarVisaoDiaria();
-                    
-                    // Fechar modal
-                    fecharModalUsarPacote();
-                    
-                    // Mostrar notificação
-                    mostrarNotificacao('Uso do pacote registrado com sucesso!', 'success');
-                } else {
-                    mostrarNotificacao('Este pacote já foi totalmente utilizado!', 'error');
-                }
-            }
-        }
-        
-        function marcarPacotePago(id) {
-            // Encontrar o pacote
-            const pacoteIndex = pacotesAtivos.findIndex(p => p.id === id);
-            
-            if (pacoteIndex !== -1) {
-                // Marcar como pago
-                pacotesAtivos[pacoteIndex].pagamento = 'pago';
-                
-                // Adicionar ao histórico com o valor total do pacote
-                const pacote = pacotesAtivos[pacoteIndex];
-                const servico = servicos.find(s => s.id === pacote.servicoId);
-                
-                if (servico) {
-                    const historicoItem = {
-                        id: 'historico_pacote_' + Date.now(),
-                        clienteId: pacote.clienteId,
-                        servicoId: pacote.servicoId,
-                        data: pacote.dataInicio,
-                        valor: servico.preco,
-                        status: 'pago',
-                        tipo: 'pacote',
-                        pacoteId: pacote.id
-                    };
-                    
-                    historico.push(historicoItem);
-                }
-                
-                // Atualizar interfaces
-                carregarPacotesAtivos();
-                carregarHistorico();
-                
-                // Mostrar notificação
-                mostrarNotificacao('Pacote marcado como pago!', 'success');
-            }
-        }
-        
-        function excluirPacote(id) {
-            if (confirm('Tem certeza que deseja excluir este pacote?')) {
-                // Remover da lista
-                pacotesAtivos = pacotesAtivos.filter(p => p.id !== id);
-                
-                // Atualizar interface
-                carregarPacotesAtivos();
-                
-                // Mostrar notificação
-                mostrarNotificacao('Pacote excluído com sucesso!', 'success');
-            }
-        }
-        
-        function abrirModalUsarPacote(pacoteId, servicoId, clienteId) {
-            // Preencher dados no modal
-            document.getElementById('modal-pacote-id').value = pacoteId;
-            document.getElementById('modal-pacote-servico-id').value = servicoId;
-            document.getElementById('modal-pacote-cliente-id').value = clienteId;
-            
-            // Configurar data e hora padrão
-            const hoje = new Date().toISOString().split('T')[0];
-            document.getElementById('modal-pacote-data').value = hoje;
-            document.getElementById('modal-pacote-hora').value = '09:00';
-            document.getElementById('modal-pacote-hora-fim').value = '10:00';
-            
-            // Mostrar modal
-            document.getElementById('modal-usar-pacote').style.display = 'flex';
-        }
-        
-        function fecharModalUsarPacote() {
-            document.getElementById('modal-usar-pacote').style.display = 'none';
-            document.getElementById('form-usar-pacote').reset();
-        }
-        
+
+
+        // ==================================================================================
+        // PACOTES ATIVOS (CRUD e Lógica de Uso - Melhoria 3)
+        // ==================================================================================
+
+        const pacotesAtivosRef = query(ref(database, DB_NODES.PACOTES_ATIVOS), orderByChild('dataInicio'));
+        const pacoteSessoesRef = ref(database, DB_NODES.PACOTE_SESSOES);
+
         function carregarPacotesAtivos() {
-            const tbody = document.getElementById('lista-pacotes-ativos');
-            
-            // Limpar tabela
-            tbody.innerHTML = '';
-            
-            // Preencher tabela
-            pacotesAtivos.forEach(pacote => {
-                const cliente = clientes.find(c => c.id === pacote.clienteId);
-                const servico = servicos.find(s => s.id === pacote.servicoId);
-                
-                const tr = document.createElement('tr');
-                
-                // Adicionar data-label para responsividade
-                tr.innerHTML = `
-                    <td data-label="Cliente">${cliente ? cliente.nome : 'Cliente não encontrado'}</td>
-                    <td data-label="Pacote">${servico ? servico.nome : 'Serviço não encontrado'} (${pacote.sessoesUsadas}/${pacote.sessoesTotal})</td>
-                    <td data-label="Pagamento">
-                        ${pacote.pagamento === 'pago' ? 
-                            '<span class="status-package-paid">Pago</span>' : 
-                            '<span class="status-package-pending">Pendente</span>'}
-                    </td>
-                    <td data-label="Vencimento">${calcularVencimentoPacote(pacote.dataInicio, 30)}</td>
-                    <td data-label="Ações" class="action-buttons">
-                        ${pacote.sessoesUsadas < pacote.sessoesTotal ? 
-                            `<button class="btn-primary" onclick="abrirModalUsarPacote('${pacote.id}', '${pacote.servicoId}', '${pacote.clienteId}')">
-                                <span class="material-icons">event_available</span> Usar
-                            </button>` : 
-                            '<button class="btn-secondary" disabled><span class="material-icons">event_busy</span> Esgotado</button>'
-                        }
-                        ${pacote.pagamento === 'pendente' ? 
-                            `<button class="btn-success" onclick="marcarPacotePago('${pacote.id}')">
-                                <span class="material-icons">payments</span> Marcar Pago
-                            </button>` : 
-                            ''
-                        }
-                        <button class="btn-danger" onclick="excluirPacote('${pacote.id}')">
-                            <span class="material-icons">delete</span> Excluir
-                        </button>
-                    </td>
-                `;
-                
-                tbody.appendChild(tr);
-            });
-            
-            // Se não houver pacotes, mostrar mensagem
-            if (pacotesAtivos.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Nenhum pacote ativo encontrado.</td></tr>';
-            }
-        }
-        
-        // =============================================
-        // FUNÇÕES PARA VISÃO DIÁRIA
-        // =============================================
-        
-        function renderizarVisaoDiaria(hoje = false) {
-            const tbody = document.getElementById('lista-visao-diaria');
-            let dataSelecionada;
-            
-            if (hoje) {
-                dataSelecionada = new Date().toISOString().split('T')[0];
-                document.getElementById('filtro-visao-diaria-data').value = dataSelecionada;
-            } else {
-                dataSelecionada = document.getElementById('filtro-visao-diaria-data').value;
-            }
-            
-            // Limpar tabela
-            tbody.innerHTML = '';
-            
-            // Gerar horários das 07:00 às 22:00, de 30 em 30 minutos
-            const horarios = [];
-            for (let hora = 7; hora <= 22; hora++) {
-                for (let minuto = 0; minuto < 60; minuto += 30) {
-                    const horaStr = hora.toString().padStart(2, '0');
-                    const minutoStr = minuto.toString().padStart(2, '0');
-                    horarios.push(`${horaStr}:${minutoStr}`);
-                }
-            }
-            
-            // Preencher tabela com horários
-            horarios.forEach(horario => {
-                const tr = document.createElement('tr');
-                
-                // Encontrar agendamentos para este horário e data
-                const agendamentosNoHorario = agendamentos.filter(a => 
-                    a.data === dataSelecionada && 
-                    a.hora <= horario && 
-                    a.horaFim > horario
-                );
-                
-                // Encontrar usos de pacote para este horário e data
-                const historicoNoHorario = historico.filter(h => 
-                    h.data === dataSelecionada && 
-                    h.hora <= horario && 
-                    h.horaFim > horario &&
-                    h.tipo === 'pacote'
-                );
-                
-                // Combinar agendamentos e usos de pacote
-                const todosAgendamentos = [...agendamentosNoHorario, ...historicoNoHorario];
-                
-                let conteudoCelula = '';
-                
-                if (todosAgendamentos.length > 0) {
-                    // Mostrar informações do agendamento
-                    todosAgendamentos.forEach(agendamento => {
-                        const cliente = clientes.find(c => c.id === agendamento.clienteId);
-                        const servico = servicos.find(s => s.id === agendamento.servicoId);
+            onValue(pacotesAtivosRef, (snapshot) => {
+                pacotesAtivos = {};
+                if (snapshot.exists()) {
+                    snapshot.forEach((childSnapshot) => {
+                        const pacote = childSnapshot.val();
+                        pacote.id = childSnapshot.key;
+                        pacotesAtivos[pacote.id] = pacote;
                         
-                        const tipo = agendamento.tipo === 'pacote' ? 'Pacote' : 'Individual';
-                        
-                        conteudoCelula += `
-                            <div class="agendamento-ocupado">
-                                <strong>${cliente ? cliente.nome : 'Cliente'}</strong><br>
-                                ${servico ? servico.nome : 'Serviço'} (${tipo})<br>
-                                ${agendamento.hora} - ${agendamento.horaFim}
-                            </div>
-                        `;
+                        // Garante que o contador está inicializado
+                        if (typeof pacote.quantidadeUsada === 'undefined') {
+                            pacote.quantidadeUsada = 0;
+                        }
                     });
-                } else {
-                    // Horário livre
-                    conteudoCelula = `<div class="agendamento-vago">Horário Livre</div>`;
                 }
-                
-                tr.innerHTML = `
-                    <td class="horario-celula">${horario}</td>
-                    <td>${conteudoCelula}</td>
-                `;
-                
-                tbody.appendChild(tr);
+                // Carrega as sessões de pacote para calcular o uso
+                carregarSessoesPacotes(); 
             });
         }
         
-        // =============================================
-        // FUNÇÕES PARA HISTÓRICO E LUCROS
-        // =============================================
-        
-        function carregarHistorico() {
-            const tbody = document.getElementById('lista-historico');
-            const filtroMes = document.getElementById('filtro-historico-mes').value;
+        // Carrega as sessões de uso dos pacotes e atualiza a contagem
+        function carregarSessoesPacotes() {
+             onValue(pacoteSessoesRef, (snapshot) => {
+                 pacoteSessoes = {};
+                 const usoPorPacote = {};
+                 if (snapshot.exists()) {
+                      snapshot.forEach((childSnapshot) => {
+                         const sessao = childSnapshot.val();
+                         sessao.id = childSnapshot.key;
+                         pacoteSessoes[sessao.id] = sessao;
+                         
+                         // Conta o uso para o pacote ativo
+                         usoPorPacote[sessao.pacoteAtivoId] = (usoPorPacote[sessao.pacoteAtivoId] || 0) + 1;
+                      });
+                 }
+                 
+                 // Atualiza a quantidadeUsada em pacotesAtivos (cache)
+                 Object.keys(pacotesAtivos).forEach(pacoteId => {
+                     pacotesAtivos[pacoteId].quantidadeUsada = usoPorPacote[pacoteId] || 0;
+                 });
+                 
+                 renderizarPacotesAtivos();
+                 renderizarVisaoDiaria(); // Renderiza novamente com as sessões carregadas
+             });
+        }
+
+        document.getElementById('pacote-inicio-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            iniciarPacote();
+        });
+
+        function iniciarPacote() {
+            const clienteId = document.getElementById('pacote-cliente-id').value;
+            const servicoId = document.getElementById('pacote-servico-id').value;
+            const dataInicio = document.getElementById('pacote-data-inicio').value;
+
+            if (!clienteId || !servicoId || !dataInicio) {
+                 showNotification('Preencha todos os campos para iniciar o pacote.', 'warning');
+                 return;
+            }
+
+            const cliente = clientes[clienteId];
+            const servico = servicos[servicoId]; // O serviço é um pacote
             
-            // Filtrar histórico
-            let historicoFiltrado = historico;
-            
-            if (filtroMes) {
-                historicoFiltrado = historico.filter(h => h.data.startsWith(filtroMes));
+            if (!cliente || !servico || !servico.isPacote) {
+                showNotification('Seleção inválida de Cliente ou Pacote.', 'error');
+                return;
             }
             
-            // Ordenar por data (mais recente primeiro)
-            historicoFiltrado.sort((a, b) => new Date(b.data) - new Date(a.data));
+            const dataVencimento = new Date(dataInicio);
+            // Vencimento padrão: 30 dias após o início
+            dataVencimento.setDate(dataVencimento.getDate() + 30);
             
-            // Limpar tabela
+            const pacoteData = {
+                clienteId,
+                clienteNome: cliente.nome,
+                servicoId,
+                servicoNome: servico.nome,
+                precoTotal: servico.preco,
+                quantidadeTotal: servico.quantidadeTotal,
+                quantidadeUsada: 0,
+                dataInicio,
+                dataVencimento: dataVencimento.toISOString().slice(0, 10),
+                pago: false, // Inicia como não pago
+                status: 'ativo'
+            };
+
+            push(ref(database, DB_NODES.PACOTES_ATIVOS), pacoteData)
+                .then(() => {
+                    showNotification('Pacote iniciado com sucesso! Lembre-se de marcá-lo como pago.', 'success');
+                    document.getElementById('pacote-inicio-form').reset();
+                    document.getElementById('pacote-data-inicio').value = getHoje();
+                })
+                .catch(error => showNotification('Erro ao iniciar pacote: ' + error.message, 'error'));
+        }
+
+        function renderizarPacotesAtivos() {
+            const tbody = document.getElementById('lista-pacotes-ativos');
             tbody.innerHTML = '';
             
-            // Preencher tabela
-            historicoFiltrado.forEach(item => {
-                const cliente = clientes.find(c => c.id === item.clienteId);
-                const servico = servicos.find(s => s.id === item.servicoId);
+            if (Object.keys(pacotesAtivos).length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Nenhum pacote ativo encontrado.</td></tr>';
+                return;
+            }
+
+            Object.values(pacotesAtivos).forEach(pacote => {
+                const isFinalizado = pacote.quantidadeUsada >= pacote.quantidadeTotal;
+                const status = isFinalizado ? 'finalizado' : (new Date(pacote.dataVencimento) < new Date(getHoje()) ? 'vencido' : 'ativo');
                 
-                const tr = document.createElement('tr');
-                
-                // Adicionar data-label para responsividade
-                tr.innerHTML = `
-                    <td data-label="Data">${formatarData(item.data)}</td>
-                    <td data-label="Cliente">${cliente ? cliente.nome : 'Cliente não encontrado'}</td>
-                    <td data-label="Serviço">${servico ? servico.nome : 'Serviço não encontrado'} ${item.tipo === 'pacote' ? '(Pacote)' : ''}</td>
-                    <td data-label="Valor">R$ ${item.valor.toFixed(2)}</td>
-                    <td data-label="Status">
-                        ${item.status === 'pago' ? 
-                            '<span class="status-package-paid">Pago</span>' : 
-                            '<span class="status-package-pending">Pendente</span>'}
+                let statusPagamento = '';
+                if (pacote.pago) {
+                    statusPagamento = `<span class="status-package-paid">PAGO</span>`;
+                } else {
+                    statusPagamento = `<span class="status-package-pending">PENDENTE</span>`;
+                }
+
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td data-label="Cliente">${pacote.clienteNome}</td>
+                    <td data-label="Pacote (Total/Usado)">
+                        <strong>${pacote.servicoNome}</strong><br>
+                        ${pacote.quantidadeUsada} de ${pacote.quantidadeTotal} usados
+                        <span class="${isFinalizado ? 'status-package-finalized' : 'status-package-active'}">(${isFinalizado ? 'FINALIZADO' : 'ATIVO'})</span>
                     </td>
+                    <td data-label="Pagamento">${statusPagamento}</td>
+                    <td data-label="Vencimento">${formatarData(pacote.dataVencimento)}</td>
                     <td data-label="Ações" class="action-buttons">
-                        ${item.status === 'pendente' ? 
-                            `<button class="btn-success" onclick="marcarComoPago('${item.id}')">
-                                <span class="material-icons">payments</span> Marcar Pago
-                            </button>` : 
-                            ''
-                        }
+                        ${!isFinalizado ? 
+                            `<button class="btn-primary" onclick="openModal('usarPacoteModal', '${pacote.id}')"><span class="material-icons">task_alt</span> Usar Pacote</button>` 
+                            : ''}
+                        
+                        ${!pacote.pago ? 
+                            `<button class="btn-success" onclick="marcarPacotePago('${pacote.id}', ${pacote.precoTotal})"><span class="material-icons">paid</span> Marcar Pago</button>` 
+                            : ''}
+                        
+                        <button class="btn-danger" onclick="deletePacoteAtivo('${pacote.id}', '${pacote.clienteNome}')"><span class="material-icons">delete</span> Excluir</button>
                     </td>
                 `;
-                
-                tbody.appendChild(tr);
             });
-            
-            // Se não houver histórico, mostrar mensagem
-            if (historicoFiltrado.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Nenhum registro encontrado.</td></tr>';
-            }
-            
-            // Atualizar resumo financeiro
-            atualizarResumoFinanceiro(historicoFiltrado);
         }
         
-        function marcarComoPago(id) {
-            // Encontrar o item no histórico
-            const itemIndex = historico.findIndex(h => h.id === id);
-            
-            if (itemIndex !== -1) {
-                // Marcar como pago
-                historico[itemIndex].status = 'pago';
-                
-                // Atualizar interface
-                carregarHistorico();
-                
-                // Mostrar notificação
-                mostrarNotificacao('Serviço marcado como pago!', 'success');
-            }
+        // ** MELHORIA 3 - LÓGICA DE PAGAMENTO DO PACOTE NO HISTÓRICO **
+        function marcarPacotePago(pacoteId, precoTotal) {
+             const pacote = pacotesAtivos[pacoteId];
+             if (!pacote) return;
+             
+             if (pacote.pago) {
+                 showNotification('Este pacote já foi marcado como pago!', 'info');
+                 return;
+             }
+             
+             // 1. Atualiza o status do pacote ativo
+             const updateData = { pago: true };
+             update(ref(database, `${DB_NODES.PACOTES_ATIVOS}/${pacoteId}`), updateData)
+                .then(() => {
+                    // 2. Lança o valor total no Histórico/Lucros (NÓ HISTORICO)
+                    const historicoData = {
+                        data: getHoje(), // Data do pagamento (hoje)
+                        clienteNome: pacote.clienteNome,
+                        descricao: `Pagamento Pacote: ${pacote.servicoNome}`,
+                        valor: precoTotal,
+                        tipo: 'Pacote (Pagamento Total)',
+                        pacoteId: pacoteId
+                    };
+                    return push(ref(database, DB_NODES.HISTORICO), historicoData);
+                })
+                .then(() => {
+                    showNotification(`Pacote de ${pacote.clienteNome} marcado como PAGO e Lucro total (${formatarMoeda(precoTotal)}) contabilizado!`, 'success');
+                })
+                .catch(error => showNotification('Erro ao marcar como pago/contabilizar: ' + error.message, 'error'));
+        }
+
+        function deletePacoteAtivo(id, nome) {
+             if (confirm(`Tem certeza que deseja excluir o pacote ativo de ${nome}? Isso não exclui as sessões já utilizadas.`)) {
+                 remove(ref(database, `${DB_NODES.PACOTES_ATIVOS}/${id}`))
+                     .then(() => showNotification('Pacote ativo excluído com sucesso!', 'success'))
+                     .catch(error => showNotification('Erro ao excluir pacote ativo: ' + error.message, 'error'));
+             }
         }
         
-        function atualizarResumoFinanceiro(historicoFiltrado) {
-            // Calcular totais
-            const totalRecebido = historicoFiltrado
-                .filter(item => item.status === 'pago')
-                .reduce((total, item) => total + item.valor, 0);
-                
-            const totalPendente = historicoFiltrado
-                .filter(item => item.status === 'pendente')
-                .reduce((total, item) => total + item.valor, 0);
-                
-            const totalMes = totalRecebido + totalPendente;
+        // ** MELHORIA 3 - LÓGICA DE USO DE PACOTE (SESSÃO) **
+        document.getElementById('pacote-uso-form').addEventListener('submit', (e) => {
+             e.preventDefault();
+             iniciarSessaoPacote();
+        });
+
+        function iniciarSessaoPacote() {
+             const pacoteAtivoId = document.getElementById('modal-pacote-id').value;
+             const data = document.getElementById('pacote-uso-data').value;
+             const horaInicio = document.getElementById('pacote-uso-hora-inicio').value;
+             const horaFim = document.getElementById('pacote-uso-hora-fim').value;
+             
+             if (!data || !horaInicio || !horaFim) {
+                 showNotification('Preencha todos os campos de Data e Hora para registrar a sessão.', 'warning');
+                 return;
+             }
+             
+             const pacote = pacotesAtivos[pacoteAtivoId];
+             if (!pacote) {
+                 showNotification('Pacote ativo não encontrado.', 'error');
+                 return;
+             }
+             
+             if (pacote.quantidadeUsada >= pacote.quantidadeTotal) {
+                 showNotification('Este pacote já foi totalmente utilizado!', 'error');
+                 closeModal('usarPacoteModal');
+                 return;
+             }
+             
+             // 1. Cria o registro da sessão de uso
+             const sessaoData = {
+                 pacoteAtivoId,
+                 clienteId: pacote.clienteId,
+                 clienteNome: pacote.clienteNome,
+                 servicoNome: pacote.servicoNome,
+                 data,
+                 hora: horaInicio,
+                 horaFim,
+                 preco: 0, // Valor zero para a sessão individual
+                 status: 'realizado',
+                 tipo: 'Pacote Session'
+             };
+
+             push(pacoteSessoesRef, sessaoData)
+                 .then((newRef) => {
+                      // 2. Lança o valor ZERO no Histórico (para registro)
+                      const historicoData = {
+                         data: data,
+                         clienteNome: pacote.clienteNome,
+                         descricao: `Uso de Pacote: ${pacote.servicoNome}`,
+                         valor: 0,
+                         tipo: 'Pacote Session',
+                         sessaoId: newRef.key
+                      };
+                      return push(ref(database, DB_NODES.HISTORICO), historicoData);
+                 })
+                 .then(() => {
+                     showNotification('Uso de pacote registrado com sucesso! (Valor: R$ 0,00)', 'success');
+                     closeModal('usarPacoteModal');
+                     document.getElementById('pacote-uso-form').reset();
+                     // carregarSessoesPacotes() será chamado pelo listener, atualizando a lista
+                 })
+                 .catch(error => showNotification('Erro ao registrar uso de pacote: ' + error.message, 'error'));
+        }
+
+
+        // ==================================================================================
+        // VISÃO DIÁRIA DA AGENDA (Melhoria 6)
+        // ==================================================================================
+        
+        // ** MELHORIA 6 - GERA HORÁRIOS (07:00 ÀS 22:00, 30 min) **
+        function gerarHorarios() {
+            const horarios = [];
+            // Começa às 7:00 (7 * 60 = 420 minutos)
+            // Termina até 22:00 (1320 minutos), o último slot de início é 21:30 (1320 - 30)
+            const minutosFim = 22 * 60; 
             
-            // Atualizar elementos
-            document.getElementById('total-recebido').textContent = `R$ ${totalRecebido.toFixed(2)}`;
-            document.getElementById('total-pendente').textContent = `R$ ${totalPendente.toFixed(2)}`;
-            document.getElementById('total-mes').textContent = `R$ ${totalMes.toFixed(2)}`;
+            for (let minutos = 7 * 60; minutos < minutosFim; minutos += 30) {
+                const hora = Math.floor(minutos / 60);
+                const minuto = minutos % 60;
+                const horaFormatada = String(hora).padStart(2, '0');
+                const minutoFormatado = String(minuto).padStart(2, '0');
+                const horario = `${horaFormatada}:${minutoFormatado}`;
+                horarios.push(horario);
+            }
+            return horarios;
+        }
+
+
+        function renderizarVisaoDiaria(usarDataDeHoje = false) {
+             const hoje = getHoje();
+             let dataSelecionada = document.getElementById('filtro-visao-diaria-data').value;
+             
+             if (usarDataDeHoje || !dataSelecionada) {
+                  dataSelecionada = hoje;
+                  document.getElementById('filtro-visao-diaria-data').value = hoje;
+             }
+
+             const tbody = document.getElementById('lista-visao-diaria');
+             tbody.innerHTML = '';
+             
+             if (!dataSelecionada) {
+                  tbody.innerHTML = '<tr><td colspan="2" style="text-align: center;">Selecione uma data para visualizar.</td></tr>';
+                  return;
+             }
+             
+             const horarios = gerarHorarios();
+             const agendamentosDoDia = {};
+             
+             // Função para adicionar agendamentos ao mapa de horários
+             function adicionarAgendamento(agendamento, tipo) {
+                 const horaInicio = agendamento.hora;
+                 const horaFim = agendamento.horaFim; 
+                 // Cria uma chave única de 30 em 30 min (ex: "07:00", "07:30")
+                 const inicioMin = (parseInt(horaInicio.substring(0, 2)) * 60) + parseInt(horaInicio.substring(3, 5));
+                 const fimMin = (parseInt(horaFim.substring(0, 2)) * 60) + parseInt(horaFim.substring(3, 5));
+                 
+                 for (let min = inicioMin; min < fimMin; min += 30) {
+                     const hora = Math.floor(min / 60);
+                     const minuto = min % 60;
+                     const chave = `${String(hora).padStart(2, '0')}:${String(minuto).padStart(2, '0')}`;
+                     
+                     // Adiciona o agendamento apenas se a hora de início for a mesma da chave do horário,
+                     // para evitar duplicação em slots de 30 min
+                     if (chave === horaInicio) {
+                          agendamentosDoDia[chave] = { agendamento, tipo };
+                     } else if (!agendamentosDoDia[chave]) {
+                          // Preenche os blocos intermediários para marcar como ocupado
+                          agendamentosDoDia[chave] = { agendamento, tipo, continua: true };
+                     }
+                 }
+             }
+
+             // 1. Filtra Agendamentos Individuais (AGENDAMENTOS)
+             Object.values(agendamentosIndividuais).filter(a => a.data === dataSelecionada).forEach(a => {
+                  adicionarAgendamento(a, 'Individual');
+             });
+             
+             // 2. Filtra Sessões de Pacotes (PACOTE_SESSOES) - MELHORIA 6
+             Object.values(pacoteSessoes).filter(s => s.data === dataSelecionada).forEach(s => {
+                  adicionarAgendamento(s, 'Pacote');
+             });
+             
+             // 3. Renderiza
+             let lastAgendamento = null;
+             
+             horarios.forEach(horario => {
+                 const agendamentoInfo = agendamentosDoDia[horario];
+                 const row = tbody.insertRow();
+                 row.style.height = '40px'; // Altura padrão
+                 
+                 row.innerHTML = `<td class="horario-celula">${horario}</td>`;
+                 
+                 if (agendamentoInfo && agendamentoInfo.agendamento) {
+                      const { agendamento, tipo, continua } = agendamentoInfo;
+                      
+                      // Verifica se é o início de um novo agendamento ou se continua um anterior
+                      if (!continua) {
+                          const isPackage = tipo === 'Pacote';
+                          const statusClass = isPackage ? 'agendamento-ocupado pacote-session' : 'agendamento-ocupado';
+                          const nomeServico = isPackage ? `[Pacote] ${agendamento.servicoNome}` : agendamento.servicoNome;
+                          
+                          // Calcula quantas linhas (30min) o agendamento ocupa
+                          const inicioMin = (parseInt(agendamento.hora.substring(0, 2)) * 60) + parseInt(agendamento.hora.substring(3, 5));
+                          const fimMin = (parseInt(agendamento.horaFim.substring(0, 2)) * 60) + parseInt(agendamento.horaFim.substring(3, 5));
+                          const rowSpan = Math.ceil((fimMin - inicioMin) / 30);
+                          
+                          row.innerHTML += `
+                              <td rowspan="${rowSpan}" class="${statusClass}">
+                                  <strong>${agendamento.clienteNome}</strong><br>
+                                  <span>${nomeServico} | Término: ${agendamento.horaFim}</span>
+                              </td>
+                          `;
+                          lastAgendamento = agendamento.id;
+                      } else {
+                          // É um slot intermediário, não adiciona célula para ser coberto pelo rowspan
+                          lastAgendamento = agendamento.id;
+                          return; // Não adiciona a linha/célula 'Detalhes'
+                      }
+
+                 } else {
+                      row.innerHTML += `<td class="agendamento-vago">VAGO</td>`;
+                      lastAgendamento = null;
+                 }
+                 
+             });
+             
+             if (horarios.length === 0) {
+                 tbody.innerHTML = '<tr><td colspan="2" style="text-align: center;">Não foi possível gerar horários.</td></tr>';
+             }
+        }
+
+
+        // ==================================================================================
+        // HISTÓRICO/LUCROS (Listagem e Resumo)
+        // ==================================================================================
+
+        const historicoRef = query(ref(database, DB_NODES.HISTORICO), orderByChild('data'));
+
+        function carregarHistorico() {
+            onValue(historicoRef, (snapshot) => {
+                historicoCompleto = {};
+                if (snapshot.exists()) {
+                    snapshot.forEach((childSnapshot) => {
+                        const registro = childSnapshot.val();
+                        registro.id = childSnapshot.key;
+                        historicoCompleto[registro.id] = registro;
+                    });
+                }
+                renderizarHistorico();
+            });
+        }
+
+        function renderizarHistorico() {
+             const mesFiltro = document.getElementById('filtro-historico-mes').value;
+             const tbodyHistorico = document.getElementById('lista-historico');
+             const tbodyLucros = document.getElementById('lista-lucros-mensais');
+             tbodyHistorico.innerHTML = '';
+             tbodyLucros.innerHTML = '';
+
+             let historicoArray = Object.values(historicoCompleto);
+             const resumoMensal = {};
+             let lucroTotalGeral = 0;
+             let totalAgendamentosGeral = 0;
+
+             // 1. Filtrar e Calcular Resumo Mensal
+             historicoArray = historicoArray.sort((a, b) => b.data.localeCompare(a.data)); // Mais recente primeiro
+
+             historicoArray.forEach(reg => {
+                 const mesAno = reg.data.substring(0, 7); // YYYY-MM
+                 const valor = reg.valor || 0;
+
+                 lucroTotalGeral += valor;
+
+                 if (!resumoMensal[mesAno]) {
+                     resumoMensal[mesAno] = { totalLucro: 0, totalAgendamentos: 0, data: mesAno };
+                 }
+
+                 resumoMensal[mesAno].totalLucro += valor;
+                 resumoMensal[mesAno].totalAgendamentos += 1;
+                 
+                 // 2. Renderizar Histórico Completo
+                 if (!mesFiltro || mesFiltro === mesAno) {
+                     const row = tbodyHistorico.insertRow();
+                     row.innerHTML = `
+                         <td data-label="Data">${formatarData(reg.data)}</td>
+                         <td data-label="Cliente"><strong>${reg.clienteNome}</strong></td>
+                         <td data-label="Descrição">${reg.descricao}</td>
+                         <td data-label="Valor (R$)" style="font-weight: bold;">${formatarMoeda(reg.valor)}</td>
+                         <td data-label="Tipo">${reg.tipo}</td>
+                     `;
+                 }
+             });
+
+             if (tbodyHistorico.innerHTML === '') {
+                 tbodyHistorico.innerHTML = '<tr><td colspan="5" style="text-align: center;">Nenhum registro de histórico encontrado para este período.</td></tr>';
+             }
+             
+             // 3. Renderizar Resumo Mensal
+             const resumoArray = Object.values(resumoMensal).sort((a, b) => b.data.localeCompare(a.data));
+             
+             if (resumoArray.length === 0) {
+                 tbodyLucros.innerHTML = '<tr><td colspan="4" style="text-align: center;">Nenhum resumo financeiro disponível.</td></tr>';
+                 return;
+             }
+
+             resumoArray.forEach(resumo => {
+                 const mesFormatado = new Date(resumo.data + '-01').toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+                 const row = tbodyLucros.insertRow();
+                 row.innerHTML = `
+                     <td data-label="Mês/Ano">${mesFormatado.charAt(0).toUpperCase() + mesFormatado.slice(1)}</td>
+                     <td data-label="Total Agendamentos" style="text-align: center;">${resumo.totalAgendamentos}</td>
+                     <td data-label="Lucro Total (R$)" style="font-weight: bold;">${formatarMoeda(resumo.totalLucro)}</td>
+                     <td data-label="Detalhes"><button class="btn-info" onclick="aplicarFiltroMesHistorico('${resumo.data}')"><span class="material-icons">search</span> Detalhes</button></td>
+                 `;
+             });
+        }
+        
+        function aplicarFiltroMesHistorico(mesAno) {
+             document.getElementById('filtro-historico-mes').value = mesAno;
+             renderizarHistorico();
+             // Scroll para a tabela de histórico
+             document.getElementById('lista-historico').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function filtrarHistoricoTabela() {
+             const filtro = document.getElementById('filtro-historico-cliente').value.toLowerCase();
+             // Renderização é feita em `renderizarHistorico`, mas precisamos de um filtro adicional na tabela.
+             // Para simplificar, vou apenas usar um filtro JS na tabela já renderizada.
+             const rows = document.getElementById('lista-historico').querySelectorAll('tr');
+             rows.forEach(row => {
+                 const clienteCell = row.querySelector('td[data-label="Cliente"]');
+                 if (clienteCell) {
+                     if (clienteCell.textContent.toLowerCase().includes(filtro)) {
+                         row.style.display = '';
+                     } else {
+                         row.style.display = 'none';
+                     }
+                 }
+             });
         }
         
         function resetFiltroHistorico() {
-            document.getElementById('filtro-historico-mes').value = '';
+            document.getElementById('filtro-historico-mes').value = ''; 
+            document.getElementById('filtro-historico-cliente').value = '';
+            renderizarHistorico();
+        }
+        
+        // ==================================================================================
+        // INICIALIZAÇÃO
+        // ==================================================================================
+        document.addEventListener('DOMContentLoaded', () => {
+             // Mostra a tela de login ao carregar a página
+            showLogin();
+            
+            // Inicia os listeners de dados
+            carregarClientes();
+            carregarServicos();
+            carregarAgendamentos(); 
             carregarHistorico();
-        }
-        
-        // =============================================
-        // FUNÇÕES UTILITÁRIAS
-        // =============================================
-        
-        function formatarData(data) {
-            const partes = data.split('-');
-            return `${partes[2]}/${partes[1]}/${partes[0]}`;
-        }
-        
-        function calcularVencimentoPacote(dataInicio, diasValidade) {
-            const data = new Date(dataInicio);
-            data.setDate(data.getDate() + diasValidade);
-            return data.toISOString().split('T')[0];
-        }
-        
-        function mostrarNotificacao(mensagem, tipo) {
-            const notificationBar = document.getElementById('notification-bar');
+            // carregarPacotesAtivos chama carregarSessoesPacotes
+            carregarPacotesAtivos(); 
             
-            // Configurar mensagem e tipo
-            notificationBar.textContent = mensagem;
-            notificationBar.className = '';
-            notificationBar.classList.add(tipo);
+            // Configura a data de hoje para os inputs de data
+            const today = getHoje();
+            document.getElementById('agenda-data').value = today;
+            document.getElementById('pacote-data-inicio').value = today;
+            document.getElementById('filtro-visao-diaria-data').value = today;
+
+            // Associa a função showSection aos links da sidebar
+            document.querySelectorAll('.sidebar ul li a').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    showSection(this.getAttribute('data-section') + '-section');
+                });
+            });
             
-            // Mostrar notificação
-            notificationBar.classList.add('show');
+             // Inicializa a lógica de Pacote/Serviço (esconde o campo de quantidade total por padrão)
+            document.getElementById('group-quantidade-total').style.display = 'none';
             
-            // Esconder após 3 segundos
-            setTimeout(() => {
-                notificationBar.classList.remove('show');
-            }, 3000);
-        }
-        
-        // =============================================
-        // EVENT LISTENERS ADICIONAIS
-        // =============================================
-        
-        // Login
-        document.getElementById('login-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const senha = document.getElementById('loginSenha').value;
-            
-            // Verificar senha (simulação)
-            if (senha === 'tati123') {
-                // Esconder login, mostrar app
-                document.getElementById('login-container').style.display = 'none';
-                document.getElementById('app-container').style.display = 'flex';
-                
-                // Inicializar Firebase e carregar dados
-                initializeFirebase();
-                
-                // Mostrar notificação
-                mostrarNotificacao('Login realizado com sucesso!', 'success');
-            } else {
-                mostrarNotificacao('Senha incorreta! Tente novamente.', 'error');
-            }
-        });
-        
-        // Logout
-        document.getElementById('logout-button').addEventListener('click', function() {
-            if (confirm('Tem certeza que deseja sair?')) {
-                // Esconder app, mostrar login
-                document.getElementById('app-container').style.display = 'none';
-                document.getElementById('login-container').style.display = 'flex';
-                
-                // Limpar formulário de login
-                document.getElementById('login-form').reset();
-                
-                // Mostrar notificação
-                mostrarNotificacao('Logout realizado com sucesso!', 'success');
-            }
-        });
-        
-        // Fechar modal de usar pacote
-        document.querySelector('.close-modal').addEventListener('click', fecharModalUsarPacote);
-        document.getElementById('cancelar-usar-pacote').addEventListener('click', fecharModalUsarPacote);
-        
-        // Fechar modal ao clicar fora
-        document.getElementById('modal-usar-pacote').addEventListener('click', function(e) {
-            if (e.target === this) {
-                fecharModalUsarPacote();
-            }
-        });
-        
-        // =============================================
-        // INICIALIZAÇÃO AO CARREGAR A PÁGINA
-        // =============================================
-        
-        // Configurar data atual nos campos de data
-        window.addEventListener('load', function() {
-            const hoje = new Date().toISOString().split('T')[0];
-            document.getElementById('filtro-historico-mes').value = hoje.substring(0, 7);
         });
     </script>
 </body>
 </html>
-
