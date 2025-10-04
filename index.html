@@ -776,6 +776,33 @@
         </div>
     </div>
 
+    <!-- NOVO: Modal para limpeza de dados -->
+    <div id="modal-limpeza-dados" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Limpeza de Dados</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="form-group">
+                <p><strong>Atenção:</strong> Esta ação não pode ser desfeita!</p>
+                <label>
+                    <input type="checkbox" id="confirmar-limpeza"> Confirmo que desejo prosseguir com a limpeza
+                </label>
+            </div>
+            <div class="flex-container">
+                <button type="button" class="btn-danger" id="btn-limpar-historico" disabled>
+                    <span class="material-icons">delete_forever</span> Limpar Apenas Histórico
+                </button>
+                <button type="button" class="btn-danger" id="btn-limpar-tudo" disabled>
+                    <span class="material-icons">delete_sweep</span> Limpar Tudo (exceto Clientes/Serviços)
+                </button>
+                <button type="button" class="btn-secondary" id="cancelar-limpeza">
+                    <span class="material-icons">cancel</span> Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div id="login-container">
         <div class="login-card">
             <div class="login-icon">
@@ -1129,7 +1156,13 @@
             </div>
 
             <div id="historico-section" class="content-section">
-                <div class="section-header"><h2>Histórico de Agendamentos e Lucros Mensais</h2></div>
+                <div class="section-header">
+                    <h2>Histórico de Agendamentos e Lucros Mensais</h2>
+                    <!-- NOVO: Botão para limpeza de dados -->
+                    <button class="btn-danger" onclick="abrirModalLimpeza()">
+                        <span class="material-icons">delete_sweep</span> Limpeza de Dados
+                    </button>
+                </div>
                 
                 <div class="card" style="margin-bottom: 30px;">
                     <h3>Resumo de Lucros</h3>
@@ -1139,7 +1172,7 @@
                                 <th style="width: 25%;">Mês/Ano</th>
                                 <th style="width: 25%;">Total Agendamentos</th>
                                 <th style="width: 25%;">Lucro Total (R$)</th>
-                                <th style="width: 25%;">Detalhes</th>
+                                <th style="width: 25%;">Ações</th> <!-- REMOVIDO: Detalhes -->
                             </tr>
                         </thead>
                         <tbody id="lista-lucros-mensais">
@@ -1154,7 +1187,7 @@
                 <div class="card">
                     <div class="filter-row">
                         <div style="flex-grow: 1;">
-                            <label for="filtro-historico-mes">Filtrar por Mês (Lucros)</label>
+                            <label for="filtro-historico-mes">Filtrar por Mês</label>
                             <input type="month" id="filtro-historico-mes" onchange="renderizarHistorico()">
                         </div>
                         <div style="flex-grow: 2;">
@@ -1721,7 +1754,8 @@
             
             // 2. Atualizar o uso do pacote
             const novoUso = pacote.quantidadeUsada + quantidadeDebitar;
-            const novoStatus = novoUso >= pacote.quantidadeTotal ? 'finalizado' : 'ativo';
+            // CORREÇÃO: Só marca como finalizado se os procedimentos estiverem esgotados E o pagamento estiver feito
+            const novoStatus = (novoUso >= pacote.quantidadeTotal && pacote.statusPagamento === 'pago') ? 'finalizado' : 'ativo';
 
             try {
                 // Adiciona o agendamento no Histórico
@@ -1741,7 +1775,7 @@
             }
         });
 
-        // 4.3. CORREÇÃO FINAL: Marcar Pacote como Pago
+        // 4.3. CORREÇÃO FINAL: Marcar Pacote como Pago - PACOTE SÓ FINALIZA QUANDO PAGO E PROCEDIMENTOS ESGOTADOS
         window.marcarPacotePago = async function(pacoteId) {
             if (confirm('Marcar este pacote como PAGO?')) {
                 try {
@@ -1752,9 +1786,13 @@
                         return;
                     }
 
-                    // 1. Atualizar status de pagamento do pacote
+                    // ATUALIZAÇÃO: Só marca como finalizado se os procedimentos estiverem esgotados
+                    const novoStatus = pacote.quantidadeUsada >= pacote.quantidadeTotal ? 'finalizado' : 'ativo';
+
+                    // 1. Atualizar status de pagamento do pacote e status se necessário
                     await update(ref(db, 'pacotes_ativos/' + pacoteId), {
-                        statusPagamento: 'pago'
+                        statusPagamento: 'pago',
+                        status: novoStatus
                     });
 
                     // 2. Registrar no histórico com o valor total do pacote
@@ -1784,12 +1822,15 @@
             }
         }
         
-        // 4.4. Salvar Agendamento (Individual) - MANTIDO IGUAL
+        // 4.4. Salvar Agendamento (Individual) - COM VERIFICAÇÃO DE CONFLITO DE HORÁRIO
         document.getElementById('agendamento-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = document.getElementById('agendamento-id').value;
             const clienteId = document.getElementById('agenda-cliente-id').value;
             const servicoId = document.getElementById('agenda-servico-id').value;
+            const data = document.getElementById('agenda-data').value;
+            const horaInicio = document.getElementById('agenda-hora').value;
+            const horaFim = document.getElementById('agenda-hora-fim').value;
             
             const cliente = cacheClientes[clienteId];
             const servico = cacheServicos[servicoId];
@@ -1799,14 +1840,30 @@
                 return;
             }
 
+            // NOVO: Verificar conflito de horário
+            if (!id) { // Só verifica conflito para novos agendamentos
+                const conflito = agendamentosAtivos.some(a => 
+                    a.data === data && 
+                    a.id !== id && // Não verifica o próprio agendamento em edição
+                    ((horaInicio >= a.hora && horaInicio < a.horaFim) ||
+                     (horaFim > a.hora && horaFim <= a.horaFim) ||
+                     (horaInicio <= a.hora && horaFim >= a.horaFim))
+                );
+
+                if (conflito) {
+                    showNotification('Conflito de horário! Já existe um agendamento neste horário. Por favor, escolha outro horário.', 'error');
+                    return;
+                }
+            }
+
             const agendamento = {
                 clienteId: clienteId,
                 clienteNome: cliente.nome,
                 servicoId: servicoId,
                 servicoNome: servico.nome,
-                data: document.getElementById('agenda-data').value,
-                hora: document.getElementById('agenda-hora').value,
-                horaFim: document.getElementById('agenda-hora-fim').value,
+                data: data,
+                hora: horaInicio,
+                horaFim: horaFim,
                 observacoes: document.getElementById('agenda-observacoes').value || '',
                 valor: servico.preco,
                 status: 'ativo', // Novo agendamento é sempre ativo
@@ -2048,20 +2105,20 @@
             });
         }
 
-        // 5.4. RENDERIZAR PACOTES ATIVOS (Tabela) - CORREÇÃO FINAL
+        // 5.4. RENDERIZAR PACOTES ATIVOS (Tabela) - CORREÇÃO: MOSTRAR TODOS OS PACOTES ATIVOS (NÃO SÓ OS NÃO PAGOS)
         function renderizarPacotesAtivos() {
             const tabela = document.getElementById('lista-pacotes-ativos');
             tabela.innerHTML = '';
 
-            // CORREÇÃO: Mostrar TODOS os pacotes que não estão pagos (ativos E finalizados mas não pagos)
-            const pacotesNaoPagos = pacotesAtivosList.filter(p => p.statusPagamento !== 'pago');
+            // CORREÇÃO: Mostrar TODOS os pacotes que não estão finalizados (ativos independente do pagamento)
+            const pacotesAtivos = pacotesAtivosList.filter(p => p.status === 'ativo');
             
-            if (pacotesNaoPagos.length === 0) {
-                 tabela.innerHTML = '<tr><td colspan="5" style="text-align: center;">Nenhum pacote pendente.</td></tr>';
+            if (pacotesAtivos.length === 0) {
+                 tabela.innerHTML = '<tr><td colspan="5" style="text-align: center;">Nenhum pacote ativo.</td></tr>';
                  return;
             }
 
-            pacotesNaoPagos.forEach(p => {
+            pacotesAtivos.forEach(p => {
                 const row = tabela.insertRow();
                 
                 // Cliente
@@ -2111,7 +2168,7 @@
                      actionButtons += `<button class="btn-secondary" disabled><span class="material-icons">event_busy</span> Esgotado</button>`;
                 }
                 
-                // CORREÇÃO: Botão Marcar Pago - sempre aparece se não estiver pago
+                // Botão Marcar Pago - só aparece se não estiver pago
                 if (p.statusPagamento !== 'pago') {
                      actionButtons += `<button class="btn-success" onclick="marcarPacotePago('${p.id}')">
                          <span class="material-icons">payments</span> Marcar Pago
@@ -2273,22 +2330,38 @@
             });
         }
         
-        // 5.7. RENDERIZAR HISTÓRICO E LUCROS - MANTIDO IGUAL
+        // 5.7. RENDERIZAR HISTÓRICO E LUCROS - CORREÇÃO: CONTABILIZAR PAGAMENTOS DE PACOTES E FILTRAR AMBOS
         window.renderizarHistorico = function() {
-            // 5.7.1. Lucros Mensais
+            // 5.7.1. Lucros Mensais - CORREÇÃO: INCLUIR PAGAMENTOS DE PACOTES
             const listaLucrosMensais = document.getElementById('lista-lucros-mensais');
+            const filtroMes = document.getElementById('filtro-historico-mes').value;
             listaLucrosMensais.innerHTML = '';
             
             const lucrosPorMes = agendamentosHistorico.reduce((acc, a) => {
-                if (a.status !== 'finalizado' || a.tipo === 'pacote') return acc;
-                const mesAno = a.data.substring(0, 7);
-                acc[mesAno] = acc[mesAno] || { totalAgendamentos: 0, lucroTotal: 0 };
-                acc[mesAno].totalAgendamentos++;
-                acc[mesAno].lucroTotal += a.valor || 0;
+                // CORREÇÃO: Incluir pacotes pagos e agendamentos finalizados
+                if ((a.status === 'finalizado' && a.tipo === 'individual') || 
+                    (a.tipo === 'pacote_pagamento')) {
+                    
+                    const mesAno = a.data.substring(0, 7);
+                    acc[mesAno] = acc[mesAno] || { totalAgendamentos: 0, lucroTotal: 0 };
+                    
+                    if (a.tipo === 'pacote_pagamento') {
+                        acc[mesAno].lucroTotal += a.valor || 0;
+                    } else {
+                        acc[mesAno].totalAgendamentos++;
+                        acc[mesAno].lucroTotal += a.valor || 0;
+                    }
+                }
                 return acc;
             }, {});
 
-            const mesesOrdenados = Object.keys(lucrosPorMes).sort().reverse();
+            // Aplicar filtro de mês se existir
+            let mesesParaExibir = Object.keys(lucrosPorMes);
+            if (filtroMes) {
+                mesesParaExibir = mesesParaExibir.filter(mes => mes === filtroMes);
+            }
+            
+            const mesesOrdenados = mesesParaExibir.sort().reverse();
             
             if (mesesOrdenados.length === 0) {
                 listaLucrosMensais.innerHTML = '<tr><td colspan="4" style="text-align: center;">Nenhum lucro registrado.</td></tr>';
@@ -2301,20 +2374,27 @@
                      row.insertCell().textContent = lucro.totalAgendamentos;
                      row.insertCell().textContent = formatarMoeda(lucro.lucroTotal);
                      
-                     let detalhesCell = row.insertCell();
-                     detalhesCell.innerHTML = `<button class="btn-info" onclick="aplicarFiltroHistoricoMes('${mesAno}')"><span class="material-icons">search</span> Ver Detalhes</button>`;
+                     // REMOVIDO: Botão "Ver Detalhes"
+                     let acoesCell = row.insertCell();
+                     acoesCell.innerHTML = ''; // Vazio
                  });
             }
 
-            // 5.7.2. Histórico Completo
+            // 5.7.2. Histórico Completo - CORREÇÃO: APLICAR FILTRO DE MÊS TAMBÉM AQUI
             const listaHistorico = document.getElementById('lista-historico');
-            const filtroMes = document.getElementById('filtro-historico-mes').value;
+            const filtroCliente = document.getElementById('filtro-historico-cliente').value.toLowerCase();
             listaHistorico.innerHTML = '';
 
             let historicoFiltrado = agendamentosHistorico;
             
+            // Aplicar filtro de mês
             if (filtroMes) {
                  historicoFiltrado = historicoFiltrado.filter(a => a.data.startsWith(filtroMes));
+            }
+            
+            // Aplicar filtro de cliente
+            if (filtroCliente) {
+                historicoFiltrado = historicoFiltrado.filter(a => a.clienteNome.toLowerCase().includes(filtroCliente));
             }
             
             if (historicoFiltrado.length === 0) {
@@ -2345,6 +2425,8 @@
                      if (a.procedimentoRealizado) {
                          servicoTexto += ` - ${a.procedimentoRealizado}`;
                      }
+                 } else if (a.tipo === 'pacote_pagamento') {
+                     servicoTexto += ' (Pagamento de Pacote)';
                  } else if (a.status === 'cancelado') {
                       servicoTexto += ' (Cancelado)';
                  }
@@ -2364,7 +2446,7 @@
                  let statusClass = 'btn-secondary';
                  let statusIcon = 'info';
 
-                 if (a.status === 'finalizado') {
+                 if (a.status === 'finalizado' || a.tipo === 'pacote_pagamento') {
                      statusClass = 'btn-success';
                      statusIcon = 'check';
                  } else if (a.status === 'cancelado') {
@@ -2379,10 +2461,7 @@
             });
         }
         
-        window.aplicarFiltroHistoricoMes = function(mesAno) {
-             document.getElementById('filtro-historico-mes').value = mesAno;
-             renderizarHistorico();
-        }
+        // REMOVIDO: função aplicarFiltroHistoricoMes (não é mais necessária)
         
         // 6. FUNÇÃO DE REVERSÃO DE HISTÓRICO - MANTIDO IGUAL
         window.reverterHistorico = async function(agendamentoId) {
@@ -2447,6 +2526,94 @@
             renderizarHistorico();
         }
         
+        // =================================================================
+        // 7. NOVAS FUNÇÕES: LIMPEZA DE DADOS
+        // =================================================================
+
+        // 7.1. Modal de Limpeza de Dados
+        window.abrirModalLimpeza = function() {
+            document.getElementById('modal-limpeza-dados').style.display = 'flex';
+            document.getElementById('confirmar-limpeza').checked = false;
+            document.getElementById('btn-limpar-historico').disabled = true;
+            document.getElementById('btn-limpar-tudo').disabled = true;
+        }
+
+        window.fecharModalLimpeza = function() {
+            document.getElementById('modal-limpeza-dados').style.display = 'none';
+        }
+
+        // Habilitar botões quando confirmado
+        document.getElementById('confirmar-limpeza').addEventListener('change', function() {
+            const enabled = this.checked;
+            document.getElementById('btn-limpar-historico').disabled = !enabled;
+            document.getElementById('btn-limpar-tudo').disabled = !enabled;
+        });
+
+        // Fechar modal
+        document.querySelectorAll('#modal-limpeza-dados .close-modal, #cancelar-limpeza').forEach(btn => {
+            btn.addEventListener('click', fecharModalLimpeza);
+        });
+
+        // Fechar modal ao clicar fora
+        document.getElementById('modal-limpeza-dados').addEventListener('click', function(e) {
+            if (e.target === this) {
+                fecharModalLimpeza();
+            }
+        });
+
+        // 7.2. Limpar Apenas Histórico
+        document.getElementById('btn-limpar-historico').addEventListener('click', async function() {
+            if (!confirm('Tem certeza que deseja limpar TODO o histórico? Esta ação não pode ser desfeita!')) {
+                return;
+            }
+
+            try {
+                // Buscar todos os agendamentos do histórico
+                const historicoRef = query(agendamentosRef, orderByChild('status'));
+                const snapshot = await new Promise(resolve => onValue(historicoRef, resolve, { onlyOnce: true }));
+                
+                const updates = {};
+                snapshot.forEach(childSnapshot => {
+                    const agendamento = childSnapshot.val();
+                    if (agendamento.status !== 'ativo') {
+                        updates[childSnapshot.key] = null; // Remove do banco
+                    }
+                });
+
+                // Executar remoção em lote
+                await update(ref(db, 'agendamentos'), updates);
+                
+                showNotification('Histórico limpo com sucesso!', 'success');
+                fecharModalLimpeza();
+                
+            } catch (error) {
+                console.error("Erro ao limpar histórico:", error);
+                showNotification('Erro ao limpar histórico: ' + error.message, 'error');
+            }
+        });
+
+        // 7.3. Limpar Tudo (exceto Clientes e Serviços)
+        document.getElementById('btn-limpar-tudo').addEventListener('click', async function() {
+            if (!confirm('Tem certeza que deseja limpar TODOS os agendamentos e pacotes? Clientes e serviços serão mantidos. Esta ação não pode ser desfeita!')) {
+                return;
+            }
+
+            try {
+                // Limpar agendamentos
+                await remove(agendamentosRef);
+                
+                // Limpar pacotes ativos
+                await remove(pacotesAtivosRef);
+                
+                showNotification('Todos os dados foram limpos!', 'success');
+                fecharModalLimpeza();
+                
+            } catch (error) {
+                console.error("Erro ao limpar dados:", error);
+                showNotification('Erro ao limpar dados: ' + error.message, 'error');
+            }
+        });
+
         // ----------------------------------------------------------------------------------
         // INICIALIZAÇÃO
         // ----------------------------------------------------------------------------------
