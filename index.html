@@ -537,7 +537,7 @@
         }
         
         /* --------------------------------------------------- */
-        /* RESPONSIVIDADE MOBILE (Mobile First - Portrait Mode)*/
+        /* RESPONSIVIDADE MOBILE - MELHORIAS PARA VISÃO DIÁRIA */
         /* --------------------------------------------------- */
         @media (max-width: 768px) {
             
@@ -626,16 +626,53 @@
                 padding: 10px 15px !important;
             }
             
-            /* V6: Ajuste para a Tabela de Visão Diária */
+            /* MELHORIA: Visão Diária em Mobile */
             .table-responsive {
-                 overflow-x: auto;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch; /* Scroll suave no iOS */
             }
+            
             #tabela-visao-diaria {
-                 width: 100%;
-                 min-width: 300px; /* Garante que não fique muito esmagada */
+                width: 100%;
+                min-width: 350px; /* Aumentado para melhor visualização */
+                font-size: 0.85rem; /* Texto um pouco menor para caber melhor */
             }
+            
             #tabela-visao-diaria td {
-                 padding: 5px 10px !important;
+                padding: 8px 5px !important; /* Reduz padding para economizar espaço */
+                height: 35px; /* Altura reduzida para mobile */
+                word-wrap: break-word;
+                overflow: hidden;
+            }
+            
+            .horario-celula {
+                width: 60px; /* Largura reduzida para mobile */
+                font-size: 0.8rem;
+                padding: 5px !important;
+            }
+            
+            .agendamento-ocupado {
+                font-size: 0.8rem;
+                line-height: 1.1;
+                padding: 3px 5px !important;
+                border-left: 3px solid var(--primary-color); /* Borda mais fina */
+            }
+            
+            .agendamento-ocupado strong {
+                font-size: 0.85rem;
+            }
+            
+            .agendamento-vago,
+            .agendamento-vencido {
+                font-size: 0.8rem;
+                line-height: 35px; /* Centraliza verticalmente */
+                padding: 0 5px;
+            }
+            
+            /* Garantir que o conteúdo não ultrapasse os limites */
+            #tabela-visao-diaria td:not(.horario-celula) {
+                max-width: 200px;
+                white-space: normal;
             }
 
             /* 2. Correção de Tabelas (Cartão-like View) */
@@ -1165,7 +1202,7 @@
                 </div>
                 
                 <div class="card" style="margin-bottom: 30px;">
-                    <h3>Resumo de Lucros</h3>
+                    <h3 id="titulo-resumo-lucros">Resumo de Lucros</h3>
                     <table class="data-table" id="tabela-lucros-mensais">
                         <thead>
                             <tr>
@@ -1698,6 +1735,17 @@
             const procedimento = document.getElementById('modal-pacote-procedimento').value;
             const outroProcedimento = document.getElementById('modal-pacote-outro').value;
             
+            // NOVO: Verificar conflito de horário para pacotes também
+            const dataPacote = document.getElementById('modal-pacote-data').value;
+            const horaInicioPacote = document.getElementById('modal-pacote-hora').value;
+            const horaFimPacote = document.getElementById('modal-pacote-hora-fim').value;
+
+            const conflitoPacote = verificarConflitoHorarioPacote(dataPacote, horaInicioPacote, horaFimPacote);
+            if (conflitoPacote) {
+                showNotification('Horário já reservado! Por favor, escolha outro horário.', 'error');
+                return;
+            }
+            
             const pacote = pacotesAtivosList.find(p => p.id === pacoteId);
             const servico = cacheServicos[servicoId];
             const cliente = cacheClientes[clienteId];
@@ -1840,18 +1888,11 @@
                 return;
             }
 
-            // NOVO: Verificar conflito de horário
+            // NOVO: Verificar conflito de horário para serviços individuais
             if (!id) { // Só verifica conflito para novos agendamentos
-                const conflito = agendamentosAtivos.some(a => 
-                    a.data === data && 
-                    a.id !== id && // Não verifica o próprio agendamento em edição
-                    ((horaInicio >= a.hora && horaInicio < a.horaFim) ||
-                     (horaFim > a.hora && horaFim <= a.horaFim) ||
-                     (horaInicio <= a.hora && horaFim >= a.horaFim))
-                );
-
+                const conflito = verificarConflitoHorario(data, horaInicio, horaFim);
                 if (conflito) {
-                    showNotification('Conflito de horário! Já existe um agendamento neste horário. Por favor, escolha outro horário.', 'error');
+                    showNotification('Horário já reservado! Por favor, escolha outro horário.', 'error');
                     return;
                 }
             }
@@ -1902,6 +1943,32 @@
             showNotification(`Editando agendamento para: ${agendamento.clienteNome}`, 'info');
         }
         
+        // NOVO: Função auxiliar para verificar conflitos de horário
+        function verificarConflitoHorario(data, horaInicio, horaFim, idExcluir = null) {
+            return agendamentosAtivos.some(a => 
+                a.data === data && 
+                a.id !== idExcluir && // Não verifica o próprio agendamento em edição
+                ((horaInicio >= a.hora && horaInicio < a.horaFim) ||
+                 (horaFim > a.hora && horaFim <= a.horaFim) ||
+                 (horaInicio <= a.hora && horaFim >= a.horaFim))
+            );
+        }
+
+        // NOVO: Função para verificar conflito também para pacotes
+        function verificarConflitoHorarioPacote(data, horaInicio, horaFim) {
+            // Busca em TODOS os agendamentos (ativos e históricos de pacotes/finalizados do dia)
+            const todosAgendamentosDoDia = [
+                ...agendamentosAtivos.filter(a => a.data === data),
+                ...agendamentosHistorico.filter(a => a.data === data && (a.tipo === 'pacote' || a.status === 'finalizado'))
+            ];
+            
+            return todosAgendamentosDoDia.some(a => 
+                ((horaInicio >= a.hora && horaInicio < a.horaFim) ||
+                 (horaFim > a.hora && horaFim <= a.horaFim) ||
+                 (horaInicio <= a.hora && horaFim >= a.horaFim))
+            );
+        }
+        
         window.finalizarAgendamento = async function(id) {
             const agendamento = agendamentosAtivos.find(a => a.id === id);
             if (!agendamento) return;
@@ -1919,6 +1986,7 @@
             }
         }
 
+        // MELHORIA 1: Cancelamento de Pacotes na Visão Diária e Histórico
         window.cancelarAgendamento = async function(id) {
             const agendamento = agendamentosAtivos.find(a => a.id === id);
             if (!agendamento) return;
@@ -1928,6 +1996,15 @@
                     await update(ref(db, 'agendamentos/' + id), {
                         status: 'cancelado' // Manda para o histórico
                     });
+                    
+                    // NOVO: Se for um pacote, também remove da Visão Diária imediatamente
+                    if (agendamento.tipo === 'pacote') {
+                        // Força atualização da Visão Diária
+                        if (document.getElementById('visao-diaria-pane').classList.contains('active')) {
+                            renderizarVisaoDiaria();
+                        }
+                    }
+                    
                     showNotification('Agendamento cancelado e enviado para Histórico!', 'info');
                 } catch (error) {
                     showNotification('Erro ao cancelar agendamento: ' + error.message, 'error');
@@ -2332,10 +2409,19 @@
         
         // 5.7. RENDERIZAR HISTÓRICO E LUCROS - CORREÇÃO: CONTABILIZAR PAGAMENTOS DE PACOTES E FILTRAR AMBOS
         window.renderizarHistorico = function() {
-            // 5.7.1. Lucros Mensais - CORREÇÃO: INCLUIR PAGAMENTOS DE PACOTES
+            // 5.7.1. Lucros Mensais - CORREÇÃO: TÍTULO DINÂMICO E INCLUIR PAGAMENTOS DE PACOTES
             const listaLucrosMensais = document.getElementById('lista-lucros-mensais');
             const filtroMes = document.getElementById('filtro-historico-mes').value;
             listaLucrosMensais.innerHTML = '';
+
+            // MELHORIA 3: Atualizar título do resumo dinamicamente
+            const tituloResumo = document.querySelector('#historico-section h3');
+            if (filtroMes) {
+                const mes = new Date(filtroMes + '-01').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+                tituloResumo.textContent = `Resumo de Lucros - ${mes}`;
+            } else {
+                tituloResumo.textContent = 'Resumo de Lucros - Todos os Meses';
+            }
             
             const lucrosPorMes = agendamentosHistorico.reduce((acc, a) => {
                 // CORREÇÃO: Incluir pacotes pagos e agendamentos finalizados
