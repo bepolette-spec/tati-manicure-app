@@ -8,25 +8,25 @@
     
     <style>
         :root {
-            --primary-color: #ff8c6b; /* Cor de Destaque (Salmão/Coral) */
-            --secondary-color: #6c757d; /* Cinza para secundários */
-            --background-color: #f4f7f6; /* Fundo Suave */
+            --primary-color: #ff6b8b; /* Rosa mais feminino */
+            --secondary-color: #ba68c8; /* Roxo suave */
+            --background-color: #fce4ec; /* Rosa claro de fundo */
             --sidebar-bg: #ffffff;
-            --sidebar-hover-bg: #fff0eb; /* Fundo mais claro para hover */
-            --text-color: #343a40; /* Texto Principal (Escuro) */
-            --success-color: #28a745;
-            --info-color: #17a2b8;
-            --danger-color: #dc3545;
-            --warning-color: #ffc107;
-            --border-color: #e9ecef;
-            --shadow-color: rgba(0, 0, 0, 0.05);
+            --sidebar-hover-bg: #f8bbd9; /* Rosa mais claro para hover */
+            --text-color: #4a148c; /* Roxo escuro para texto */
+            --success-color: #66bb6a; /* Verde suave */
+            --info-color: #4fc3f7; /* Azul claro */
+            --danger-color: #ef5350; /* Vermelho suave */
+            --warning-color: #ffb74d; /* Laranja suave */
+            --border-color: #f48fb1; /* Rosa para bordas */
+            --shadow-color: rgba(255, 107, 139, 0.1); /* Sombra rosa */
         }
 
         body {
             font-family: 'Arial', sans-serif;
             margin: 0;
             padding: 0;
-            background-color: var(--background-color);
+            background: linear-gradient(135deg, #fce4ec 0%, #f8bbd9 100%); /* Gradiente feminino */
             color: var(--text-color);
             display: flex;
             min-height: 100vh;
@@ -38,36 +38,45 @@
             justify-content: center;
             align-items: center;
             width: 100%;
-            background-color: var(--primary-color);
+            background: linear-gradient(135deg, #ff6b8b 0%, #ba68c8 100%); /* Gradiente rosa-roxo */
             min-height: 100vh;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path fill="%23ffffff" opacity="0.1" d="M30,20 L70,20 L80,40 L70,60 L30,60 L20,40 Z M35,30 C37,30 38,31 38,33 C38,35 37,36 35,36 C33,36 32,35 32,33 C32,31 33,30 35,30 Z M45,30 C47,30 48,31 48,33 C48,35 47,36 45,36 C43,36 42,35 42,33 C42,31 43,30 45,30 Z M55,30 C57,30 58,31 58,33 C58,35 57,36 55,36 C53,36 52,35 52,33 C52,31 53,30 55,30 Z M65,30 C67,30 68,31 68,33 C68,35 67,36 65,36 C63,36 62,35 62,33 C62,31 63,30 65,30 Z M40,45 C42,45 43,46 43,48 C43,50 42,51 40,51 C38,51 37,50 37,48 C37,46 38,45 40,45 Z M50,45 C52,45 53,46 53,48 C53,50 52,51 50,51 C48,51 47,50 47,48 C47,46 48,45 50,45 Z M60,45 C62,45 63,46 63,48 C63,50 62,51 60,51 C58,51 57,50 57,48 C57,46 58,45 60,45 Z"/></svg>');
-            background-size: 200px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path fill="%23ffffff" opacity="0.1" d="M30,30 Q50,10 70,30 T90,50 Q70,90 50,70 T10,50 Q30,10 50,30 Z M40,40 Q50,35 60,40 T70,50 Q60,65 50,60 T30,50 Q40,35 50,40 Z"/></svg>');
+            background-size: 150px;
         }
 
         .login-card {
-            background: var(--sidebar-bg);
+            background: rgba(255, 255, 255, 0.95);
             padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px var(--shadow-color);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(255, 107, 139, 0.3);
             text-align: center;
             width: 100%;
             max-width: 400px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .login-card h1 {
             color: var(--primary-color);
             margin-bottom: 30px;
             font-size: 1.8rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .login-icon {
-            font-size: 60px;
+            font-size: 80px;
             color: var(--primary-color);
             margin-bottom: 20px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
         }
 
         #app-container {
-            display: none; /* Escondido por padrão, mostrado após o login */
+            display: none;
             width: 100%;
             flex-direction: row;
         }
@@ -75,8 +84,8 @@
         /* Barra Lateral (Sidebar) */
         .sidebar {
             width: 250px;
-            background-color: var(--sidebar-bg);
-            box-shadow: 2px 0 5px var(--shadow-color);
+            background: linear-gradient(180deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            box-shadow: 4px 0 15px var(--shadow-color);
             display: flex;
             flex-direction: column;
             padding: 20px 0;
@@ -86,9 +95,11 @@
         .logo {
             text-align: center;
             margin-bottom: 30px;
-            color: var(--primary-color);
+            color: white;
             font-size: 1.6rem;
             font-weight: bold;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            padding: 0 20px;
         }
 
         .sidebar ul {
@@ -102,15 +113,18 @@
             align-items: center;
             padding: 15px 20px;
             text-decoration: none;
-            color: var(--text-color);
-            transition: background-color 0.2s, color 0.2s;
+            color: white;
+            transition: all 0.3s ease;
             font-weight: 500;
+            border-left: 4px solid transparent;
         }
 
         .sidebar ul li a:hover,
         .sidebar ul li a.active {
-            background-color: var(--sidebar-hover-bg);
-            color: var(--primary-color);
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border-left-color: white;
+            transform: translateX(5px);
         }
 
         .sidebar ul li a .material-icons {
@@ -121,7 +135,7 @@
         .user-info {
             margin-top: auto;
             padding: 20px;
-            border-top: 1px solid var(--border-color);
+            border-top: 1px solid rgba(255, 255, 255, 0.3);
             display: flex;
             flex-direction: column;
             align-items: flex-start;
@@ -130,6 +144,7 @@
         .user-info p {
             margin: 0 0 10px 0;
             font-weight: bold;
+            color: white;
         }
 
         /* Conteúdo Principal */
@@ -137,6 +152,7 @@
             flex-grow: 1;
             padding: 30px;
             overflow-y: auto;
+            background: var(--background-color);
         }
 
         .content-section {
@@ -146,6 +162,12 @@
 
         .content-section.active {
             display: block;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .section-header {
@@ -153,8 +175,8 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
         }
 
         .section-header h2 {
@@ -183,33 +205,43 @@
 
         /* Cartão (Card) */
         .card {
-            background: #fff;
+            background: rgba(255, 255, 255, 0.9);
             padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px var(--shadow-color);
+            border-radius: 15px;
+            box-shadow: 0 5px 15px var(--shadow-color);
             margin-bottom: 20px;
+            border: 1px solid rgba(255, 107, 139, 0.1);
+            backdrop-filter: blur(10px);
         }
         
         /* NOVO V6: Abas dentro de uma seção */
         .tab-menu {
              display: flex;
-             border-bottom: 2px solid var(--border-color);
+             border-bottom: 3px solid var(--border-color);
              margin-bottom: 20px;
+             border-radius: 10px 10px 0 0;
+             overflow: hidden;
         }
         .tab-menu button {
-             padding: 10px 20px;
+             padding: 12px 20px;
              border: none;
-             background: transparent;
+             background: rgba(255, 255, 255, 0.7);
              cursor: pointer;
              font-size: 1rem;
              color: var(--secondary-color);
-             border-bottom: 2px solid transparent;
-             transition: border-color 0.2s, color 0.2s;
+             border-bottom: 3px solid transparent;
+             transition: all 0.3s ease;
              font-weight: bold;
+             flex: 1;
         }
         .tab-menu button.active {
              color: var(--primary-color);
-             border-bottom: 2px solid var(--primary-color);
+             border-bottom: 3px solid var(--primary-color);
+             background: white;
+        }
+        .tab-menu button:hover {
+             background: rgba(255, 255, 255, 0.9);
+             color: var(--primary-color);
         }
         .tab-content {
              padding-top: 10px;
@@ -219,6 +251,7 @@
         }
         .tab-pane.active {
              display: block;
+             animation: fadeIn 0.5s ease-in;
         }
 
         /* Formulários */
@@ -238,8 +271,9 @@
         label {
             display: block;
             margin-bottom: 5px;
-            font-weight: 500;
+            font-weight: 600;
             font-size: 0.95rem;
+            color: var(--text-color);
         }
 
         input[type="text"],
@@ -251,17 +285,17 @@
         textarea,
         select {
             width: 100%;
-            padding: 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
             box-sizing: border-box;
             font-size: 1rem;
-            transition: border-color 0.2s;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.8);
         }
 
         /* Datalist input */
         input[list] {
-            /* Estilo para garantir que o input datalist se pareça com um campo normal */
             background-image: none;
         }
 
@@ -275,6 +309,8 @@
         select:focus {
             border-color: var(--primary-color);
             outline: none;
+            box-shadow: 0 0 0 3px rgba(255, 107, 139, 0.2);
+            background: white;
         }
 
         textarea {
@@ -283,70 +319,77 @@
 
         /* Botões */
         button, .btn {
-            padding: 10px 15px;
+            padding: 12px 18px;
             border: none;
-            border-radius: 4px;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 1rem;
             font-weight: bold;
             display: inline-flex;
             align-items: center;
-            gap: 5px;
-            transition: background-color 0.2s, opacity 0.2s;
+            gap: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
         .btn-primary {
-            background-color: var(--primary-color);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
             color: white;
         }
 
         .btn-primary:hover {
-            background-color: #e57a5e;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(255, 107, 139, 0.4);
         }
 
         .btn-success {
-            background-color: var(--success-color);
+            background: linear-gradient(135deg, var(--success-color) 0%, #4caf50 100%);
             color: white;
         }
 
         .btn-success:hover {
-            background-color: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(102, 187, 106, 0.4);
         }
 
         .btn-secondary {
-            background-color: var(--secondary-color);
+            background: linear-gradient(135deg, var(--secondary-color) 0%, #7b1fa2 100%);
             color: white;
         }
 
         .btn-secondary:hover {
-            background-color: #5a6268;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(186, 104, 200, 0.4);
         }
 
         .btn-danger {
-            background-color: var(--danger-color);
+            background: linear-gradient(135deg, var(--danger-color) 0%, #d32f2f 100%);
             color: white;
         }
 
         .btn-danger:hover {
-            background-color: #c82333;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(239, 83, 80, 0.4);
         }
 
         .btn-warning {
-            background-color: var(--warning-color);
-            color: var(--text-color);
+            background: linear-gradient(135deg, var(--warning-color) 0%, #f57c00 100%);
+            color: white;
         }
 
         .btn-warning:hover {
-            background-color: #ffb547;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(255, 183, 77, 0.4);
         }
 
         .btn-info {
-            background-color: var(--info-color);
+            background: linear-gradient(135deg, var(--info-color) 0%, #0288d1 100%);
             color: white;
         }
 
         .btn-info:hover {
-            background-color: #138496;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(79, 195, 247, 0.4);
         }
 
         /* Tabelas */
@@ -354,10 +397,13 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 3px 10px var(--shadow-color);
         }
 
         .data-table thead tr {
-            background-color: var(--primary-color);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
             color: white;
             text-align: left;
         }
@@ -368,7 +414,9 @@
         }
 
         .data-table tbody tr:hover {
-            background-color: var(--sidebar-hover-bg);
+            background: rgba(255, 107, 139, 0.05);
+            transform: scale(1.01);
+            transition: all 0.2s ease;
         }
 
         .data-table td.action-buttons button {
@@ -386,15 +434,16 @@
             top: 20px;
             right: 20px;
             padding: 15px 25px;
-            border-radius: 8px;
+            border-radius: 10px;
             color: white;
             opacity: 0;
             visibility: hidden;
-            transition: opacity 0.3s, visibility 0.3s, transform 0.3s;
+            transition: all 0.3s ease;
             transform: translateY(-20px);
             z-index: 1000;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
             font-weight: bold;
+            backdrop-filter: blur(10px);
         }
 
         #notification-bar.show {
@@ -403,9 +452,15 @@
             transform: translateY(0);
         }
 
-        #notification-bar.success { background-color: var(--success-color); }
-        #notification-bar.error { background-color: var(--danger-color); }
-        #notification-bar.info { background-color: var(--info-color); }
+        #notification-bar.success { 
+            background: linear-gradient(135deg, var(--success-color) 0%, #4caf50 100%); 
+        }
+        #notification-bar.error { 
+            background: linear-gradient(135deg, var(--danger-color) 0%, #d32f2f 100%); 
+        }
+        #notification-bar.info { 
+            background: linear-gradient(135deg, var(--info-color) 0%, #0288d1 100%); 
+        }
 
         /* Utilitários */
         .flex-container {
@@ -435,33 +490,34 @@
         .filter-row button {
             flex-grow: 0;
             flex-shrink: 0;
-            padding: 9px 15px; /* Ajuste para alinhar com o input */
+            padding: 11px 15px;
         }
         
         /* NOVO V6: Estilos para a Tabela de Visão Diária */
         #tabela-visao-diaria {
-             border: 1px solid var(--border-color);
+             border: 2px solid var(--border-color);
              margin-top: 0;
+             border-radius: 10px;
         }
         #tabela-visao-diaria thead tr {
-             background-color: var(--secondary-color);
+             background: linear-gradient(135deg, var(--secondary-color) 0%, #7b1fa2 100%);
         }
         #tabela-visao-diaria td {
-             height: 40px; /* Altura padrão para cada intervalo de 30 min */
+             height: 40px;
              font-size: 0.9rem;
              vertical-align: top;
         }
         .horario-celula {
              width: 80px;
              font-weight: bold;
-             background-color: var(--sidebar-hover-bg);
+             background: rgba(255, 107, 139, 0.1);
              color: var(--text-color);
              text-align: center;
              vertical-align: middle !important;
-             border-right: 1px solid var(--border-color);
+             border-right: 2px solid var(--border-color);
         }
         .agendamento-vago {
-             background-color: #f7fff7; /* Verde clarinho */
+             background: rgba(102, 187, 106, 0.1);
              color: var(--success-color);
              font-weight: bold;
              font-style: italic;
@@ -469,7 +525,7 @@
              line-height: 40px;
         }
         .agendamento-vencido {
-             background-color: #ffe6e6; /* Vermelho clarinho */
+             background: rgba(239, 83, 80, 0.1);
              color: var(--danger-color);
              font-weight: bold;
              font-style: italic;
@@ -477,7 +533,7 @@
              line-height: 40px;
         }
         .agendamento-ocupado {
-             background-color: #fff0eb; /* Fundo do hover de sidebar, suave */
+             background: rgba(255, 107, 139, 0.05);
              color: var(--text-color);
              font-weight: 500;
              padding: 5px 10px !important;
@@ -499,19 +555,21 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
             z-index: 1000;
             align-items: center;
             justify-content: center;
         }
         
         .modal-content {
-            background-color: white;
+            background: white;
             padding: 25px;
-            border-radius: 8px;
+            border-radius: 15px;
             width: 90%;
             max-width: 500px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 2px solid var(--border-color);
         }
         
         .modal-header {
@@ -519,8 +577,8 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
         }
         
         .modal-header h3 {
@@ -534,6 +592,12 @@
             font-size: 24px;
             cursor: pointer;
             color: var(--secondary-color);
+            transition: all 0.3s ease;
+        }
+        
+        .close-modal:hover {
+            color: var(--primary-color);
+            transform: scale(1.1);
         }
         
         /* --------------------------------------------------- */
@@ -546,7 +610,7 @@
                 width: 100%;
                 height: auto;
                 position: relative;
-                box-shadow: 0 0 5px var(--shadow-color);
+                box-shadow: 0 0 10px var(--shadow-color);
             }
 
             .main-content {
@@ -560,14 +624,14 @@
             /* Navegação Horizontal */
             .sidebar ul {
                 display: flex;
-                flex-wrap: nowrap; /* Tenta manter em uma linha, mas permite rolagem */
+                flex-wrap: nowrap;
                 overflow-x: auto;
                 justify-content: flex-start;
-                border-bottom: 1px solid var(--border-color);
+                border-bottom: 2px solid rgba(255, 255, 255, 0.3);
             }
 
             .sidebar ul li {
-                flex-shrink: 0; /* Impede que os itens encolham */
+                flex-shrink: 0;
                 text-align: center;
             }
 
@@ -577,6 +641,15 @@
                 flex-direction: column;
                 font-size: 0.75rem;
                 white-space: nowrap;
+                border-left: none;
+                border-bottom: 3px solid transparent;
+            }
+
+            .sidebar ul li a:hover,
+            .sidebar ul li a.active {
+                border-left: none;
+                border-bottom: 3px solid white;
+                transform: translateY(-2px);
             }
 
             .sidebar ul li a .material-icons {
@@ -594,7 +667,7 @@
             }
 
             .user-info p {
-                display: none; /* Esconde o texto "Olá, Tati!" para economizar espaço */
+                display: none;
             }
 
             .user-info button {
@@ -606,12 +679,12 @@
             /* 1. Correção de Formulários e Filtros (Empilhamento) */
             .form-row, .filter-row {
                 flex-direction: column;
-                gap: 0; /* Remove gap quando empilha */
+                gap: 0;
             }
 
             .form-row > div, 
             .filter-row > div {
-                flex: 0 0 100% !important; /* Força largura total */
+                flex: 0 0 100% !important;
                 width: 100%;
             }
             
@@ -623,30 +696,30 @@
             .filter-row button {
                 width: 100%;
                 margin-top: 5px; 
-                padding: 10px 15px !important;
+                padding: 12px 15px !important;
             }
             
             /* MELHORIA: Visão Diária em Mobile */
             .table-responsive {
                 overflow-x: auto;
-                -webkit-overflow-scrolling: touch; /* Scroll suave no iOS */
+                -webkit-overflow-scrolling: touch;
             }
             
             #tabela-visao-diaria {
                 width: 100%;
-                min-width: 350px; /* Aumentado para melhor visualização */
-                font-size: 0.85rem; /* Texto um pouco menor para caber melhor */
+                min-width: 350px;
+                font-size: 0.85rem;
             }
             
             #tabela-visao-diaria td {
-                padding: 8px 5px !important; /* Reduz padding para economizar espaço */
-                height: 35px; /* Altura reduzida para mobile */
+                padding: 8px 5px !important;
+                height: 35px;
                 word-wrap: break-word;
                 overflow: hidden;
             }
             
             .horario-celula {
-                width: 60px; /* Largura reduzida para mobile */
+                width: 60px;
                 font-size: 0.8rem;
                 padding: 5px !important;
             }
@@ -655,7 +728,7 @@
                 font-size: 0.8rem;
                 line-height: 1.1;
                 padding: 3px 5px !important;
-                border-left: 3px solid var(--primary-color); /* Borda mais fina */
+                border-left: 3px solid var(--primary-color);
             }
             
             .agendamento-ocupado strong {
@@ -665,7 +738,7 @@
             .agendamento-vago,
             .agendamento-vencido {
                 font-size: 0.8rem;
-                line-height: 35px; /* Centraliza verticalmente */
+                line-height: 35px;
                 padding: 0 5px;
             }
             
@@ -677,27 +750,27 @@
 
             /* 2. Correção de Tabelas (Cartão-like View) */
             .data-table, .data-table tbody, .data-table td, .data-table tr {
-                display: block; /* Força elementos da tabela a empilhar */
+                display: block;
             }
 
             .data-table thead {
-                display: none; /* Esconde o cabeçalho original */
+                display: none;
             }
 
             .data-table tr {
-                border: 1px solid var(--border-color);
+                border: 2px solid var(--border-color);
                 margin-bottom: 15px;
-                border-radius: 8px;
-                box-shadow: 0 1px 3px var(--shadow-color);
+                border-radius: 10px;
+                box-shadow: 0 2px 8px var(--shadow-color);
                 padding: 10px;
             }
 
             .data-table td {
                 border: none;
                 position: relative;
-                padding-left: 50% !important; /* Espaço para o rótulo */
-                text-align: right; /* Alinha o valor à direita */
-                white-space: normal; /* Permite quebras de linha */
+                padding-left: 50% !important;
+                text-align: right;
+                white-space: normal;
                 min-height: 40px;
             }
 
@@ -715,12 +788,11 @@
             }
             
             /* FIX V6: Organização dos botões de ação em mobile */
-            /* Garante que o rótulo "Ações" não sobreponha o primeiro botão */
             .data-table td.action-buttons {
                 text-align: left;
                 padding-left: 10px !important;
                 display: flex; 
-                flex-direction: column; /* Empilha os botões */
+                flex-direction: column;
                 gap: 5px;
             }
             
@@ -733,7 +805,7 @@
             
             .data-table td.action-buttons button {
                 margin: 0;
-                width: 100%; /* Ocupa a largura toda */
+                width: 100%;
                 max-width: 100%;
                 box-sizing: border-box;
                 font-size: 0.9rem; 
@@ -920,7 +992,7 @@
                                 </div>
                             </form>
                             
-                            <hr style="margin: 20px 0;">
+                            <hr style="margin: 20px 0; border-color: var(--border-color);">
 
                             <h3>Pacotes Ativos e Utilização</h3>
                             <div style="max-height: 500px; overflow-y: auto;">
@@ -1209,7 +1281,7 @@
                                 <th style="width: 25%;">Mês/Ano</th>
                                 <th style="width: 25%;">Total Agendamentos</th>
                                 <th style="width: 25%;">Lucro Total (R$)</th>
-                                <th style="width: 25%;">Ações</th> <!-- REMOVIDO: Detalhes -->
+                                <th style="width: 25%;">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="lista-lucros-mensais">
@@ -1725,7 +1797,7 @@
             }
         });
 
-        // Formulário de usar pacote - MELHORADO
+        // CORREÇÃO PRINCIPAL: Formulário de usar pacote - AGORA VAI PARA AGENDAMENTOS ATIVOS
         document.getElementById('form-usar-pacote').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -1735,7 +1807,7 @@
             const procedimento = document.getElementById('modal-pacote-procedimento').value;
             const outroProcedimento = document.getElementById('modal-pacote-outro').value;
             
-            // NOVO: Verificar conflito de horário para pacotes também
+            // Verificar conflito de horário para pacotes também
             const dataPacote = document.getElementById('modal-pacote-data').value;
             const horaInicioPacote = document.getElementById('modal-pacote-hora').value;
             const horaFimPacote = document.getElementById('modal-pacote-hora-fim').value;
@@ -1782,7 +1854,7 @@
                 descricaoProcedimento = outroProcedimento;
             }
 
-            // 1. Criar agendamento com status "finalizado" e tipo "pacote"
+            // CORREÇÃO: Agora cria agendamento com status "ativo" (não finalizado)
             const novoAgendamento = {
                 clienteId: clienteId,
                 clienteNome: cliente.nome,
@@ -1793,30 +1865,31 @@
                 horaFim: document.getElementById('modal-pacote-hora-fim').value,
                 observacoes: `Uso do Pacote: ${pacote.servicoNome} - ${descricaoProcedimento} (Debitado ${quantidadeDebitar} procedimento(s)) - ${document.getElementById('modal-pacote-observacoes').value || ''}`,
                 valor: 0.00, // Valor é 0, pois já foi pago no pacote
-                status: 'finalizado', // Já finaliza o agendamento
+                status: 'ativo', // CORREÇÃO: Agora fica ATIVO (não finalizado)
                 tipo: 'pacote',
                 pacoteId: pacoteId,
                 procedimentoRealizado: descricaoProcedimento,
                 quantidadeDebitada: quantidadeDebitar
             };
             
-            // 2. Atualizar o uso do pacote
+            // CORREÇÃO: Atualiza o uso do pacote imediatamente
             const novoUso = pacote.quantidadeUsada + quantidadeDebitar;
-            // CORREÇÃO: Só marca como finalizado se os procedimentos estiverem esgotados E o pagamento estiver feito
-            const novoStatus = (novoUso >= pacote.quantidadeTotal && pacote.statusPagamento === 'pago') ? 'finalizado' : 'ativo';
 
             try {
-                // Adiciona o agendamento no Histórico
+                // CORREÇÃO: Adiciona o agendamento nos ATIVOS (não no histórico)
                 await push(agendamentosRef, novoAgendamento); 
 
-                // Atualiza o pacote
+                // CORREÇÃO: Atualiza o pacote imediatamente
                 await update(ref(db, 'pacotes_ativos/' + pacoteId), {
-                    quantidadeUsada: novoUso,
-                    status: novoStatus
+                    quantidadeUsada: novoUso
+                    // Status do pacote só muda quando finalizado na lista de agendamentos
                 });
 
-                showNotification(`Uso de Pacote registrado para ${cliente.nome}! Debitado ${quantidadeDebitar} procedimento(s).`, 'success');
+                showNotification(`Uso de Pacote agendado para ${cliente.nome}! Debitado ${quantidadeDebitar} procedimento(s). Agora aparecerá na lista de agendamentos ativos.`, 'success');
                 fecharModalUsarPacote();
+                
+                // CORREÇÃO: Leva para a aba de agendamentos ativos
+                showAgendaTab('lista-agendamentos');
             } catch (error) {
                 console.error("Erro ao usar pacote:", error);
                 showNotification('Erro ao registrar uso de pacote: ' + error.message, 'error');
@@ -1888,7 +1961,7 @@
                 return;
             }
 
-            // NOVO: Verificar conflito de horário para serviços individuais
+            // Verificar conflito de horário para serviços individuais
             if (!id) { // Só verifica conflito para novos agendamentos
                 const conflito = verificarConflitoHorario(data, horaInicio, horaFim);
                 if (conflito) {
@@ -1969,17 +2042,29 @@
             );
         }
         
+        // CORREÇÃO: Finalizar Agendamento - AGORA FUNCIONA TANTO PARA INDIVIDUAIS QUANTO PARA PACOTES
         window.finalizarAgendamento = async function(id) {
             const agendamento = agendamentosAtivos.find(a => a.id === id);
             if (!agendamento) return;
 
             if (confirm(`Finalizar agendamento para ${agendamento.clienteNome} (${agendamento.servicoNome})?`)) {
                 try {
-                    // Apenas muda o status para 'finalizado' - NÃO EXCLUI
+                    // CORREÇÃO: Para pacotes, também finaliza o pacote se todos os procedimentos foram usados
+                    if (agendamento.tipo === 'pacote' && agendamento.pacoteId) {
+                        const pacote = pacotesAtivosList.find(p => p.id === agendamento.pacoteId);
+                        if (pacote && pacote.quantidadeUsada >= pacote.quantidadeTotal && pacote.statusPagamento === 'pago') {
+                            await update(ref(db, 'pacotes_ativos/' + agendamento.pacoteId), {
+                                status: 'finalizado'
+                            });
+                        }
+                    }
+
+                    // Muda o status para 'finalizado' - vai para o histórico
                     await update(ref(db, 'agendamentos/' + id), {
                         status: 'finalizado'
                     });
-                    showNotification('Agendamento finalizado! Continua visível na Visão Diária.', 'success');
+                    
+                    showNotification('Agendamento finalizado! Agora aparece no histórico.', 'success');
                 } catch (error) {
                     showNotification('Erro ao finalizar agendamento: ' + error.message, 'error');
                 }
@@ -2256,7 +2341,7 @@
             });
         }
         
-        // 5.5. RENDERIZAR LISTA DE AGENDAMENTOS (Tabela) - MANTIDO IGUAL
+        // 5.5. RENDERIZAR LISTA DE AGENDAMENTOS (Tabela) - CORREÇÃO: MOSTRAR PACOTES TAMBÉM
         window.carregarAgendamentos = function() {
             renderizarListaAgendamentos();
         }
@@ -2296,7 +2381,11 @@
 
                 // Serviço
                 let servicoCell = row.insertCell();
-                servicoCell.textContent = a.servicoNome;
+                let servicoTexto = a.servicoNome;
+                if (a.tipo === 'pacote') {
+                    servicoTexto += ' (Pacote)';
+                }
+                servicoCell.textContent = servicoTexto;
                 servicoCell.setAttribute('data-label', 'Serviço');
                 
                 // Status
