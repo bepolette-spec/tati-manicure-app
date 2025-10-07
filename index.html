@@ -787,7 +787,26 @@
                 color: var(--primary-color);
             }
             
-            /* FIX V6: Organização dos botões de ação em mobile */
+            /* MELHORIA 1: Botões da agenda empilhados verticalmente */
+            .flex-container {
+                flex-direction: column;
+                gap: 10px;
+                align-items: stretch;
+            }
+            
+            .flex-container > div {
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .flex-container button {
+                width: 100%;
+                margin: 0 !important;
+            }
+            
+            /* MELHORIA 2: Ações em clientes - melhor organização */
             .data-table td.action-buttons {
                 text-align: left;
                 padding-left: 10px !important;
@@ -818,48 +837,7 @@
                 padding: 15px;
             }
         }
-    
-/* ===== AJUSTES MÍNIMOS APLICADOS: manter todas as lógicas originais ===== */
-/* 1) Forçar empilhamento dos botões da aba Agenda em mobile (retrato) */
-@media (max-width: 768px) {
-  .tab-menu {
-    flex-direction: column !important;
-    align-items: stretch !important;
-    gap: 8px !important;
-  }
-  .tab-menu button, .tab-menu .tab-button {
-    display: block !important;
-    width: 100% !important;
-    margin: 6px 0 !important;
-    box-sizing: border-box !important;
-  }
-  /* remover transformações que podem esconder botões em mobile */
-  .tab-menu button.active { transform: none !important; }
-}
-
-/* 2) Garantir que os botões de Ações não se sobreponham (desktop e mobile) */
-.data-table td.action-buttons {
-  display: flex !important;
-  gap: 8px !important;
-  align-items: center !important;
-  justify-content: flex-end !important;
-  flex-wrap: wrap !important;
-  position: relative !important;
-  z-index: 2 !important;
-}
-@media (max-width: 768px) {
-  .data-table td.action-buttons {
-    flex-direction: column !important;
-    align-items: stretch !important;
-    justify-content: flex-start !important;
-  }
-  .data-table td.action-buttons button {
-    width: 100% !important;
-    box-sizing: border-box !important;
-  }
-}
-/* ===== FIM AJUSTES ===== */
-</style>
+    </style>
 </head>
 <body>
 
@@ -1317,6 +1295,7 @@
                 </div>
                 
                 <div class="card" style="margin-bottom: 30px;">
+                    <!-- MELHORIA 3: Título dinâmico do resumo de lucros -->
                     <h3 id="titulo-resumo-lucros">Resumo de Lucros - Todos os Meses</h3>
                     <table class="data-table" id="tabela-lucros-mensais">
                         <thead>
@@ -1513,7 +1492,7 @@
             }
         }
 
-        // Lógica de Login - CORRIGIDA
+        // Lógica de Login - CORREÇÃO: Senha mantida como tati123
         function showLogin() {
             document.getElementById('app-container').style.display = 'none';
             document.getElementById('login-container').style.display = 'flex';
@@ -2547,7 +2526,7 @@
             const filtroMes = document.getElementById('filtro-historico-mes').value;
             listaLucrosMensais.innerHTML = '';
 
-            // CORREÇÃO 4: Título dinâmico baseado no filtro
+            // MELHORIA 3: Título dinâmico baseado no filtro
             const tituloResumo = document.getElementById('titulo-resumo-lucros');
             if (filtroMes) {
                 const mes = new Date(filtroMes + '-01').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
@@ -2862,37 +2841,5 @@
             
         });
     </script>
-
-<!-- ===== SCRIPT DE AJUSTE (não altera lógicas existentes) ===== -->
-<script>
-(function(){
-  // Garantir que os botões da aba Agenda acionem a função corretamente e fiquem visíveis
-  function ensureTabButtons() {
-    const tabMenu = document.querySelector('.tab-menu');
-    if (!tabMenu) return;
-    tabMenu.style.flexWrap = 'nowrap';
-    // ensure class names exist
-    Array.from(tabMenu.querySelectorAll('button')).forEach(btn => {
-      btn.classList.add('tab-button');
-      btn.style.display = 'block';
-    });
-  }
-
-  // Reaplicar quando a página for carregada e quando o tamanho da tela mudar
-  document.addEventListener('DOMContentLoaded', ensureTabButtons);
-  window.addEventListener('resize', ensureTabButtons);
-
-  // Em alguns navegadores o onchange="renderizarHistorico()" já está setado; reafirmamos o listener sem sobrescrever a função
-  document.addEventListener('DOMContentLoaded', function(){
-    const filtro = document.getElementById('filtro-historico-mes');
-    if (filtro) {
-      // remove duplicatas de listeners simples (caso já exista)
-      filtro.removeEventListener('change', window.renderizarHistorico);
-      filtro.addEventListener('change', function(){ try { if (typeof window.renderizarHistorico === 'function') window.renderizarHistorico(); } catch(e){console.error(e);} });
-    }
-  });
-})();
-</script>
-<!-- ===== FIM DO SCRIPT DE AJUSTE ===== -->
 </body>
 </html>
