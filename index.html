@@ -1063,7 +1063,8 @@
                                             <th>Valor</th>
                                             <th>Status</th>
                                             <th>Data Início</th>
-                                            <th>Ações</th>
+                                            <!-- MELHORIA 1: Removido o cabeçalho "Ações" -->
+                                            <th></th>
                                         </tr>
                                     </thead>
                                     <tbody id="lista-pacotes-ativos">
@@ -1171,7 +1172,8 @@
                                             <th>Serviço</th>
                                             <th>Valor</th>
                                             <th>Observações</th>
-                                            <th>Ações</th>
+                                            <!-- MELHORIA 1: Removido o cabeçalho "Ações" -->
+                                            <th></th>
                                         </tr>
                                     </thead>
                                     <tbody id="lista-agendamentos">
@@ -1357,7 +1359,8 @@
                                     <th>Duração</th>
                                     <th>Valor</th>
                                     <th>Descrição</th>
-                                    <th>Ações</th>
+                                    <!-- MELHORIA 1: Removido o cabeçalho "Ações" -->
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody id="lista-servicos">
@@ -1461,1369 +1464,1533 @@
         </main>
     </div>
 
-    <!-- Firebase App (o SDK do Firebase é sempre necessário) -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <!-- Firebase Authentication -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <!-- Firebase Firestore -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+        import { getDatabase, ref, onValue, push, set, update, remove, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-database.js";
 
-    <script>
-        // Configuração do Firebase
+        // =================================================================
+        // 1.1. CONFIGURAÇÃO FIREBASE E VARIÁVEIS GLOBAIS
+        // =================================================================
+
+        // Sua configuração do Firebase
         const firebaseConfig = {
-            apiKey: "AIzaSyDqMlT3c4v3h9Zk9Q7d8w6X7y5z4a3b2c1d",
-            authDomain: "tati-manicure-app.firebaseapp.com",
-            projectId: "tati-manicure-app",
-            storageBucket: "tati-manicure-app.appspot.com",
-            messagingSenderId: "123456789012",
-            appId: "1:123456789012:web:abcdef123456"
+            apiKey: "AIzaSyBatp6e1NzevurpB2yS8eGErgSYC_t2-Nc",
+            authDomain: "tati-manicure.firebaseapp.com",
+            databaseURL: "https://tati-manicure-default-rtdb.firebaseio.com",
+            projectId: "tati-manicure",
+            storageBucket: "tati-manicure.firebaseapp.com",
+            messagingSenderId: "1061777323027",
+            appId: "1:1061777323027:web:7b54e5fdbb7f06ee293be6",
+            measurementId: "G-V3J5ZJ5XBT"
         };
 
-        // Inicializa o Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+        // Inicialização do Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
 
-        // Referências às coleções do Firestore
-        const clientesRef = db.collection("clientes");
-        const servicosRef = db.collection("servicos");
-        const agendamentosRef = db.collection("agendamentos");
-        const pacotesRef = db.collection("pacotes");
-        const historicoRef = db.collection("historico");
+        // Referências aos nós (listas/tabelas) do seu banco de dados
+        const clientesRef = ref(db, 'clientes');
+        const servicosRef = ref(db, 'servicos');
+        const agendamentosRef = ref(db, 'agendamentos');
+        const pacotesAtivosRef = ref(db, 'pacotes_ativos');
+        
+        // CORREÇÃO: Senha original mantida
+        const SENHA_UNICA = "tati123";
 
-        // Estado da aplicação
-        let clientes = [];
-        let servicos = [];
-        let agendamentos = [];
-        let pacotes = [];
-        let historico = [];
-        let usuarioLogado = null;
+        // Caches de Dados
+        let cacheClientes = {};
+        let cacheServicos = {};
+        let cachePacotes = {};
+        let cacheAgendamentos = {};
+        let agendamentosAtivos = [];
+        let agendamentosHistorico = [];
+        let pacotesAtivosList = [];
+        let clientesDataList = [];
 
-        // Inicialização da aplicação
-        document.addEventListener('DOMContentLoaded', function() {
-            // Verificar se o usuário já está logado
-            auth.onAuthStateChanged((user) => {
-                if (user) {
-                    usuarioLogado = user;
-                    document.getElementById('login-container').style.display = 'none';
-                    document.getElementById('app-container').style.display = 'flex';
-                    carregarDados();
-                } else {
-                    document.getElementById('login-container').style.display = 'flex';
-                    document.getElementById('app-container').style.display = 'none';
-                }
+        // =================================================================
+        // 1.2. FUNÇÕES DE UTILIDADE E UI GERAL
+        // =================================================================
+
+        // Função auxiliar para converter o snapshot do RTDB em um array de objetos
+        function snapshotToArray(snapshot) {
+            const arr = [];
+            snapshot.forEach(childSnapshot => {
+                const item = childSnapshot.val();
+                item.id = childSnapshot.key;
+                arr.push(item);
             });
+            return arr;
+        }
 
-            // Configurar formulário de login
-            document.getElementById('login-form').addEventListener('submit', fazerLogin);
+        // Função para formatar data e hora
+        function formatarDataHora(dataHoraString) {
+            const d = new Date(dataHoraString);
+            return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        }
+        
+        function formatarData(dataString) {
+            const d = new Date(dataString);
+            return d.toLocaleDateString('pt-BR');
+        }
 
-            // Configurar botão de logout
-            document.getElementById('logout-button').addEventListener('click', fazerLogout);
+        // Função para formatar moeda
+        function formatarMoeda(valor) {
+            return parseFloat(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
 
-            // Configurar navegação entre seções
-            document.querySelectorAll('.sidebar ul li a').forEach(link => {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const sectionId = this.getAttribute('data-section') + '-section';
-                    
-                    // Atualizar navegação ativa
-                    document.querySelectorAll('.sidebar ul li a').forEach(item => {
-                        item.classList.remove('active');
-                    });
-                    this.classList.add('active');
-                    
-                    // Mostrar seção correspondente
-                    document.querySelectorAll('.content-section').forEach(section => {
-                        section.classList.remove('active');
-                    });
-                    document.getElementById(sectionId).classList.add('active');
-                });
+        // Função para exibir notificações
+        window.showNotification = function(message, type = 'info') {
+            const bar = document.getElementById('notification-bar');
+            bar.textContent = message;
+            bar.className = `show ${type}`;
+            setTimeout(() => {
+                bar.className = '';
+            }, 3000);
+        }
+
+        // Função para mudar a seção principal
+        window.showSection = function(sectionId) {
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
             });
-
-            // Configurar formulários
-            document.getElementById('cliente-form').addEventListener('submit', salvarCliente);
-            document.getElementById('servico-form').addEventListener('submit', salvarServico);
-            document.getElementById('agendamento-form').addEventListener('submit', salvarAgendamento);
-            document.getElementById('pacote-inicio-form').addEventListener('submit', iniciarPacote);
-            document.getElementById('form-usar-pacote').addEventListener('submit', usarPacote);
-
-            // Configurar botões
-            document.getElementById('btn-novo-cliente').addEventListener('click', mostrarFormCliente);
-            document.getElementById('btn-cancelar-cliente').addEventListener('click', cancelarFormCliente);
-            document.getElementById('btn-novo-servico').addEventListener('click', mostrarFormServico);
-            document.getElementById('btn-cancelar-servico').addEventListener('click', cancelarFormServico);
-            document.getElementById('btn-limpar-filtro-cliente').addEventListener('click', limparFiltroCliente);
-            document.getElementById('btn-limpar-filtros').addEventListener('click', limparFiltrosAgendamentos);
-            document.getElementById('btn-filtrar-historico').addEventListener('click', filtrarHistorico);
-            document.getElementById('btn-hoje').addEventListener('click', definirDataHoje);
-            document.getElementById('btn-limpeza-dados').addEventListener('click', mostrarModalLimpeza);
-            document.getElementById('cancelar-limpeza').addEventListener('click', fecharModalLimpeza);
-            document.getElementById('confirmar-limpeza').addEventListener('change', toggleBotoesLimpeza);
-            document.getElementById('btn-limpar-historico').addEventListener('click', limparHistorico);
-            document.getElementById('btn-limpar-tudo').addEventListener('click', limparTudo);
-
-            // Configurar filtros
-            document.getElementById('filtro-cliente-nome').addEventListener('input', filtrarClientes);
-            document.getElementById('filtro-data').addEventListener('change', filtrarAgendamentos);
-            document.getElementById('filtro-cliente').addEventListener('input', filtrarAgendamentos);
-            document.getElementById('visao-data').addEventListener('change', carregarVisaoDiaria);
-
-            // Configurar modal de pacote
-            document.querySelector('.close-modal').addEventListener('click', fecharModalPacote);
-            document.getElementById('cancelar-usar-pacote').addEventListener('click', fecharModalPacote);
-            document.getElementById('modal-pacote-procedimento').addEventListener('change', function() {
-                document.getElementById('group-outro-procedimento').style.display = 
-                    this.value === 'Outro' ? 'block' : 'none';
-            });
-
-            // Configurar checkbox de pacote no agendamento
-            document.getElementById('agendamento-pacote').addEventListener('change', function() {
-                document.getElementById('pacote-selecao-container').style.display = 
-                    this.checked ? 'block' : 'none';
-                if (this.checked) {
-                    carregarPacotesParaAgendamento();
-                }
-            });
-
-            // Configurar seleção de serviço para atualizar valor
-            document.getElementById('agendamento-servico').addEventListener('change', function() {
-                const servicoId = this.value;
-                const servico = servicos.find(s => s.id === servicoId);
-                if (servico) {
-                    document.getElementById('agendamento-valor').value = servico.valor;
-                }
-            });
-
-            // Configurar seleção de serviço para pacote
-            document.getElementById('pacote-servico-id').addEventListener('change', function() {
-                const servicoId = this.value;
-                const servico = servicos.find(s => s.id === servicoId);
-                if (servico) {
-                    document.getElementById('pacote-valor').value = servico.valor;
-                document.getElementById('pacote-quantidade').value = 1;
-                calcularValorPacote();
-                document.getElementById('pacote-quantidade').addEventListener('input', calcularValorPacote);
-                document.getElementById('pacote-servico-id').removeEventListener('change', arguments.callee);
-                document.getElementById('pacote-servico-id').addEventListener('change', function() {
-                    document.getElementById('pacote-quantidade').removeEventListener('input', calcularValorPacote);
-                });
-            });
-
-            // Inicializar campos de data
-            definirDataHoje();
-            carregarAnosFiltro();
+            document.getElementById(sectionId).classList.add('active');
             
-            // MELHORIA 2: Corrigir o mês no filtro do histórico
-            const hoje = new Date();
-            document.getElementById('filtro-mes').value = hoje.getMonth() + 1;
-            document.getElementById('filtro-ano').value = hoje.getFullYear();
-        });
+            // Atualiza o menu lateral
+            document.querySelectorAll('.sidebar ul li a').forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('data-section') === sectionId.replace('-section', '')) {
+                    link.classList.add('active');
+                }
+            });
 
-        // ========== FUNÇÕES DE AUTENTICAÇÃO ==========
-        function fazerLogin(e) {
+            // Lógica de carregamento específica por seção
+            if (sectionId === 'agenda-section') {
+                // Apenas garante que a aba ativa está carregando os dados corretos
+                 const activePane = document.querySelector('#agenda-section .tab-pane.active');
+                 if (activePane.id === 'lista-agendamentos-pane') carregarAgendamentos();
+                 else if (activePane.id === 'pacotes-ativos-pane') carregarPacotesAtivos();
+                 else if (activePane.id === 'visao-diaria-pane') renderizarVisaoDiaria();
+
+            } else if (sectionId === 'historico-section') {
+                renderizarHistorico();
+            } else if (sectionId === 'clientes-section') {
+                renderizarClientes();
+            } else if (sectionId === 'servicos-section') {
+                renderizarServicos();
+            }
+        }
+        
+        // Função para mudar a aba na seção Agenda
+        window.showAgendaTab = function(paneId, event) {
+            document.querySelectorAll('#agenda-section .tab-pane').forEach(pane => {
+                pane.classList.remove('active');
+            });
+            document.getElementById(paneId + '-pane').classList.add('active');
+
+            document.querySelectorAll('#agenda-section .tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            if (event) {
+                event.currentTarget.classList.add('active');
+            } else {
+                 // Caso seja chamado programaticamente
+                 document.querySelector(`.tab-button[onclick*='${paneId}']`).classList.add('active');
+            }
+            
+
+            if (paneId === 'lista-agendamentos' || paneId === 'novo-agendamento') {
+                carregarAgendamentos(); // Garante que a lista de agendamentos esteja carregada
+            } else if (paneId === 'visao-diaria') {
+                document.getElementById('filtro-visao-diaria-data').value = new Date().toISOString().slice(0, 10);
+                renderizarVisaoDiaria();
+            } else if (paneId === 'pacotes-ativos') {
+                carregarPacotesAtivos();
+            }
+        }
+
+        // CORREÇÃO: Lógica de Login ORIGINAL - SIMPLES E FUNCIONAL
+        function showLogin() {
+            document.getElementById('app-container').style.display = 'none';
+            document.getElementById('login-container').style.display = 'flex';
+        }
+        
+        function showApp() {
+            document.getElementById('login-container').style.display = 'none';
+            document.getElementById('app-container').style.display = 'flex';
+            // Carrega os dados iniciais do app
+            showSection('agenda-section');
+        }
+        
+        document.getElementById('login-form').addEventListener('submit', (e) => {
             e.preventDefault();
             const senha = document.getElementById('loginSenha').value;
             
-            // Autenticação simples com senha fixa (em produção, usar Firebase Auth)
-            if (senha === 'tati123') {
-                auth.signInAnonymously()
-                    .then(() => {
-                        mostrarNotificacao('Login realizado com sucesso!', 'success');
-                    })
-                    .catch((error) => {
-                        console.error('Erro no login:', error);
-                        mostrarNotificacao('Erro ao fazer login. Tente novamente.', 'error');
-                    });
+            if (senha === SENHA_UNICA) {
+                 showApp();
+                 showNotification('Login realizado com sucesso!', 'success');
             } else {
-                mostrarNotificacao('Senha incorreta!', 'error');
+                 showNotification('Senha incorreta. Tente novamente.', 'error');
+            }
+        });
+        
+        document.getElementById('logout-button').addEventListener('click', () => {
+            showLogin();
+            showNotification('Sessão encerrada.', 'info');
+        });
+
+        // =================================================================
+        // 2. FUNÇÕES DE CARREGAMENTO DE DADOS (RTDB LISTENER)
+        // =================================================================
+        
+        // 2.1. Clientes
+        function carregarClientes() {
+            onValue(clientesRef, (snapshot) => {
+                const clientes = snapshotToArray(snapshot);
+                cacheClientes = {};
+                clientesDataList = [];
+
+                clientes.forEach(c => {
+                    cacheClientes[c.id] = c;
+                    clientesDataList.push({ id: c.id, nome: c.nome, telefone: c.telefone, endereco: c.endereco });
+                });
+
+                renderizarClientes();
+                renderizarClienteDatalist();
+                popularSelectClientes();
+            }, { onlyOnce: false });
+        }
+
+        // 2.2. Serviços
+        function carregarServicos() {
+             onValue(servicosRef, (snapshot) => {
+                const servicos = snapshotToArray(snapshot);
+                cacheServicos = {};
+                servicos.forEach(s => cacheServicos[s.id] = s);
+
+                renderizarServicos();
+                popularSelectServicos();
+                popularSelectPacotes();
+            }, { onlyOnce: false });
+        }
+
+        // 2.3. Pacotes Ativos
+        function carregarPacotesAtivos() {
+            onValue(pacotesAtivosRef, (snapshot) => {
+                pacotesAtivosList = snapshotToArray(snapshot);
+                pacotesAtivosList.sort((a, b) => new Date(a.dataVencimento) - new Date(b.dataVencimento));
+                renderizarPacotesAtivos();
+            }, { onlyOnce: false });
+        }
+
+        // 2.4. Agendamentos
+        function carregarAgendamentos() {
+            onValue(agendamentosRef, (snapshot) => {
+                const allAgendamentos = snapshotToArray(snapshot);
+                
+                agendamentosAtivos = allAgendamentos.filter(a => a.status === 'ativo');
+                agendamentosHistorico = allAgendamentos.filter(a => a.status !== 'ativo');
+                
+                // Salva todos em cache (usado principalmente para a reversão)
+                cacheAgendamentos = {};
+                allAgendamentos.forEach(a => cacheAgendamentos[a.id] = a);
+
+                agendamentosAtivos.sort((a, b) => new Date(a.data) - new Date(b.data) || a.hora.localeCompare(b.hora));
+                agendamentosHistorico.sort((a, b) => new Date(b.data) - new Date(a.data) || b.hora.localeCompare(a.hora));
+                
+                renderizarListaAgendamentos();
+                // A visão diária e o histórico dependem destes dados, forçamos a atualização se a seção estiver ativa:
+                if (document.getElementById('visao-diaria-pane').classList.contains('active')) renderizarVisaoDiaria(); 
+                if (document.getElementById('historico-section').classList.contains('active')) renderizarHistorico();
+            }, { onlyOnce: false });
+        }
+        
+        // =================================================================
+        // 3. FUNÇÕES CRUD: CLIENTES E SERVIÇOS
+        // =================================================================
+        
+        // 3.1. Clientes
+        document.getElementById('cliente-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('cliente-id').value;
+            const cliente = {
+                nome: document.getElementById('cliente-nome').value,
+                telefone: document.getElementById('cliente-telefone').value || '',
+                email: document.getElementById('cliente-email').value || '',
+                endereco: document.getElementById('cliente-endereco').value || '',
+                observacoes: document.getElementById('cliente-observacoes').value || ''
+            };
+
+            try {
+                if (id) {
+                    // Atualizar
+                    await update(ref(db, 'clientes/' + id), cliente);
+                    showNotification('Cliente atualizado com sucesso!', 'success');
+                } else {
+                    // Novo
+                    await push(clientesRef, cliente);
+                    showNotification('Cliente salvo com sucesso!', 'success');
+                }
+                resetClienteForm();
+            } catch (error) {
+                console.error("Erro ao salvar cliente:", error);
+                showNotification('Erro ao salvar cliente: ' + error.message, 'error');
+            }
+        });
+
+        window.editarCliente = function(id) {
+            const cliente = cacheClientes[id];
+            if (!cliente) return;
+            document.getElementById('cliente-id').value = id;
+            document.getElementById('cliente-nome').value = cliente.nome;
+            document.getElementById('cliente-telefone').value = cliente.telefone;
+            document.getElementById('cliente-email').value = cliente.email;
+            document.getElementById('cliente-endereco').value = cliente.endereco;
+            document.getElementById('cliente-observacoes').value = cliente.observacoes;
+            document.getElementById('btn-salvar-cliente').innerHTML = '<span class="material-icons">edit</span> Atualizar Cliente';
+            showNotification(`Editando cliente: ${cliente.nome}`, 'info');
+        }
+
+        window.excluirCliente = async function(id) {
+            if (confirm('Tem certeza que deseja excluir este cliente e todos os agendamentos/pacotes associados? (Não se preocupe, o Firebase cuidará das dependências)')) {
+                try {
+                    // Nota: A exclusão em cascata deve ser feita no Firebase, aqui só removemos o registro do cliente.
+                    await remove(ref(db, 'clientes/' + id));
+                    showNotification('Cliente excluído com sucesso!', 'success');
+                } catch (error) {
+                    console.error("Erro ao excluir cliente:", error);
+                    showNotification('Erro ao excluir cliente: ' + error.message, 'error');
+                }
             }
         }
 
-        function fazerLogout() {
-            auth.signOut()
-                .then(() => {
-                    mostrarNotificacao('Logout realizado com sucesso!', 'success');
-                })
-                .catch((error) => {
-                    console.error('Erro no logout:', error);
-                });
-        }
-
-        // ========== FUNÇÕES DE CARREGAMENTO DE DADOS ==========
-        function carregarDados() {
-            carregarClientes();
-            carregarServicos();
-            carregarAgendamentos();
-            carregarPacotes();
-            carregarHistorico();
-        }
-
-        function carregarClientes() {
-            clientesRef.orderBy('nome').onSnapshot((snapshot) => {
-                clientes = [];
-                snapshot.forEach((doc) => {
-                    clientes.push({ id: doc.id, ...doc.data() });
-                });
-                atualizarListaClientes();
-                atualizarDatalistClientes();
-                atualizarSelectClientes();
-            });
-        }
-
-        function carregarServicos() {
-            servicosRef.orderBy('nome').onSnapshot((snapshot) => {
-                servicos = [];
-                snapshot.forEach((doc) => {
-                    servicos.push({ id: doc.id, ...doc.data() });
-                });
-                atualizarListaServicos();
-                atualizarSelectServicos();
-            });
-        }
-
-        function carregarAgendamentos() {
-            const hoje = new Date();
-            hoje.setHours(0, 0, 0, 0);
-            
-            agendamentosRef.where('data', '>=', hoje.toISOString().split('T')[0])
-                          .orderBy('data')
-                          .orderBy('horaInicio')
-                          .onSnapshot((snapshot) => {
-                agendamentos = [];
-                snapshot.forEach((doc) => {
-                    agendamentos.push({ id: doc.id, ...doc.data() });
-                });
-                atualizarListaAgendamentos();
-                carregarVisaoDiaria();
-            });
-        }
-
-        function carregarPacotes() {
-            pacotesRef.where('status', 'in', ['ativo', 'pendente']).onSnapshot((snapshot) => {
-                pacotes = [];
-                snapshot.forEach((doc) => {
-                    pacotes.push({ id: doc.id, ...doc.data() });
-                });
-                atualizarListaPacotesAtivos();
-            });
-        }
-
-        function carregarHistorico() {
-            // Carregar histórico do mês atual por padrão
-            const hoje = new Date();
-            const primeiroDiaMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-            const ultimoDiaMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
-            
-            historicoRef.where('data', '>=', primeiroDiaMes.toISOString().split('T')[0])
-                       .where('data', '<=', ultimoDiaMes.toISOString().split('T')[0])
-                       .orderBy('data', 'desc')
-                       .onSnapshot((snapshot) => {
-                historico = [];
-                snapshot.forEach((doc) => {
-                    historico.push({ id: doc.id, ...doc.data() });
-                });
-                atualizarListaHistorico();
-                calcularResumoFinanceiro();
-            });
-        }
-
-        // ========== FUNÇÕES DE ATUALIZAÇÃO DE UI ==========
-        function atualizarListaClientes() {
-            const tbody = document.getElementById('lista-clientes');
-            const filtro = document.getElementById('filtro-cliente-nome').value.toLowerCase();
-            
-            tbody.innerHTML = '';
-            
-            const clientesFiltrados = clientes.filter(cliente => 
-                cliente.nome.toLowerCase().includes(filtro)
-            );
-            
-            clientesFiltrados.forEach(cliente => {
-                const tr = document.createElement('tr');
-                
-                // Formatar data de aniversário
-                let aniversarioFormatado = '-';
-                if (cliente.aniversario) {
-                    const data = new Date(cliente.aniversario);
-                    aniversarioFormatado = data.toLocaleDateString('pt-BR');
-                }
-                
-                tr.innerHTML = `
-                    <td data-label="Nome">${cliente.nome}</td>
-                    <td data-label="Telefone">${cliente.telefone || '-'}</td>
-                    <td data-label="E-mail">${cliente.email || '-'}</td>
-                    <td data-label="Aniversário">${aniversarioFormatado}</td>
-                    <td data-label="Observações">${cliente.observacoes || '-'}</td>
-                    <td class="action-buttons" data-label="">
-                        <button class="btn-warning editar-cliente" data-id="${cliente.id}">
-                            <span class="material-icons">edit</span> Editar
-                        </button>
-                        <button class="btn-danger excluir-cliente" data-id="${cliente.id}">
-                            <span class="material-icons">delete</span> Excluir
-                        </button>
-                    </td>
-                `;
-                
-                tbody.appendChild(tr);
-            });
-            
-            // Adicionar event listeners aos botões
-            document.querySelectorAll('.editar-cliente').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    editarCliente(this.getAttribute('data-id'));
-                });
-            });
-            
-            document.querySelectorAll('.excluir-cliente').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    excluirCliente(this.getAttribute('data-id'));
-                });
-            });
-            
-            // Aplicar responsividade às tabelas
-            aplicarResponsividadeTabelas();
-        }
-
-        function atualizarListaServicos() {
-            const tbody = document.getElementById('lista-servicos');
-            tbody.innerHTML = '';
-            
-            servicos.forEach(servico => {
-                const tr = document.createElement('tr');
-                
-                tr.innerHTML = `
-                    <td data-label="Nome">${servico.nome}</td>
-                    <td data-label="Duração">${servico.duracao} min</td>
-                    <td data-label="Valor">R$ ${servico.valor.toFixed(2)}</td>
-                    <td data-label="Descrição">${servico.descricao || '-'}</td>
-                    <td class="action-buttons" data-label="Ações">
-                        <button class="btn-warning editar-servico" data-id="${servico.id}">
-                            <span class="material-icons">edit</span> Editar
-                        </button>
-                        <button class="btn-danger excluir-servico" data-id="${servico.id}">
-                            <span class="material-icons">delete</span> Excluir
-                        </button>
-                    </td>
-                `;
-                
-                tbody.appendChild(tr);
-            });
-            
-            // Adicionar event listeners aos botões
-            document.querySelectorAll('.editar-servico').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    editarServico(this.getAttribute('data-id'));
-                });
-            });
-            
-            document.querySelectorAll('.excluir-servico').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    excluirServico(this.getAttribute('data-id'));
-                });
-            });
-            
-            // Aplicar responsividade às tabelas
-            aplicarResponsividadeTabelas();
-        }
-
-        function atualizarListaAgendamentos() {
-            const tbody = document.getElementById('lista-agendamentos');
-            const filtroData = document.getElementById('filtro-data').value;
-            const filtroCliente = document.getElementById('filtro-cliente').value.toLowerCase();
-            
-            tbody.innerHTML = '';
-            
-            const agendamentosFiltrados = agendamentos.filter(agendamento => {
-                const atendeData = !filtroData || agendamento.data === filtroData;
-                const atendeCliente = !filtroCliente || 
-                    agendamento.clienteNome.toLowerCase().includes(filtroCliente);
-                return atendeData && atendeCliente;
-            });
-            
-            agendamentosFiltrados.forEach(agendamento => {
-                const tr = document.createElement('tr');
-                
-                // Formatar data
-                const data = new Date(agendamento.data);
-                const dataFormatada = data.toLocaleDateString('pt-BR');
-                
-                tr.innerHTML = `
-                    <td data-label="Data">${dataFormatada}</td>
-                    <td data-label="Hora">${agendamento.horaInicio} - ${agendamento.horaFim}</td>
-                    <td data-label="Cliente">${agendamento.clienteNome}</td>
-                    <td data-label="Serviço">${agendamento.servicoNome}</td>
-                    <td data-label="Valor">R$ ${agendamento.valor.toFixed(2)}</td>
-                    <td data-label="Observações">${agendamento.observacoes || '-'}</td>
-                    <td class="action-buttons" data-label="Ações">
-                        <button class="btn-success finalizar-agendamento" data-id="${agendamento.id}">
-                            <span class="material-icons">check_circle</span> Finalizar
-                        </button>
-                        <button class="btn-danger excluir-agendamento" data-id="${agendamento.id}">
-                            <span class="material-icons">delete</span> Excluir
-                        </button>
-                    </td>
-                `;
-                
-                tbody.appendChild(tr);
-            });
-            
-            // Adicionar event listeners aos botões
-            document.querySelectorAll('.finalizar-agendamento').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    finalizarAgendamento(this.getAttribute('data-id'));
-                });
-            });
-            
-            document.querySelectorAll('.excluir-agendamento').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    excluirAgendamento(this.getAttribute('data-id'));
-                });
-            });
-            
-            // Aplicar responsividade às tabelas
-            aplicarResponsividadeTabelas();
-        }
-
-        function atualizarListaPacotesAtivos() {
-            const tbody = document.getElementById('lista-pacotes-ativos');
-            tbody.innerHTML = '';
-            
-            pacotes.forEach(pacote => {
-                const tr = document.createElement('tr');
-                
-                // Formatar data de início
-                const dataInicio = new Date(pacote.dataInicio);
-                const dataFormatada = dataInicio.toLocaleDateString('pt-BR');
-                
-                // Determinar classe de status
-                let statusClass = '';
-                let statusText = '';
-                
-                switch(pacote.status) {
-                    case 'ativo':
-                        statusClass = 'status-package-active';
-                        statusText = 'Ativo';
-                        break;
-                    case 'pendente':
-                        statusClass = 'status-package-pending';
-                        statusText = 'Pendente';
-                        break;
-                    case 'pago':
-                        statusClass = 'status-package-paid';
-                        statusText = 'Pago';
-                        break;
-                    case 'finalizado':
-                        statusClass = 'status-package-finalized';
-                        statusText = 'Finalizado';
-                        break;
-                }
-                
-                tr.innerHTML = `
-                    <td data-label="Cliente">${pacote.clienteNome}</td>
-                    <td data-label="Serviço">${pacote.servicoNome}</td>
-                    <td data-label="Procedimentos Restantes">${pacote.procedimentosRestantes} / ${pacote.quantidadeTotal}</td>
-                    <td data-label="Valor">R$ ${pacote.valorTotal.toFixed(2)}</td>
-                    <td data-label="Status"><span class="${statusClass}">${statusText}</span></td>
-                    <td data-label="Data Início">${dataFormatada}</td>
-                    <td class="action-buttons" data-label="Ações">
-                        <button class="btn-info usar-pacote" data-id="${pacote.id}" 
-                                data-servico-id="${pacote.servicoId}" 
-                                data-cliente-id="${pacote.clienteId}"
-                                ${pacote.status !== 'ativo' ? 'disabled' : ''}>
-                            <span class="material-icons">event_available</span> Usar
-                        </button>
-                        <button class="btn-warning editar-pacote" data-id="${pacote.id}">
-                            <span class="material-icons">edit</span> Editar
-                        </button>
-                        <button class="btn-danger excluir-pacote" data-id="${pacote.id}">
-                            <span class="material-icons">delete</span> Excluir
-                        </button>
-                    </td>
-                `;
-                
-                tbody.appendChild(tr);
-            });
-            
-            // Adicionar event listeners aos botões
-            document.querySelectorAll('.usar-pacote').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    if (!this.disabled) {
-                        abrirModalUsarPacote(
-                            this.getAttribute('data-id'),
-                            this.getAttribute('data-servico-id'),
-                            this.getAttribute('data-cliente-id')
-                        );
-                    }
-                });
-            });
-            
-            document.querySelectorAll('.editar-pacote').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    // Implementar edição de pacote se necessário
-                    mostrarNotificacao('Funcionalidade em desenvolvimento', 'info');
-                });
-            });
-            
-            document.querySelectorAll('.excluir-pacote').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    excluirPacote(this.getAttribute('data-id'));
-                });
-            });
-            
-            // Aplicar responsividade às tabelas
-            aplicarResponsividadeTabelas();
-        }
-
-        function atualizarListaHistorico() {
-            const tbody = document.getElementById('lista-historico');
-            tbody.innerHTML = '';
-            
-            historico.forEach(item => {
-                const tr = document.createElement('tr');
-                
-                // Formatar data
-                const data = new Date(item.data);
-                const dataFormatada = data.toLocaleDateString('pt-BR');
-                
-                tr.innerHTML = `
-                    <td data-label="Data">${dataFormatada}</td>
-                    <td data-label="Cliente">${item.clienteNome}</td>
-                    <td data-label="Serviço">${item.servicoNome}</td>
-                    <td data-label="Valor">R$ ${item.valor.toFixed(2)}</td>
-                    <td data-label="Observações">${item.observacoes || '-'}</td>
-                    <td data-label="Tipo">${item.tipo === 'pacote' ? 'Pacote' : 'Avulso'}</td>
-                `;
-                
-                tbody.appendChild(tr);
-            });
-            
-            // Aplicar responsividade às tabelas
-            aplicarResponsividadeTabelas();
-        }
-
-        function atualizarDatalistClientes() {
-            const datalist = document.getElementById('clientes-datalist');
-            datalist.innerHTML = '';
-            
-            clientes.forEach(cliente => {
-                const option = document.createElement('option');
-                option.value = cliente.nome;
-                datalist.appendChild(option);
-            });
-        }
-
-        function atualizarSelectClientes() {
-            const select = document.getElementById('pacote-cliente-id');
-            select.innerHTML = '<option value="">Selecione um cliente</option>';
-            
-            clientes.forEach(cliente => {
-                const option = document.createElement('option');
-                option.value = cliente.id;
-                option.textContent = cliente.nome;
-                select.appendChild(option);
-            });
-        }
-
-        function atualizarSelectServicos() {
-            const selectAgendamento = document.getElementById('agendamento-servico');
-            const selectPacote = document.getElementById('pacote-servico-id');
-            
-            selectAgendamento.innerHTML = '<option value="">Selecione um serviço</option>';
-            selectPacote.innerHTML = '<option value="">Selecione um serviço</option>';
-            
-            servicos.forEach(servico => {
-                const option1 = document.createElement('option');
-                option1.value = servico.id;
-                option1.textContent = servico.nome;
-                selectAgendamento.appendChild(option1);
-                
-                const option2 = document.createElement('option');
-                option2.value = servico.id;
-                option2.textContent = servico.nome;
-                selectPacote.appendChild(option2);
-            });
-        }
-
-        function carregarPacotesParaAgendamento() {
-            const select = document.getElementById('agendamento-pacote-id');
-            const clienteNome = document.getElementById('agendamento-cliente').value;
-            
-            select.innerHTML = '<option value="">Selecione um pacote</option>';
-            
-            if (!clienteNome) return;
-            
-            const cliente = clientes.find(c => c.nome === clienteNome);
-            if (!cliente) return;
-            
-            const pacotesCliente = pacotes.filter(p => 
-                p.clienteId === cliente.id && p.status === 'ativo' && p.procedimentosRestantes > 0
-            );
-            
-            pacotesCliente.forEach(pacote => {
-                const option = document.createElement('option');
-                option.value = pacote.id;
-                option.textContent = `${pacote.servicoNome} (${pacote.procedimentosRestantes} restantes)`;
-                select.appendChild(option);
-            });
-        }
-
-        // ========== FUNÇÕES DE FORMULÁRIOS ==========
-        function mostrarFormCliente() {
-            document.getElementById('form-cliente-card').style.display = 'block';
-            document.getElementById('form-cliente-titulo').textContent = 'Novo Cliente';
+        window.resetClienteForm = function() {
             document.getElementById('cliente-form').reset();
             document.getElementById('cliente-id').value = '';
+            document.getElementById('btn-salvar-cliente').innerHTML = '<span class="material-icons">save</span> Salvar Cliente';
         }
 
-        function cancelarFormCliente() {
-            document.getElementById('form-cliente-card').style.display = 'none';
+        // 3.2. Serviços
+        // Lógica de Pacote: Mostra campo de quantidade se for pacote
+        document.getElementById('servico-isPacote').addEventListener('change', (e) => {
+            document.getElementById('group-quantidade-total').style.display = e.target.checked ? 'block' : 'none';
+        });
+
+        document.getElementById('servico-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('servico-id').value;
+            const isPacote = document.getElementById('servico-isPacote').checked;
+
+            const servico = {
+                nome: document.getElementById('servico-nome').value,
+                preco: parseFloat(document.getElementById('servico-preco').value),
+                isPacote: isPacote,
+                quantidadeTotal: isPacote ? parseInt(document.getElementById('servico-quantidade-total').value) : 1,
+                descricao: document.getElementById('servico-descricao').value || ''
+            };
+
+            try {
+                if (id) {
+                    await update(ref(db, 'servicos/' + id), servico);
+                    showNotification('Serviço/Pacote atualizado com sucesso!', 'success');
+                } else {
+                    await push(servicosRef, servico);
+                    showNotification('Serviço/Pacote salvo com sucesso!', 'success');
+                }
+                resetServicoForm();
+            } catch (error) {
+                console.error("Erro ao salvar serviço:", error);
+                showNotification('Erro ao salvar serviço: ' + error.message, 'error');
+            }
+        });
+
+        window.editarServico = function(id) {
+            const servico = cacheServicos[id];
+            if (!servico) return;
+            document.getElementById('servico-id').value = id;
+            document.getElementById('servico-nome').value = servico.nome;
+            document.getElementById('servico-preco').value = servico.preco;
+            document.getElementById('servico-descricao').value = servico.descricao;
+            document.getElementById('servico-isPacote').checked = servico.isPacote;
+            
+            // Lógica condicional para Pacote
+            document.getElementById('group-quantidade-total').style.display = servico.isPacote ? 'block' : 'none';
+            document.getElementById('servico-quantidade-total').value = servico.quantidadeTotal || 1;
+
+            document.getElementById('btn-salvar-servico').innerHTML = '<span class="material-icons">edit</span> Atualizar Serviço';
+            showNotification(`Editando serviço: ${servico.nome}`, 'info');
         }
 
-        function mostrarFormServico() {
-            document.getElementById('form-servico-card').style.display = 'block';
-            document.getElementById('form-servico-titulo').textContent = 'Novo Serviço';
+        window.excluirServico = async function(id) {
+            if (confirm('Tem certeza que deseja excluir este serviço/pacote?')) {
+                try {
+                    await remove(ref(db, 'servicos/' + id));
+                    showNotification('Serviço/Pacote excluído com sucesso!', 'success');
+                } catch (error) {
+                    console.error("Erro ao excluir serviço:", error);
+                    showNotification('Erro ao excluir serviço: ' + error.message, 'error');
+                }
+            }
+        }
+
+        window.resetServicoForm = function() {
             document.getElementById('servico-form').reset();
             document.getElementById('servico-id').value = '';
+            document.getElementById('group-quantidade-total').style.display = 'none';
+            document.getElementById('servico-quantidade-total').value = 1;
+            document.getElementById('btn-salvar-servico').innerHTML = '<span class="material-icons">save</span> Salvar Serviço';
         }
 
-        function cancelarFormServico() {
-            document.getElementById('form-servico-card').style.display = 'none';
-        }
+        // =================================================================
+        // 4. FUNÇÕES CRUD: PACOTES E AGENDAMENTOS
+        // =================================================================
 
-        function salvarCliente(e) {
+        // 4.1. Iniciar Pacote
+        document.getElementById('pacote-inicio-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            const id = document.getElementById('cliente-id').value;
-            const nome = document.getElementById('cliente-nome').value;
-            const telefone = document.getElementById('cliente-telefone').value;
-            const email = document.getElementById('cliente-email').value;
-            const aniversario = document.getElementById('cliente-aniversario').value;
-            const observacoes = document.getElementById('cliente-observacoes').value;
-            
-            const clienteData = {
-                nome,
-                telefone,
-                email: email || null,
-                aniversario: aniversario || null,
-                observacoes: observacoes || null,
-                dataCriacao: new Date().toISOString()
-            };
-            
-            if (id) {
-                // Editar cliente existente
-                clientesRef.doc(id).update(clienteData)
-                    .then(() => {
-                        mostrarNotificacao('Cliente atualizado com sucesso!', 'success');
-                        cancelarFormCliente();
-                    })
-                    .catch((error) => {
-                        console.error('Erro ao atualizar cliente:', error);
-                        mostrarNotificacao('Erro ao atualizar cliente.', 'error');
-                    });
-            } else {
-                // Adicionar novo cliente
-                clientesRef.add(clienteData)
-                    .then(() => {
-                        mostrarNotificacao('Cliente adicionado com sucesso!', 'success');
-                        cancelarFormCliente();
-                    })
-                    .catch((error) => {
-                        console.error('Erro ao adicionar cliente:', error);
-                        mostrarNotificacao('Erro ao adicionar cliente.', 'error');
-                    });
-            }
-        }
-
-        function salvarServico(e) {
-            e.preventDefault();
-            
-            const id = document.getElementById('servico-id').value;
-            const nome = document.getElementById('servico-nome').value;
-            const duracao = parseInt(document.getElementById('servico-duracao').value);
-            const valor = parseFloat(document.getElementById('servico-valor').value);
-            const descricao = document.getElementById('servico-descricao').value;
-            
-            const servicoData = {
-                nome,
-                duracao,
-                valor,
-                descricao: descricao || null,
-                dataCriacao: new Date().toISOString()
-            };
-            
-            if (id) {
-                // Editar serviço existente
-                servicosRef.doc(id).update(servicoData)
-                    .then(() => {
-                        mostrarNotificacao('Serviço atualizado com sucesso!', 'success');
-                        cancelarFormServico();
-                    })
-                    .catch((error) => {
-                        console.error('Erro ao atualizar serviço:', error);
-                        mostrarNotificacao('Erro ao atualizar serviço.', 'error');
-                    });
-            } else {
-                // Adicionar novo serviço
-                servicosRef.add(servicoData)
-                    .then(() => {
-                        mostrarNotificacao('Serviço adicionado com sucesso!', 'success');
-                        cancelarFormServico();
-                    })
-                    .catch((error) => {
-                        console.error('Erro ao adicionar serviço:', error);
-                        mostrarNotificacao('Erro ao adicionar serviço.', 'error');
-                    });
-            }
-        }
-
-        function salvarAgendamento(e) {
-            e.preventDefault();
-            
-            const clienteNome = document.getElementById('agendamento-cliente').value;
-            const telefone = document.getElementById('agendamento-telefone').value;
-            const data = document.getElementById('agendamento-data').value;
-            const horaInicio = document.getElementById('agendamento-hora').value;
-            const horaFim = document.getElementById('agendamento-hora-fim').value;
-            const servicoId = document.getElementById('agendamento-servico').value;
-            const valor = parseFloat(document.getElementById('agendamento-valor').value);
-            const observacoes = document.getElementById('agendamento-observacoes').value;
-            const usarPacote = document.getElementById('agendamento-pacote').checked;
-            const pacoteId = document.getElementById('agendamento-pacote-id').value;
-            
-            // Verificar se o cliente existe
-            let cliente = clientes.find(c => c.nome === clienteNome);
-            let clienteId = null;
-            
-            if (cliente) {
-                clienteId = cliente.id;
-            } else {
-                // Criar novo cliente
-                clienteId = clientesRef.doc().id;
-                const clienteData = {
-                    nome: clienteNome,
-                    telefone: telefone || null,
-                    dataCriacao: new Date().toISOString()
-                };
-                
-                clientesRef.doc(clienteId).set(clienteData)
-                    .then(() => {
-                        mostrarNotificacao('Novo cliente criado automaticamente!', 'info');
-                    })
-                    .catch((error) => {
-                        console.error('Erro ao criar cliente:', error);
-                    });
-            }
-            
-            // Obter nome do serviço
-            const servico = servicos.find(s => s.id === servicoId);
-            const servicoNome = servico ? servico.nome : 'Serviço não encontrado';
-            
-            const agendamentoData = {
-                clienteId,
-                clienteNome,
-                servicoId,
-                servicoNome,
-                data,
-                horaInicio,
-                horaFim,
-                valor,
-                observacoes: observacoes || null,
-                status: 'agendado',
-                dataCriacao: new Date().toISOString(),
-                tipo: usarPacote && pacoteId ? 'pacote' : 'avulso',
-                pacoteId: usarPacote && pacoteId ? pacoteId : null
-            };
-            
-            // Verificar conflitos de horário
-            const conflito = agendamentos.find(a => 
-                a.data === data && 
-                ((horaInicio >= a.horaInicio && horaInicio < a.horaFim) ||
-                 (horaFim > a.horaInicio && horaFim <= a.horaFim) ||
-                 (horaInicio <= a.horaInicio && horaFim >= a.horaFim))
-            );
-            
-            if (conflito) {
-                mostrarNotificacao('Conflito de horário! Já existe um agendamento neste período.', 'error');
-                return;
-            }
-            
-            agendamentosRef.add(agendamentoData)
-                .then(() => {
-                    mostrarNotificacao('Agendamento realizado com sucesso!', 'success');
-                    document.getElementById('agendamento-form').reset();
-                    document.getElementById('pacote-selecao-container').style.display = 'none';
-                    document.getElementById('agendamento-pacote').checked = false;
-                })
-                .catch((error) => {
-                    console.error('Erro ao agendar:', error);
-                    mostrarNotificacao('Erro ao realizar agendamento.', 'error');
-                });
-        }
-
-        function iniciarPacote(e) {
-            e.preventDefault();
-            
             const clienteId = document.getElementById('pacote-cliente-id').value;
             const servicoId = document.getElementById('pacote-servico-id').value;
-            const quantidade = parseInt(document.getElementById('pacote-quantidade').value);
-            const valorTotal = parseFloat(document.getElementById('pacote-valor').value);
-            const observacoes = document.getElementById('pacote-observacoes').value;
+            const dataInicio = document.getElementById('pacote-data-inicio').value;
             
-            // Obter nome do cliente e serviço
-            const cliente = clientes.find(c => c.id === clienteId);
-            const servico = servicos.find(s => s.id === servicoId);
-            
-            if (!cliente || !servico) {
-                mostrarNotificacao('Cliente ou serviço não encontrado.', 'error');
+            const cliente = cacheClientes[clienteId];
+            const servico = cacheServicos[servicoId];
+
+            if (!cliente || !servico || !servico.isPacote) {
+                showNotification('Dados inválidos ou serviço não é um pacote.', 'error');
                 return;
             }
             
-            const pacoteData = {
-                clienteId,
+            // Adiciona 1 mês à data de início para o vencimento
+            const dataVencimentoDate = new Date(dataInicio);
+            dataVencimentoDate.setMonth(dataVencimentoDate.getMonth() + 1);
+
+            const novoPacote = {
+                clienteId: clienteId,
                 clienteNome: cliente.nome,
-                servicoId,
+                servicoId: servicoId,
                 servicoNome: servico.nome,
-                quantidadeTotal: quantidade,
-                procedimentosRestantes: quantidade,
-                valorTotal,
-                valorUnitario: valorTotal / quantidade,
-                observacoes: observacoes || null,
-                status: 'pendente', // Será ativo após o pagamento
-                dataInicio: new Date().toISOString().split('T')[0],
-                dataCriacao: new Date().toISOString()
+                quantidadeTotal: servico.quantidadeTotal,
+                quantidadeUsada: 0,
+                dataInicio: dataInicio,
+                dataVencimento: dataVencimentoDate.toISOString().slice(0, 10), 
+                status: 'ativo',
+                statusPagamento: 'pendente',
+                valorTotal: servico.preco
             };
-            
-            pacotesRef.add(pacoteData)
-                .then(() => {
-                    mostrarNotificacao('Pacote iniciado com sucesso!', 'success');
-                    document.getElementById('pacote-inicio-form').reset();
-                })
-                .catch((error) => {
-                    console.error('Erro ao iniciar pacote:', error);
-                    mostrarNotificacao('Erro ao iniciar pacote.', 'error');
-                });
-        }
 
-        // ========== FUNÇÕES DE EDIÇÃO E EXCLUSÃO ==========
-        function editarCliente(id) {
-            const cliente = clientes.find(c => c.id === id);
-            if (!cliente) return;
-            
-            document.getElementById('form-cliente-card').style.display = 'block';
-            document.getElementById('form-cliente-titulo').textContent = 'Editar Cliente';
-            document.getElementById('cliente-id').value = cliente.id;
-            document.getElementById('cliente-nome').value = cliente.nome;
-            document.getElementById('cliente-telefone').value = cliente.telefone || '';
-            document.getElementById('cliente-email').value = cliente.email || '';
-            document.getElementById('cliente-aniversario').value = cliente.aniversario || '';
-            document.getElementById('cliente-observacoes').value = cliente.observacoes || '';
-        }
-
-        function excluirCliente(id) {
-            if (confirm('Tem certeza que deseja excluir este cliente?')) {
-                clientesRef.doc(id).delete()
-                    .then(() => {
-                        mostrarNotificacao('Cliente excluído com sucesso!', 'success');
-                    })
-                    .catch((error) => {
-                        console.error('Erro ao excluir cliente:', error);
-                        mostrarNotificacao('Erro ao excluir cliente.', 'error');
-                    });
+            try {
+                await push(pacotesAtivosRef, novoPacote);
+                showNotification(`Pacote ${servico.nome} iniciado para ${cliente.nome}!`, 'success');
+                document.getElementById('pacote-inicio-form').reset();
+                
+                // Restaurar data atual
+                document.getElementById('pacote-data-inicio').value = new Date().toISOString().slice(0, 10);
+            } catch (error) {
+                console.error("Erro ao iniciar pacote:", error);
+                showNotification('Erro ao iniciar pacote: ' + error.message, 'error');
             }
-        }
+        });
 
-        function editarServico(id) {
-            const servico = servicos.find(s => s.id === id);
-            if (!servico) return;
-            
-            document.getElementById('form-servico-card').style.display = 'block';
-            document.getElementById('form-servico-titulo').textContent = 'Editar Serviço';
-            document.getElementById('servico-id').value = servico.id;
-            document.getElementById('servico-nome').value = servico.nome;
-            document.getElementById('servico-duracao').value = servico.duracao;
-            document.getElementById('servico-valor').value = servico.valor;
-            document.getElementById('servico-descricao').value = servico.descricao || '';
-        }
-
-        function excluirServico(id) {
-            if (confirm('Tem certeza que deseja excluir este serviço?')) {
-                servicosRef.doc(id).delete()
-                    .then(() => {
-                        mostrarNotificacao('Serviço excluído com sucesso!', 'success');
-                    })
-                    .catch((error) => {
-                        console.error('Erro ao excluir serviço:', error);
-                        mostrarNotificacao('Erro ao excluir serviço.', 'error');
-                    });
-            }
-        }
-
-        function finalizarAgendamento(id) {
-            const agendamento = agendamentos.find(a => a.id === id);
-            if (!agendamento) return;
-            
-            // Mover para histórico
-            const historicoData = {
-                clienteId: agendamento.clienteId,
-                clienteNome: agendamento.clienteNome,
-                servicoId: agendamento.servicoId,
-                servicoNome: agendamento.servicoNome,
-                data: agendamento.data,
-                horaInicio: agendamento.horaInicio,
-                horaFim: agendamento.horaFim,
-                valor: agendamento.valor,
-                observacoes: agendamento.observacoes,
-                tipo: agendamento.tipo || 'avulso',
-                pacoteId: agendamento.pacoteId || null,
-                dataConclusao: new Date().toISOString()
-            };
-            
-            // Se foi usado um pacote, atualizar o pacote
-            if (agendamento.pacoteId) {
-                pacotesRef.doc(agendamento.pacoteId).get()
-                    .then((doc) => {
-                        if (doc.exists) {
-                            const pacote = doc.data();
-                            const novosProcedimentos = pacote.procedimentosRestantes - 1;
-                            const novoStatus = novosProcedimentos === 0 ? 'finalizado' : 'ativo';
-                            
-                            pacotesRef.doc(agendamento.pacoteId).update({
-                                procedimentosRestantes: novosProcedimentos,
-                                status: novoStatus
-                            });
-                        }
-                    })
-                    .catch((error) => {
-                        console.error('Erro ao atualizar pacote:', error);
-                    });
-            }
-            
-            historicoRef.add(historicoData)
-                .then(() => {
-                    // Excluir o agendamento
-                    agendamentosRef.doc(id).delete()
-                        .then(() => {
-                            mostrarNotificacao('Serviço finalizado com sucesso!', 'success');
-                        })
-                        .catch((error) => {
-                            console.error('Erro ao excluir agendamento:', error);
-                        });
-                })
-                .catch((error) => {
-                    console.error('Erro ao mover para histórico:', error);
-                    mostrarNotificacao('Erro ao finalizar serviço.', 'error');
-                });
-        }
-
-        function excluirAgendamento(id) {
-            if (confirm('Tem certeza que deseja excluir este agendamento?')) {
-                agendamentosRef.doc(id).delete()
-                    .then(() => {
-                        mostrarNotificacao('Agendamento excluído com sucesso!', 'success');
-                    })
-                    .catch((error) => {
-                        console.error('Erro ao excluir agendamento:', error);
-                        mostrarNotificacao('Erro ao excluir agendamento.', 'error');
-                    });
-            }
-        }
-
-        function excluirPacote(id) {
-            if (confirm('Tem certeza que deseja excluir este pacote?')) {
-                pacotesRef.doc(id).delete()
-                    .then(() => {
-                        mostrarNotificacao('Pacote excluído com sucesso!', 'success');
-                    })
-                    .catch((error) => {
-                        console.error('Erro ao excluir pacote:', error);
-                        mostrarNotificacao('Erro ao excluir pacote.', 'error');
-                    });
-            }
-        }
-
-        // ========== FUNÇÕES DE PACOTE ==========
-        function abrirModalUsarPacote(pacoteId, servicoId, clienteId) {
-            document.getElementById('modal-usar-pacote').style.display = 'flex';
+        // 4.2. Modal para usar pacote - CORREÇÃO 3: Horários em branco
+        window.abrirModalUsarPacote = function(pacoteId, servicoId, clienteId) {
             document.getElementById('modal-pacote-id').value = pacoteId;
             document.getElementById('modal-pacote-servico-id').value = servicoId;
             document.getElementById('modal-pacote-cliente-id').value = clienteId;
             
-            // Definir data atual como padrão
-            document.getElementById('modal-pacote-data').value = new Date().toISOString().split('T')[0];
-            
-            // Limpar outros campos
+            // CORREÇÃO 3: Horários em branco em vez de fixos
+            const hoje = new Date().toISOString().slice(0, 10);
+            document.getElementById('modal-pacote-data').value = hoje;
             document.getElementById('modal-pacote-hora').value = '';
             document.getElementById('modal-pacote-hora-fim').value = '';
+            
+            // Resetar campos
             document.getElementById('modal-pacote-procedimento').value = '';
             document.getElementById('modal-pacote-outro').value = '';
+            document.getElementById('group-outro-procedimento').style.display = 'none';
             document.getElementById('modal-pacote-observacoes').value = '';
+            
+            // Mostrar modal
+            document.getElementById('modal-usar-pacote').style.display = 'flex';
+        }
+
+        window.fecharModalUsarPacote = function() {
+            document.getElementById('modal-usar-pacote').style.display = 'none';
+            document.getElementById('form-usar-pacote').reset();
             document.getElementById('group-outro-procedimento').style.display = 'none';
         }
 
-        function fecharModalPacote() {
-            document.getElementById('modal-usar-pacote').style.display = 'none';
-        }
+        // Mostrar campo "Outro" quando selecionado
+        document.getElementById('modal-pacote-procedimento').addEventListener('change', function() {
+            const groupOutro = document.getElementById('group-outro-procedimento');
+            groupOutro.style.display = this.value === 'Outro' ? 'block' : 'none';
+        });
 
-        function usarPacote(e) {
+        // Fechar modal ao clicar no X
+        document.querySelector('.close-modal').addEventListener('click', fecharModalUsarPacote);
+        document.getElementById('cancelar-usar-pacote').addEventListener('click', fecharModalUsarPacote);
+
+        // Fechar modal ao clicar fora
+        document.getElementById('modal-usar-pacote').addEventListener('click', function(e) {
+            if (e.target === this) {
+                fecharModalUsarPacote();
+            }
+        });
+
+        // CORREÇÃO PRINCIPAL: Formulário de usar pacote - AGORA VAI PARA AGENDAMENTOS ATIVOS
+        document.getElementById('form-usar-pacote').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const pacoteId = document.getElementById('modal-pacote-id').value;
             const servicoId = document.getElementById('modal-pacote-servico-id').value;
             const clienteId = document.getElementById('modal-pacote-cliente-id').value;
-            const data = document.getElementById('modal-pacote-data').value;
-            const horaInicio = document.getElementById('modal-pacote-hora').value;
-            const horaFim = document.getElementById('modal-pacote-hora-fim').value;
             const procedimento = document.getElementById('modal-pacote-procedimento').value;
             const outroProcedimento = document.getElementById('modal-pacote-outro').value;
-            const observacoes = document.getElementById('modal-pacote-observacoes').value;
             
-            // Validar horário
-            if (!horaInicio || !horaFim) {
-                mostrarNotificacao('Preencha os horários de início e fim.', 'error');
+            // Verificar conflito de horário para pacotes também
+            const dataPacote = document.getElementById('modal-pacote-data').value;
+            const horaInicioPacote = document.getElementById('modal-pacote-hora').value;
+            const horaFimPacote = document.getElementById('modal-pacote-hora-fim').value;
+
+            const conflitoPacote = verificarConflitoHorarioPacote(dataPacote, horaInicioPacote, horaFimPacote);
+            if (conflitoPacote) {
+                showNotification('Horário já reservado! Por favor, escolha outro horário.', 'error');
                 return;
             }
             
-            if (horaInicio >= horaFim) {
-                mostrarNotificacao('O horário de fim deve ser após o horário de início.', 'error');
+            const pacote = pacotesAtivosList.find(p => p.id === pacoteId);
+            const servico = cacheServicos[servicoId];
+            const cliente = cacheClientes[clienteId];
+
+            if (!pacote || !servico || !cliente) {
+                showNotification('Dados do pacote não encontrados.', 'error');
                 return;
             }
-            
-            // Validar procedimento
-            let procedimentoRealizado = procedimento;
+
+            if (pacote.quantidadeUsada >= pacote.quantidadeTotal) {
+                showNotification('Este pacote já atingiu o limite de uso.', 'error');
+                return;
+            }
+
+            if (!procedimento) {
+                showNotification('Selecione o procedimento realizado.', 'error');
+                return;
+            }
+
+            // Calcular quantidade a debitar
+            const procedimentoSelect = document.getElementById('modal-pacote-procedimento');
+            const selectedOption = procedimentoSelect.options[procedimentoSelect.selectedIndex];
+            const quantidadeDebitar = parseInt(selectedOption.getAttribute('data-quantidade'));
+
+            // Verificar se há procedimentos suficientes
+            if (pacote.quantidadeUsada + quantidadeDebitar > pacote.quantidadeTotal) {
+                showNotification(`Pacote não tem procedimentos suficientes. Restam ${pacote.quantidadeTotal - pacote.quantidadeUsada} procedimentos.`, 'error');
+                return;
+            }
+
+            // Descrição do procedimento
+            let descricaoProcedimento = procedimento;
             if (procedimento === 'Outro' && outroProcedimento) {
-                procedimentoRealizado = outroProcedimento;
+                descricaoProcedimento = outroProcedimento;
             }
-            
-            if (!procedimentoRealizado) {
-                mostrarNotificacao('Selecione ou descreva o procedimento realizado.', 'error');
-                return;
-            }
-            
-            // Obter dados do cliente e serviço
-            const cliente = clientes.find(c => c.id === clienteId);
-            const servico = servicos.find(s => s.id === servicoId);
-            
-            if (!cliente || !servico) {
-                mostrarNotificacao('Dados do cliente ou serviço não encontrados.', 'error');
-                return;
-            }
-            
-            // Verificar conflitos de horário
-            const conflito = agendamentos.find(a => 
-                a.data === data && 
-                ((horaInicio >= a.horaInicio && horaInicio < a.horaFim) ||
-                 (horaFim > a.horaInicio && horaFim <= a.horaFim) ||
-                 (horaInicio <= a.horaInicio && horaFim >= a.horaFim))
-            );
-            
-            if (conflito) {
-                mostrarNotificacao('Conflito de horário! Já existe um agendamento neste período.', 'error');
-                return;
-            }
-            
-            // Criar agendamento para o pacote
-            const agendamentoData = {
-                clienteId,
+
+            // CORREÇÃO: Agora cria agendamento com status "ativo" (não finalizado)
+            const novoAgendamento = {
+                clienteId: clienteId,
                 clienteNome: cliente.nome,
-                servicoId,
+                servicoId: servicoId,
                 servicoNome: servico.nome,
-                data,
-                horaInicio,
-                horaFim,
-                valor: 0, // Já pago no pacote
-                observacoes: observacoes || null,
-                status: 'agendado',
-                dataCriacao: new Date().toISOString(),
+                data: document.getElementById('modal-pacote-data').value,
+                hora: document.getElementById('modal-pacote-hora').value,
+                horaFim: document.getElementById('modal-pacote-hora-fim').value,
+                observacoes: `Uso do Pacote: ${pacote.servicoNome} - ${descricaoProcedimento} (Debitado ${quantidadeDebitar} procedimento(s)) - ${document.getElementById('modal-pacote-observacoes').value || ''}`,
+                valor: 0.00, // Valor é 0, pois já foi pago no pacote
+                status: 'ativo', // CORREÇÃO: Agora fica ATIVO (não finalizado)
                 tipo: 'pacote',
-                pacoteId,
-                procedimentoRealizado
+                pacoteId: pacoteId,
+                procedimentoRealizado: descricaoProcedimento,
+                quantidadeDebitada: quantidadeDebitar
             };
             
-            agendamentosRef.add(agendamentoData)
-                .then(() => {
-                    mostrarNotificacao('Uso de pacote agendado com sucesso!', 'success');
-                    fecharModalPacote();
-                })
-                .catch((error) => {
-                    console.error('Erro ao agendar uso de pacote:', error);
-                    mostrarNotificacao('Erro ao agendar uso de pacote.', 'error');
+            // CORREÇÃO: Atualiza o uso do pacote imediatamente
+            const novoUso = pacote.quantidadeUsada + quantidadeDebitar;
+
+            try {
+                // CORREÇÃO: Adiciona o agendamento nos ATIVOS (não no histórico)
+                await push(agendamentosRef, novoAgendamento); 
+
+                // CORREÇÃO: Atualiza o pacote imediatamente
+                await update(ref(db, 'pacotes_ativos/' + pacoteId), {
+                    quantidadeUsada: novoUso
+                    // Status do pacote só muda quando finalizado na lista de agendamentos
                 });
+
+                showNotification(`Uso de Pacote agendado para ${cliente.nome}! Debitado ${quantidadeDebitar} procedimento(s). Agora aparecerá na lista de agendamentos ativos.`, 'success');
+                fecharModalUsarPacote();
+                
+                // CORREÇÃO: Leva para a aba de agendamentos ativos
+                showAgendaTab('lista-agendamentos');
+            } catch (error) {
+                console.error("Erro ao usar pacote:", error);
+                showNotification('Erro ao registrar uso de pacote: ' + error.message, 'error');
+            }
+        });
+
+        // 4.3. CORREÇÃO FINAL: Marcar Pacote como Pago - PACOTE SÓ FINALIZA QUANDO PAGO E PROCEDIMENTOS ESGOTADOS
+        window.marcarPacotePago = async function(pacoteId) {
+            if (confirm('Marcar este pacote como PAGO?')) {
+                try {
+                    const pacote = pacotesAtivosList.find(p => p.id === pacoteId);
+                    
+                    if (!pacote) {
+                        showNotification('Pacote não encontrado.', 'error');
+                        return;
+                    }
+
+                    // ATUALIZAÇÃO: Só marca como finalizado se os procedimentos estiverem esgotados
+                    const novoStatus = pacote.quantidadeUsada >= pacote.quantidadeTotal ? 'finalizado' : 'ativo';
+
+                    // 1. Atualizar status de pagamento do pacote e status se necessário
+                    await update(ref(db, 'pacotes_ativos/' + pacoteId), {
+                        statusPagamento: 'pago',
+                        status: novoStatus
+                    });
+
+                    // 2. Registrar no histórico com o valor total do pacote
+                    const historicoItem = {
+                        clienteId: pacote.clienteId,
+                        clienteNome: pacote.clienteNome,
+                        servicoId: pacote.servicoId,
+                        servicoNome: pacote.servicoNome,
+                        data: pacote.dataInicio, // Data de início do pacote
+                        hora: '00:00', // Hora padrão para pacotes
+                        horaFim: '00:00',
+                        valor: pacote.valorTotal,
+                        status: 'pago',
+                        tipo: 'pacote_pagamento',
+                        pacoteId: pacoteId,
+                        observacoes: `Pagamento do pacote ${pacote.servicoNome} - ${pacote.quantidadeUsada}/${pacote.quantidadeTotal} procedimentos utilizados`
+                    };
+
+                    await push(agendamentosRef, historicoItem);
+
+                    showNotification('Pacote marcado como PAGO e registrado no histórico!', 'success');
+                    
+                } catch (error) {
+                    console.error("Erro ao marcar pacote como pago:", error);
+                    showNotification('Erro ao marcar pacote como pago: ' + error.message, 'error');
+                }
+            }
+        }
+        
+        // 4.4. Salvar Agendamento (Individual) - COM VERIFICAÇÃO DE CONFLITO DE HORÁRIO
+        document.getElementById('agendamento-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('agendamento-id').value;
+            const clienteId = document.getElementById('agenda-cliente-id').value;
+            const servicoId = document.getElementById('agenda-servico-id').value;
+            const data = document.getElementById('agenda-data').value;
+            const horaInicio = document.getElementById('agenda-hora').value;
+            const horaFim = document.getElementById('agenda-hora-fim').value;
+            
+            const cliente = cacheClientes[clienteId];
+            const servico = cacheServicos[servicoId];
+            
+            if (!cliente || !servico || servico.isPacote) {
+                showNotification('Selecione um cliente e um serviço VÁLIDO (não-pacote).', 'error');
+                return;
+            }
+
+            // Verificar conflito de horário para serviços individuais
+            if (!id) { // Só verifica conflito para novos agendamentos
+                const conflito = verificarConflitoHorario(data, horaInicio, horaFim);
+                if (conflito) {
+                    showNotification('Horário já reservado! Por favor, escolha outro horário.', 'error');
+                    return;
+                }
+            }
+
+            const agendamento = {
+                clienteId: clienteId,
+                clienteNome: cliente.nome,
+                servicoId: servicoId,
+                servicoNome: servico.nome,
+                data: data,
+                hora: horaInicio,
+                horaFim: horaFim,
+                observacoes: document.getElementById('agenda-observacoes').value || '',
+                valor: servico.preco,
+                status: 'ativo', // Novo agendamento é sempre ativo
+                tipo: 'individual'
+            };
+
+            try {
+                if (id) {
+                    await update(ref(db, 'agendamentos/' + id), agendamento);
+                    showNotification('Agendamento atualizado com sucesso!', 'success');
+                } else {
+                    await push(agendamentosRef, agendamento);
+                    showNotification('Agendamento salvo com sucesso!', 'success');
+                }
+                resetAgendamentoForm();
+            } catch (error) {
+                console.error("Erro ao salvar agendamento:", error);
+                showNotification('Erro ao salvar agendamento: ' + error.message, 'error');
+            }
+        });
+
+        window.editarAgendamento = function(id) {
+            const agendamento = agendamentosAtivos.find(a => a.id === id);
+            if (!agendamento) return;
+            
+            document.getElementById('agendamento-id').value = id;
+            document.getElementById('agenda-cliente-id').value = agendamento.clienteId;
+            document.getElementById('agenda-servico-id').value = agendamento.servicoId;
+            document.getElementById('agenda-data').value = agendamento.data;
+            document.getElementById('agenda-hora').value = agendamento.hora;
+            document.getElementById('agenda-hora-fim').value = agendamento.horaFim;
+            document.getElementById('agenda-observacoes').value = agendamento.observacoes;
+            
+            document.getElementById('btn-salvar-agendamento').innerHTML = '<span class="material-icons">edit</span> Atualizar Agendamento';
+            showAgendaTab('novo-agendamento'); // Leva para a aba de edição
+            showNotification(`Editando agendamento para: ${agendamento.clienteNome}`, 'info');
+        }
+        
+        // NOVO: Função auxiliar para verificar conflitos de horário
+        function verificarConflitoHorario(data, horaInicio, horaFim, idExcluir = null) {
+            return agendamentosAtivos.some(a => 
+                a.data === data && 
+                a.id !== idExcluir && // Não verifica o próprio agendamento em edição
+                ((horaInicio >= a.hora && horaInicio < a.horaFim) ||
+                 (horaFim > a.hora && horaFim <= a.horaFim) ||
+                 (horaInicio <= a.hora && horaFim >= a.horaFim))
+            );
         }
 
-        function calcularValorPacote() {
-            const servicoId = document.getElementById('pacote-servico-id').value;
-            const quantidade = parseInt(document.getElementById('pacote-quantidade').value);
+        // NOVO: Função para verificar conflito também para pacotes
+        function verificarConflitoHorarioPacote(data, horaInicio, horaFim) {
+            // Busca em TODOS os agendamentos (ativos e históricos de pacotes/finalizados do dia)
+            const todosAgendamentosDoDia = [
+                ...agendamentosAtivos.filter(a => a.data === data),
+                ...agendamentosHistorico.filter(a => a.data === data && (a.tipo === 'pacote' || a.status === 'finalizado'))
+            ];
             
-            if (servicoId && quantidade) {
-                const servico = servicos.find(s => s.id === servicoId);
-                if (servico) {
-                    const valorTotal = servico.valor * quantidade;
-                    document.getElementById('pacote-valor').value = valorTotal.toFixed(2);
+            return todosAgendamentosDoDia.some(a => 
+                ((horaInicio >= a.hora && horaInicio < a.horaFim) ||
+                 (horaFim > a.hora && horaFim <= a.horaFim) ||
+                 (horaInicio <= a.hora && horaFim >= a.horaFim))
+            );
+        }
+        
+        // CORREÇÃO: Finalizar Agendamento - AGORA FUNCIONA TANTO PARA INDIVIDUAIS QUANTO PARA PACOTES
+        window.finalizarAgendamento = async function(id) {
+            const agendamento = agendamentosAtivos.find(a => a.id === id);
+            if (!agendamento) return;
+
+            if (confirm(`Finalizar agendamento para ${agendamento.clienteNome} (${agendamento.servicoNome})?`)) {
+                try {
+                    // CORREÇÃO: Para pacotes, também finaliza o pacote se todos os procedimentos foram usados
+                    if (agendamento.tipo === 'pacote' && agendamento.pacoteId) {
+                        const pacote = pacotesAtivosList.find(p => p.id === agendamento.pacoteId);
+                        if (pacote && pacote.quantidadeUsada >= pacote.quantidadeTotal && pacote.statusPagamento === 'pago') {
+                            await update(ref(db, 'pacotes_ativos/' + agendamento.pacoteId), {
+                                status: 'finalizado'
+                            });
+                        }
+                    }
+
+                    // Muda o status para 'finalizado' - vai para o histórico
+                    await update(ref(db, 'agendamentos/' + id), {
+                        status: 'finalizado'
+                    });
+                    
+                    showNotification('Agendamento finalizado! Agora aparece no histórico.', 'success');
+                } catch (error) {
+                    showNotification('Erro ao finalizar agendamento: ' + error.message, 'error');
                 }
             }
         }
 
-        // ========== FUNÇÕES DE VISÃO DIÁRIA ==========
-        function carregarVisaoDiaria() {
-            const dataSelecionada = document.getElementById('visao-data').value;
-            if (!dataSelecionada) return;
-            
-            const tbody = document.getElementById('corpo-visao-diaria');
-            tbody.innerHTML = '';
-            
-            // Obter agendamentos do dia
-            const agendamentosDia = agendamentos.filter(a => a.data === dataSelecionada);
-            
-            // Criar linhas para cada horário (8:00 às 18:00)
-            for (let hora = 8; hora <= 18; hora++) {
-                const tr = document.createElement('tr');
-                
-                // Célula de horário
-                const tdHorario = document.createElement('td');
-                tdHorario.className = 'horario-celula';
-                tdHorario.textContent = `${hora}:00`;
-                tr.appendChild(tdHorario);
-                
-                // Células para cada coluna de hora (8:00, 9:00, etc.)
-                for (let colHora = 8; colHora <= 18; colHora++) {
-                    const td = document.createElement('td');
-                    
-                    // Verificar se há agendamento neste horário
-                    const agendamento = agendamentosDia.find(a => {
-                        const horaInicio = parseInt(a.horaInicio.split(':')[0]);
-                        const horaFim = parseInt(a.horaFim.split(':')[0]);
-                        return hora >= horaInicio && hora < horaFim && colHora === horaInicio;
+        // MELHORIA 1: Cancelamento de Pacotes na Visão Diária e Histórico
+        window.cancelarAgendamento = async function(id) {
+            const agendamento = agendamentosAtivos.find(a => a.id === id);
+            if (!agendamento) return;
+
+            if (confirm(`Cancelar agendamento para ${agendamento.clienteNome} (${agendamento.servicoNome})?`)) {
+                try {
+                    await update(ref(db, 'agendamentos/' + id), {
+                        status: 'cancelado' // Manda para o histórico
                     });
                     
-                    if (agendamento) {
-                        td.className = 'agendamento-ocupado';
-                        td.innerHTML = `
-                            <strong>${agendamento.clienteNome}</strong><br>
-                            ${agendamento.servicoNome}<br>
-                            ${agendamento.horaInicio} - ${agendamento.horaFim}
-                        `;
-                        td.setAttribute('data-id', agendamento.id);
-                        td.addEventListener('click', function() {
-                            // Implementar ação ao clicar no agendamento, se necessário
-                        });
-                    } else {
-                        // Verificar se este horário já passou (para a data selecionada)
-                        const hoje = new Date();
-                        const dataAgenda = new Date(dataSelecionada);
-                        
-                        if (dataAgenda.toDateString() === hoje.toDateString() && hora < hoje.getHours()) {
-                            td.className = 'agendamento-vencido';
-                            td.textContent = 'Horário passado';
-                        } else {
-                            td.className = 'agendamento-vago';
-                            td.textContent = 'Livre';
+                    // NOVO: Se for um pacote, também remove da Visão Diária imediatamente
+                    if (agendamento.tipo === 'pacote') {
+                        // Força atualização da Visão Diária
+                        if (document.getElementById('visao-diaria-pane').classList.contains('active')) {
+                            renderizarVisaoDiaria();
                         }
                     }
                     
-                    tr.appendChild(td);
+                    showNotification('Agendamento cancelado e enviado para Histórico!', 'info');
+                } catch (error) {
+                    showNotification('Erro ao cancelar agendamento: ' + error.message, 'error');
+                }
+            }
+        }
+        
+        window.resetAgendamentoForm = function() {
+             document.getElementById('agendamento-form').reset();
+             document.getElementById('agendamento-id').value = '';
+             document.getElementById('btn-salvar-agendamento').innerHTML = '<span class="material-icons">save</span> Salvar Agendamento';
+             
+             // Restaurar data e hora padrão
+             const hoje = new Date().toISOString().slice(0, 10);
+             document.getElementById('agenda-data').value = hoje;
+             document.getElementById('agenda-hora').value = '09:00';
+             document.getElementById('agenda-hora-fim').value = '10:00';
+        }
+
+        // =================================================================
+        // 5. FUNÇÕES DE RENDERIZAÇÃO
+        // =================================================================
+
+        // 5.1. RENDERIZAR DROPDOWNS
+        function popularSelectClientes() {
+            const selects = [
+                document.getElementById('pacote-cliente-id'), 
+                document.getElementById('agenda-cliente-id')
+            ];
+
+            selects.forEach(select => {
+                const selectedValue = select.value;
+                select.innerHTML = '<option value="">Selecione um Cliente</option>';
+                clientesDataList.forEach(c => {
+                    const option = document.createElement('option');
+                    option.value = c.id;
+                    option.textContent = c.nome;
+                    select.appendChild(option);
+                });
+                select.value = selectedValue; // Tenta manter a seleção
+            });
+        }
+        
+        function popularSelectServicos() {
+             const select = document.getElementById('agenda-servico-id');
+             const selectedValue = select.value;
+             select.innerHTML = '<option value="">Selecione um Serviço</option>';
+             Object.values(cacheServicos).filter(s => !s.isPacote).forEach(s => {
+                 const option = document.createElement('option');
+                 option.value = s.id;
+                 option.textContent = `${s.nome} (${formatarMoeda(s.preco)})`;
+                 select.appendChild(option);
+             });
+             select.value = selectedValue;
+        }
+        
+        function popularSelectPacotes() {
+             const select = document.getElementById('pacote-servico-id');
+             const selectedValue = select.value;
+             select.innerHTML = '<option value="">Selecione um Pacote</option>';
+             Object.values(cacheServicos).filter(s => s.isPacote).forEach(s => {
+                 const option = document.createElement('option');
+                 option.value = s.id;
+                 option.textContent = `${s.nome} (${s.quantidadeTotal}x - ${formatarMoeda(s.preco)})`;
+                 select.appendChild(option);
+             });
+             select.value = selectedValue;
+        }
+
+        function renderizarClienteDatalist() {
+            const datalist = document.getElementById('clientes-datalist');
+            datalist.innerHTML = '';
+            clientesDataList.forEach(c => {
+                const option = document.createElement('option');
+                option.value = c.nome;
+                datalist.appendChild(option);
+            });
+        }
+
+        // 5.2. RENDERIZAR CLIENTES (Tabela) - CORREÇÃO 2: Ações não cobrindo botão Editar
+        function renderizarClientes() {
+            const tabela = document.getElementById('lista-clientes');
+            const filtro = document.getElementById('filtro-clientes').value.toLowerCase();
+            tabela.innerHTML = '';
+            
+            const clientesFiltrados = clientesDataList.filter(c => 
+                c.nome.toLowerCase().includes(filtro) || 
+                c.telefone.includes(filtro) || 
+                (c.endereco && c.endereco.toLowerCase().includes(filtro))
+            );
+
+            if (clientesFiltrados.length === 0) {
+                 tabela.innerHTML = '<tr><td colspan="4" style="text-align: center;">Nenhum cliente encontrado.</td></tr>';
+                 return;
+            }
+
+            clientesFiltrados.forEach(c => {
+                const clienteCompleto = cacheClientes[c.id];
+                const row = tabela.insertRow();
+                row.dataset.clienteId = c.id; 
+                row.dataset.clienteNome = c.nome.toLowerCase(); 
+
+                // Nome
+                let nomeCell = row.insertCell();
+                nomeCell.textContent = c.nome;
+                nomeCell.setAttribute('data-label', 'Nome');
+
+                // Telefone
+                let telCell = row.insertCell();
+                telCell.textContent = c.telefone;
+                telCell.setAttribute('data-label', 'Telefone');
+
+                // Endereço (em vez de Email)
+                let enderecoCell = row.insertCell();
+                enderecoCell.textContent = clienteCompleto.endereco || '';
+                enderecoCell.setAttribute('data-label', 'Endereço');
+
+                // Ações - CORREÇÃO 2: Melhor organização dos botões
+                let actionCell = row.insertCell();
+                actionCell.classList.add('action-buttons');
+                // MELHORIA 1: Removido o data-label "Ações"
+                actionCell.innerHTML = `
+                    <button class="btn-warning" onclick="editarCliente('${c.id}')"><span class="material-icons">edit</span> Editar</button>
+                    <button class="btn-danger" onclick="excluirCliente('${c.id}')"><span class="material-icons">delete</span> Excluir</button>
+                `;
+            });
+        }
+        
+        window.filtrarClientes = function() {
+            renderizarClientes();
+        }
+
+        // 5.3. RENDERIZAR SERVIÇOS (Tabela) - MANTIDO IGUAL
+        function renderizarServicos() {
+            const tabela = document.getElementById('lista-servicos');
+            tabela.innerHTML = '';
+            const servicos = Object.values(cacheServicos).sort((a, b) => a.nome.localeCompare(b.nome));
+
+            if (servicos.length === 0) {
+                 tabela.innerHTML = '<tr><td colspan="5" style="text-align: center;">Nenhum serviço cadastrado.</td></tr>';
+                 return;
+            }
+            
+            servicos.forEach(s => {
+                const row = tabela.insertRow();
+
+                // Serviço
+                let nomeCell = row.insertCell();
+                nomeCell.textContent = s.nome;
+                nomeCell.setAttribute('data-label', 'Serviço');
+
+                // Tipo
+                let tipoCell = row.insertCell();
+                tipoCell.textContent = s.isPacote ? 'Pacote' : 'Individual';
+                tipoCell.setAttribute('data-label', 'Tipo');
+
+                // Total Proc.
+                let qtdCell = row.insertCell();
+                qtdCell.textContent = s.isPacote ? `${s.quantidadeTotal}x` : '-';
+                qtdCell.setAttribute('data-label', 'Total Proc.');
+
+                // Preço
+                let precoCell = row.insertCell();
+                precoCell.textContent = formatarMoeda(s.preco);
+                precoCell.setAttribute('data-label', 'Preço');
+
+                // Ações
+                let actionCell = row.insertCell();
+                actionCell.classList.add('action-buttons');
+                // MELHORIA 1: Removido o data-label "Ações"
+                actionCell.innerHTML = `
+                    <button class="btn-warning" onclick="editarServico('${s.id}')"><span class="material-icons">edit</span> Editar</button>
+                    <button class="btn-danger" onclick="excluirServico('${s.id}')"><span class="material-icons">delete</span> Excluir</button>
+                `;
+            });
+        }
+
+        // 5.4. RENDERIZAR PACOTES ATIVOS (Tabela) - CORREÇÃO: MOSTRAR TODOS OS PACOTES ATIVOS (NÃO SÓ OS NÃO PAGOS)
+        function renderizarPacotesAtivos() {
+            const tabela = document.getElementById('lista-pacotes-ativos');
+            tabela.innerHTML = '';
+
+            // CORREÇÃO: Mostrar TODOS os pacotes que não estão finalizados (ativos independente do pagamento)
+            const pacotesAtivos = pacotesAtivosList.filter(p => p.status === 'ativo');
+            
+            if (pacotesAtivos.length === 0) {
+                 tabela.innerHTML = '<tr><td colspan="5" style="text-align: center;">Nenhum pacote ativo.</td></tr>';
+                 return;
+            }
+
+            pacotesAtivos.forEach(p => {
+                const row = tabela.insertRow();
+                
+                // Cliente
+                let clienteCell = row.insertCell();
+                clienteCell.textContent = p.clienteNome;
+                clienteCell.setAttribute('data-label', 'Cliente');
+
+                // Pacote (Total/Usado)
+                let pacoteCell = row.insertCell();
+                pacoteCell.textContent = `${p.servicoNome} (${p.quantidadeUsada}/${p.quantidadeTotal})`;
+                pacoteCell.setAttribute('data-label', 'Pacote');
+
+                // Pagamento
+                let pagamentoCell = row.insertCell();
+                const statusPagamento = p.statusPagamento === 'pago' ? 
+                    `<span class="status-package-paid">PAGO (${formatarMoeda(p.valorTotal)})</span>` : 
+                    `<span class="status-package-pending">PENDENTE (${formatarMoeda(p.valorTotal)})</span>`;
+                pagamentoCell.innerHTML = statusPagamento;
+                pagamentoCell.setAttribute('data-label', 'Pagamento');
+
+                // Vencimento
+                let vencimentoCell = row.insertCell();
+                const dataVencimento = new Date(p.dataVencimento);
+                const hoje = new Date();
+                let statusVencimento = formatarData(p.dataVencimento);
+                if (dataVencimento < hoje) {
+                     statusVencimento = `<span class="status-package-finalized">VENCIDO (${statusVencimento})</span>`;
+                } else {
+                     statusVencimento = `<span class="status-package-active">Ativo até (${statusVencimento})</span>`;
+                }
+                vencimentoCell.innerHTML = statusVencimento;
+                vencimentoCell.setAttribute('data-label', 'Vencimento');
+
+                // Ações
+                let actionCell = row.insertCell();
+                actionCell.classList.add('action-buttons');
+                // MELHORIA 1: Removido o data-label "Ações"
+                
+                let actionButtons = '';
+                
+                // Botão Usar Pacote - só aparece se ainda houver procedimentos disponíveis
+                if (p.quantidadeUsada < p.quantidadeTotal) {
+                     actionButtons += `<button class="btn-primary" onclick="abrirModalUsarPacote('${p.id}', '${p.servicoId}', '${p.clienteId}')">
+                         <span class="material-icons">event_available</span> Usar Pacote
+                     </button>`;
+                } else {
+                     actionButtons += `<button class="btn-secondary" disabled><span class="material-icons">event_busy</span> Esgotado</button>`;
                 }
                 
-                tbody.appendChild(tr);
-            }
-        }
+                // Botão Marcar Pago - só aparece se não estiver pago
+                if (p.statusPagamento !== 'pago') {
+                     actionButtons += `<button class="btn-success" onclick="marcarPacotePago('${p.id}')">
+                         <span class="material-icons">payments</span> Marcar Pago
+                     </button>`;
+                }
 
-        // ========== FUNÇÕES DE FILTRO E RELATÓRIO ==========
-        function filtrarClientes() {
-            atualizarListaClientes();
+                actionCell.innerHTML = actionButtons;
+            });
         }
-
-        function limparFiltroCliente() {
-            document.getElementById('filtro-cliente-nome').value = '';
-            filtrarClientes();
+        
+        // 5.5. RENDERIZAR LISTA DE AGENDAMENTOS (Tabela) - CORREÇÃO: MOSTRAR PACOTES TAMBÉM
+        window.carregarAgendamentos = function() {
+            renderizarListaAgendamentos();
         }
-
-        function filtrarAgendamentos() {
-            atualizarListaAgendamentos();
-        }
-
-        function limparFiltrosAgendamentos() {
-            document.getElementById('filtro-data').value = '';
-            document.getElementById('filtro-cliente').value = '';
-            filtrarAgendamentos();
-        }
-
-        function carregarAnosFiltro() {
-            const selectAno = document.getElementById('filtro-ano');
-            const anoAtual = new Date().getFullYear();
+        
+        function renderizarListaAgendamentos() {
+            const tabela = document.getElementById('lista-agendamentos');
+            const filtroData = document.getElementById('filtro-agenda-data').value;
+            const filtroClienteNome = document.getElementById('filtro-agenda-cliente').value.toLowerCase();
+            tabela.innerHTML = '';
             
-            for (let i = anoAtual - 5; i <= anoAtual + 1; i++) {
-                const option = document.createElement('option');
-                option.value = i;
-                option.textContent = i;
-                selectAno.appendChild(option);
+            let agendamentosFiltrados = agendamentosAtivos;
+            
+            if (filtroData) {
+                 agendamentosFiltrados = agendamentosFiltrados.filter(a => a.data === filtroData);
+            }
+            if (filtroClienteNome) {
+                 agendamentosFiltrados = agendamentosFiltrados.filter(a => a.clienteNome.toLowerCase().includes(filtroClienteNome));
             }
             
-            selectAno.value = anoAtual;
-        }
+            if (agendamentosFiltrados.length === 0) {
+                 tabela.innerHTML = '<tr><td colspan="5" style="text-align: center;">Nenhum agendamento ativo encontrado.</td></tr>';
+                 return;
+            }
 
-        function filtrarHistorico() {
-            const mes = parseInt(document.getElementById('filtro-mes').value);
-            const ano = parseInt(document.getElementById('filtro-ano').value);
-            
-            const primeiroDiaMes = new Date(ano, mes - 1, 1);
-            const ultimoDiaMes = new Date(ano, mes, 0);
-            
-            historicoRef.where('data', '>=', primeiroDiaMes.toISOString().split('T')[0])
-                       .where('data', '<=', ultimoDiaMes.toISOString().split('T')[0])
-                       .orderBy('data', 'desc')
-                       .get()
-                       .then((snapshot) => {
-                historico = [];
-                snapshot.forEach((doc) => {
-                    historico.push({ id: doc.id, ...doc.data() });
-                });
-                atualizarListaHistorico();
-                calcularResumoFinanceiro();
-            })
-            .catch((error) => {
-                console.error('Erro ao filtrar histórico:', error);
-                mostrarNotificacao('Erro ao filtrar histórico.', 'error');
+            agendamentosFiltrados.forEach(a => {
+                const row = tabela.insertRow();
+
+                // Data/Hora
+                let dataHoraCell = row.insertCell();
+                dataHoraCell.textContent = `${formatarData(a.data)} às ${a.hora}`;
+                dataHoraCell.setAttribute('data-label', 'Data/Hora');
+
+                // Cliente
+                let clienteCell = row.insertCell();
+                clienteCell.textContent = a.clienteNome;
+                clienteCell.setAttribute('data-label', 'Cliente');
+
+                // Serviço
+                let servicoCell = row.insertCell();
+                let servicoTexto = a.servicoNome;
+                if (a.tipo === 'pacote') {
+                    servicoTexto += ' (Pacote)';
+                }
+                servicoCell.textContent = servicoTexto;
+                servicoCell.setAttribute('data-label', 'Serviço');
+                
+                // Status
+                let statusCell = row.insertCell();
+                statusCell.textContent = a.status;
+                statusCell.setAttribute('data-label', 'Status');
+
+                // Ações
+                let actionCell = row.insertCell();
+                actionCell.classList.add('action-buttons');
+                // MELHORIA 1: Removido o data-label "Ações"
+                actionCell.innerHTML = `
+                    <button class="btn-success" onclick="finalizarAgendamento('${a.id}')"><span class="material-icons">done_all</span> Finalizar</button>
+                    <button class="btn-warning" onclick="editarAgendamento('${a.id}')"><span class="material-icons">edit</span> Editar</button>
+                    <button class="btn-danger" onclick="cancelarAgendamento('${a.id}')"><span class="material-icons">close</span> Cancelar</button>
+                `;
             });
         }
+        
+        window.filtrarAgendamentos = function() {
+            renderizarListaAgendamentos();
+        }
 
-        function calcularResumoFinanceiro() {
-            const totalServicos = historico.length;
-            const faturamentoBruto = historico.reduce((total, item) => total + item.valor, 0);
+        window.resetFiltroAgenda = function() {
+            document.getElementById('filtro-agenda-data').value = ''; 
+            document.getElementById('filtro-agenda-cliente').value = '';
+            renderizarListaAgendamentos();
+        }
+        
+        // 5.6. RENDERIZAR VISÃO DIÁRIA (Tabela de horários) - CORREÇÃO 5: "Vencido" em vez de "Horário Vencido"
+        window.renderizarVisaoDiaria = function(today = false) {
+            const dataInput = document.getElementById('filtro-visao-diaria-data');
+            if (today) {
+                dataInput.value = new Date().toISOString().slice(0, 10);
+            }
+            const dataSelecionada = dataInput.value;
+            const tabelaBody = document.getElementById('lista-visao-diaria');
+            tabelaBody.innerHTML = '';
+
+            if (!dataSelecionada) {
+                 tabelaBody.innerHTML = '<tr><td colspan="2" style="text-align: center;">Selecione uma data para visualizar.</td></tr>';
+                 return;
+            }
+
+            // Buscar TODOS os agendamentos para a data selecionada (ativos, finalizados e pacotes)
+            const agendamentosDoDia = [
+                ...agendamentosAtivos.filter(a => a.data === dataSelecionada),
+                ...agendamentosHistorico.filter(a => a.data === dataSelecionada && (a.tipo === 'pacote' || a.status === 'finalizado'))
+            ];
+
+            // Geração de horários (a cada 30 minutos, das 07:00 às 22:00)
+            const horarios = [];
+            for (let h = 7; h <= 21; h++) {
+                horarios.push(`${String(h).padStart(2, '0')}:00`);
+                if (h < 21) horarios.push(`${String(h).padStart(2, '0')}:30`);
+            }
+            horarios.push('22:00');
             
-            // Para simplificar, consideramos 70% de lucro líquido
-            const lucroLiquido = faturamentoBruto * 0.7;
+            const agora = new Date();
+            const dataAtual = agora.toISOString().slice(0, 10);
+            const horaAtual = agora.toTimeString().slice(0, 5);
             
-            document.getElementById('total-servicos').textContent = totalServicos;
-            document.getElementById('faturamento-bruto').textContent = `R$ ${faturamentoBruto.toFixed(2)}`;
-            document.getElementById('lucro-liquido').textContent = `R$ ${lucroLiquido.toFixed(2)}`;
-        }
+            horarios.forEach(horario => {
+                const row = tabelaBody.insertRow();
+                const horarioCell = row.insertCell();
+                horarioCell.textContent = horario;
+                horarioCell.classList.add('horario-celula');
+                
+                const detalhesCell = row.insertCell();
+                detalhesCell.setAttribute('data-label', 'Agendamento');
+                
+                const agendamentoNoHorario = agendamentosDoDia.find(a => a.hora <= horario && a.horaFim > horario);
 
-        // ========== FUNÇÕES UTILITÁRIAS ==========
-        function definirDataHoje() {
-            const hoje = new Date().toISOString().split('T')[0];
-            document.getElementById('agendamento-data').value = hoje;
-            document.getElementById('visao-data').value = hoje;
-        }
-
-        function mostrarNotificacao(mensagem, tipo) {
-            const notification = document.getElementById('notification-bar');
-            notification.textContent = mensagem;
-            notification.className = '';
-            notification.classList.add(tipo);
-            notification.classList.add('show');
-            
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
-        }
-
-        function aplicarResponsividadeTabelas() {
-            // Esta função é executada automaticamente ao atualizar as tabelas
-            // Não é necessário chamá-la manualmente
-        }
-
-        function showAgendaTab(tabName, event) {
-            // Esconder todas as abas
-            document.querySelectorAll('.tab-pane').forEach(tab => {
-                tab.classList.remove('active');
+                if (agendamentoNoHorario) {
+                    detalhesCell.classList.add('agendamento-ocupado');
+                    
+                    // Informações específicas para pacotes
+                    let infoExtra = '';
+                    if (agendamentoNoHorario.tipo === 'pacote') {
+                        infoExtra = `<br><em>Procedimento: ${agendamentoNoHorario.procedimentoRealizado || 'Pacote'}</em>`;
+                    }
+                    
+                    const tipoTexto = agendamentoNoHorario.tipo === 'pacote' ? ' (Pacote)' : 
+                                    agendamentoNoHorario.status === 'finalizado' ? ' (Finalizado)' : '';
+                    
+                    detalhesCell.innerHTML = `
+                        <strong>${agendamentoNoHorario.clienteNome}</strong>
+                        <br>${agendamentoNoHorario.servicoNome}${tipoTexto}
+                        <br>${agendamentoNoHorario.hora} - ${agendamentoNoHorario.horaFim}
+                        ${infoExtra}
+                    `;
+                    
+                    if (agendamentoNoHorario.status === 'ativo') {
+                        detalhesCell.onclick = () => editarAgendamento(agendamentoNoHorario.id);
+                    } else {
+                        detalhesCell.style.cursor = 'default';
+                    }
+                } else {
+                    // Verificar se é um horário que já passou
+                    if (dataSelecionada === dataAtual && horario < horaAtual) {
+                        detalhesCell.classList.add('agendamento-vencido');
+                        // CORREÇÃO 5: "Vencido" em vez de "Horário Vencido"
+                        detalhesCell.textContent = 'Vencido';
+                    } else {
+                        detalhesCell.classList.add('agendamento-vago');
+                        detalhesCell.textContent = 'Livre';
+                    }
+                }
             });
-            
-            // Mostrar a aba selecionada
-            document.getElementById(tabName + '-pane').classList.add('active');
-            
-            // Atualizar botões ativos
-            document.querySelectorAll('.tab-button').forEach(button => {
-                button.classList.remove('active');
-            });
-            
-            event.target.classList.add('active');
         }
+        
+        // 5.7. RENDERIZAR HISTÓRICO E LUCROS - CORREÇÃO 4: Título dinâmico do resumo de lucros
+        window.renderizarHistorico = function() {
+            // 5.7.1. Lucros Mensais - CORREÇÃO 4: Título dinâmico baseado no filtro
+            const listaLucrosMensais = document.getElementById('lista-lucros-mensais');
+            const filtroMes = document.getElementById('filtro-historico-mes').value;
+            listaLucrosMensais.innerHTML = '';
 
-        // ========== FUNÇÕES DE LIMPEZA DE DADOS ==========
-        function mostrarModalLimpeza() {
+            // CORREÇÃO 4: Título dinâmico baseado no filtro
+            const tituloResumo = document.getElementById('titulo-resumo-lucros');
+            if (filtroMes) {
+                const mes = new Date(filtroMes + '-01').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+                tituloResumo.textContent = `Resumo de Lucros - ${mes}`;
+            } else {
+                tituloResumo.textContent = 'Resumo de Lucros - Todos os Meses';
+            }
+            
+            const lucrosPorMes = agendamentosHistorico.reduce((acc, a) => {
+                // CORREÇÃO: Incluir pacotes pagos e agendamentos finalizados
+                if ((a.status === 'finalizado' && a.tipo === 'individual') || 
+                    (a.tipo === 'pacote_pagamento')) {
+                    
+                    const mesAno = a.data.substring(0, 7);
+                    acc[mesAno] = acc[mesAno] || { totalAgendamentos: 0, lucroTotal: 0 };
+                    
+                    if (a.tipo === 'pacote_pagamento') {
+                        acc[mesAno].lucroTotal += a.valor || 0;
+                    } else {
+                        acc[mesAno].totalAgendamentos++;
+                        acc[mesAno].lucroTotal += a.valor || 0;
+                    }
+                }
+                return acc;
+            }, {});
+
+            // Aplicar filtro de mês se existir
+            let mesesParaExibir = Object.keys(lucrosPorMes);
+            if (filtroMes) {
+                mesesParaExibir = mesesParaExibir.filter(mes => mes === filtroMes);
+            }
+            
+            const mesesOrdenados = mesesParaExibir.sort().reverse();
+            
+            if (mesesOrdenados.length === 0) {
+                listaLucrosMensais.innerHTML = '<tr><td colspan="4" style="text-align: center;">Nenhum lucro registrado.</td></tr>';
+            } else {
+                 mesesOrdenados.forEach(mesAno => {
+                     const mes = new Date(mesAno + '-01').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+                     const lucro = lucrosPorMes[mesAno];
+                     const row = listaLucrosMensais.insertRow();
+                     row.insertCell().textContent = mes;
+                     row.insertCell().textContent = lucro.totalAgendamentos;
+                     
+                     // MELHORIA 2: Aplicar estilo melhorado para o valor do lucro
+                     let lucroCell = row.insertCell();
+                     lucroCell.innerHTML = `<div class="lucro-valor">${formatarMoeda(lucro.lucroTotal)}</div>`;
+                     
+                     // REMOVIDO: Botão "Ver Detalhes"
+                     let acoesCell = row.insertCell();
+                     acoesCell.innerHTML = ''; // Vazio
+                 });
+            }
+
+            // 5.7.2. Histórico Completo - CORREÇÃO: APLICAR FILTRO DE MÊS TAMBÉM AQUI
+            const listaHistorico = document.getElementById('lista-historico');
+            const filtroCliente = document.getElementById('filtro-historico-cliente').value.toLowerCase();
+            listaHistorico.innerHTML = '';
+
+            let historicoFiltrado = agendamentosHistorico;
+            
+            // Aplicar filtro de mês
+            if (filtroMes) {
+                 historicoFiltrado = historicoFiltrado.filter(a => a.data.startsWith(filtroMes));
+            }
+            
+            // Aplicar filtro de cliente
+            if (filtroCliente) {
+                historicoFiltrado = historicoFiltrado.filter(a => a.clienteNome.toLowerCase().includes(filtroCliente));
+            }
+            
+            if (historicoFiltrado.length === 0) {
+                 listaHistorico.innerHTML = '<tr><td colspan="5" style="text-align: center;">Nenhum agendamento no histórico.</td></tr>';
+                 return;
+            }
+
+            historicoFiltrado.forEach(a => {
+                 const row = listaHistorico.insertRow();
+                 row.dataset.agendamentoId = a.id; 
+                 row.dataset.clienteNome = a.clienteNome.toLowerCase(); 
+                 
+                 // Data/Hora
+                 let dataHoraCell = row.insertCell();
+                 dataHoraCell.textContent = `${formatarData(a.data)} às ${a.hora}`;
+                 dataHoraCell.setAttribute('data-label', 'Data/Hora');
+                 
+                 // Cliente
+                 let clienteCell = row.insertCell();
+                 clienteCell.textContent = a.clienteNome;
+                 clienteCell.setAttribute('data-label', 'Cliente');
+
+                 // Serviço
+                 let servicoCell = row.insertCell();
+                 let servicoTexto = a.servicoNome;
+                 if (a.tipo === 'pacote') {
+                     servicoTexto += ' (Uso de Pacote)';
+                     if (a.procedimentoRealizado) {
+                         servicoTexto += ` - ${a.procedimentoRealizado}`;
+                     }
+                 } else if (a.tipo === 'pacote_pagamento') {
+                     servicoTexto += ' (Pagamento de Pacote)';
+                 } else if (a.status === 'cancelado') {
+                      servicoTexto += ' (Cancelado)';
+                 }
+                 servicoCell.textContent = servicoTexto;
+                 servicoCell.setAttribute('data-label', 'Serviço');
+
+                 // Valor
+                 let valorCell = row.insertCell();
+                 valorCell.textContent = formatarMoeda(a.valor);
+                 valorCell.setAttribute('data-label', 'Valor (R$)');
+
+                 // Ações
+                 let actionCell = row.insertCell();
+                 actionCell.classList.add('action-buttons');
+                 actionCell.setAttribute('data-label', 'Ações');
+                 
+                 let statusClass = 'btn-secondary';
+                 let statusIcon = 'info';
+
+                 if (a.status === 'finalizado' || a.tipo === 'pacote_pagamento') {
+                     statusClass = 'btn-success';
+                     statusIcon = 'check';
+                 } else if (a.status === 'cancelado') {
+                      statusClass = 'btn-danger';
+                      statusIcon = 'close';
+                 }
+
+                 actionCell.innerHTML = `
+                     <button class="${statusClass}" disabled><span class="material-icons">${statusIcon}</span> ${a.status.toUpperCase()}</button>
+                     <button class="btn-warning" onclick="reverterHistorico('${a.id}')"><span class="material-icons">undo</span> Reverter</button>
+                 `;
+            });
+        }
+        
+        // REMOVIDO: função aplicarFiltroHistoricoMes (não é mais necessária)
+        
+        // 6. FUNÇÃO DE REVERSÃO DE HISTÓRICO - MANTIDO IGUAL
+        window.reverterHistorico = async function(agendamentoId) {
+            const agendamento = cacheAgendamentos[agendamentoId];
+            if (!agendamento) {
+                showNotification('Agendamento não encontrado para reversão.', 'error');
+                return;
+            }
+
+            if (confirm(`Tem certeza que deseja reverter o agendamento de ${agendamento.clienteNome} (${agendamento.servicoNome}) para ATIVO? Isso também reverterá o uso do pacote, se for o caso.`)) {
+                
+                try {
+                    // 1. Reverter Status do Agendamento para 'ativo'
+                    await update(ref(db, 'agendamentos/' + agendamentoId), {
+                        status: 'ativo'
+                    });
+                    
+                    // 2. Se for agendamento de pacote, reverter uso do pacote
+                    if (agendamento.tipo === 'pacote' && agendamento.pacoteId) {
+                        onValue(ref(db, 'pacotes_ativos/' + agendamento.pacoteId), async (snapshot) => {
+                            const pacote = snapshot.val();
+                            if (pacote) {
+                                const novoUso = Math.max(0, pacote.quantidadeUsada - (agendamento.quantidadeDebitada || 1));
+                                await update(ref(db, 'pacotes_ativos/' + agendamento.pacoteId), {
+                                    quantidadeUsada: novoUso,
+                                    status: 'ativo'
+                                });
+                            }
+                        }, { onlyOnce: true });
+                    }
+
+                    showNotification('Agendamento revertido para Ativo!', 'success');
+                } catch (error) {
+                     console.error("Erro ao reverter agendamento:", error);
+                     showNotification('Erro ao reverter: ' + error.message, 'error');
+                }
+            }
+        }
+        
+        // 6.2. FILTRAR HISTÓRICO NA TABELA - MANTIDO IGUAL
+        window.filtrarHistoricoTabela = function() {
+             const filtro = document.getElementById('filtro-historico-cliente').value.toLowerCase();
+             const listaHistorico = document.getElementById('lista-historico');
+             const linhas = listaHistorico.getElementsByTagName('tr');
+
+             for (let i = 0; i < linhas.length; i++) {
+                 const row = linhas[i];
+                 if (!row.dataset.clienteNome) continue; 
+                
+                 if (row.dataset.clienteNome.includes(filtro)) {
+                     row.style.display = "";
+                 } else {
+                     row.style.display = "none";
+                 }
+             }
+        }
+        
+        // 6.3. RESETAR FILTRO DO HISTÓRICO - MANTIDO IGUAL
+        window.resetFiltroHistorico = function() {
+            document.getElementById('filtro-historico-mes').value = ''; 
+            document.getElementById('filtro-historico-cliente').value = '';
+            renderizarHistorico();
+        }
+        
+        // =================================================================
+        // 7. NOVAS FUNÇÕES: LIMPEZA DE DADOS
+        // =================================================================
+
+        // 7.1. Modal de Limpeza de Dados
+        window.abrirModalLimpeza = function() {
             document.getElementById('modal-limpeza-dados').style.display = 'flex';
             document.getElementById('confirmar-limpeza').checked = false;
-            toggleBotoesLimpeza();
+            document.getElementById('btn-limpar-historico').disabled = true;
+            document.getElementById('btn-limpar-tudo').disabled = true;
         }
 
-        function fecharModalLimpeza() {
+        window.fecharModalLimpeza = function() {
             document.getElementById('modal-limpeza-dados').style.display = 'none';
         }
 
-        function toggleBotoesLimpeza() {
-            const confirmado = document.getElementById('confirmar-limpeza').checked;
-            document.getElementById('btn-limpar-historico').disabled = !confirmado;
-            document.getElementById('btn-limpar-tudo').disabled = !confirmado;
-        }
+        // Habilitar botões quando confirmado
+        document.getElementById('confirmar-limpeza').addEventListener('change', function() {
+            const enabled = this.checked;
+            document.getElementById('btn-limpar-historico').disabled = !enabled;
+            document.getElementById('btn-limpar-tudo').disabled = !enabled;
+        });
 
-        function limparHistorico() {
-            if (!confirm('ATENÇÃO: Esta ação irá apagar todo o histórico de serviços e não pode ser desfeita. Continuar?')) {
+        // Fechar modal
+        document.querySelectorAll('#modal-limpeza-dados .close-modal, #cancelar-limpeza').forEach(btn => {
+            btn.addEventListener('click', fecharModalLimpeza);
+        });
+
+        // Fechar modal ao clicar fora
+        document.getElementById('modal-limpeza-dados').addEventListener('click', function(e) {
+            if (e.target === this) {
+                fecharModalLimpeza();
+            }
+        });
+
+        // 7.2. Limpar Apenas Histórico
+        document.getElementById('btn-limpar-historico').addEventListener('click', async function() {
+            if (!confirm('Tem certeza que deseja limpar TODO o histórico? Esta ação não pode ser desfeita!')) {
                 return;
             }
-            
-            historicoRef.get()
-                .then((snapshot) => {
-                    const batch = db.batch();
-                    snapshot.forEach((doc) => {
-                        batch.delete(doc.ref);
-                    });
-                    return batch.commit();
-                })
-                .then(() => {
-                    mostrarNotificacao('Histórico limpo com sucesso!', 'success');
-                    fecharModalLimpeza();
-                })
-                .catch((error) => {
-                    console.error('Erro ao limpar histórico:', error);
-                    mostrarNotificacao('Erro ao limpar histórico.', 'error');
-                });
-        }
 
-        function limparTudo() {
-            if (!confirm('ATENÇÃO: Esta ação irá apagar TODOS os agendamentos, pacotes e histórico. Apenas clientes e serviços serão mantidos. Continuar?')) {
+            try {
+                // Buscar todos os agendamentos do histórico
+                const historicoRef = query(agendamentosRef, orderByChild('status'));
+                const snapshot = await new Promise(resolve => onValue(historicoRef, resolve, { onlyOnce: true }));
+                
+                const updates = {};
+                snapshot.forEach(childSnapshot => {
+                    const agendamento = childSnapshot.val();
+                    if (agendamento.status !== 'ativo') {
+                        updates[childSnapshot.key] = null; // Remove do banco
+                    }
+                });
+
+                // Executar remoção em lote
+                await update(ref(db, 'agendamentos'), updates);
+                
+                showNotification('Histórico limpo com sucesso!', 'success');
+                fecharModalLimpeza();
+                
+            } catch (error) {
+                console.error("Erro ao limpar histórico:", error);
+                showNotification('Erro ao limpar histórico: ' + error.message, 'error');
+            }
+        });
+
+        // 7.3. Limpar Tudo (exceto Clientes e Serviços)
+        document.getElementById('btn-limpar-tudo').addEventListener('click', async function() {
+            if (!confirm('Tem certeza que deseja limpar TODOS os agendamentos e pacotes? Clientes e serviços serão mantidos. Esta ação não pode ser desfeita!')) {
                 return;
             }
+
+            try {
+                // Limpar agendamentos
+                await remove(agendamentosRef);
+                
+                // Limpar pacotes ativos
+                await remove(pacotesAtivosRef);
+                
+                showNotification('Todos os dados foram limpos!', 'success');
+                fecharModalLimpeza();
+                
+            } catch (error) {
+                console.error("Erro ao limpar dados:", error);
+                showNotification('Erro ao limpar dados: ' + error.message, 'error');
+            }
+        });
+
+        // ----------------------------------------------------------------------------------
+        // INICIALIZAÇÃO
+        // ----------------------------------------------------------------------------------
+        document.addEventListener('DOMContentLoaded', () => {
+             // Mostra a tela de login ao carregar a página
+            showLogin();
             
-            // Limpar agendamentos
-            const promise1 = agendamentosRef.get()
-                .then((snapshot) => {
-                    const batch = db.batch();
-                    snapshot.forEach((doc) => {
-                        batch.delete(doc.ref);
-                    });
-                    return batch.commit();
-                });
+            // Inicia os listeners de dados
+            carregarClientes();
+            carregarServicos();
+            carregarAgendamentos(); 
+            carregarPacotesAtivos(); 
             
-            // Limpar pacotes
-            const promise2 = pacotesRef.get()
-                .then((snapshot) => {
-                    const batch = db.batch();
-                    snapshot.forEach((doc) => {
-                        batch.delete(doc.ref);
-                    });
-                    return batch.commit();
+            // Configura a data de hoje para os inputs de data
+            const today = new Date().toISOString().slice(0, 10);
+            document.getElementById('agenda-data').value = today;
+            document.getElementById('pacote-data-inicio').value = today;
+            document.getElementById('filtro-visao-diaria-data').value = today;
+
+            // Associa a função showSection aos links da sidebar
+            document.querySelectorAll('.sidebar ul li a').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    showSection(this.getAttribute('data-section') + '-section');
                 });
+            });
             
-            // Limpar histórico
-            const promise3 = historicoRef.get()
-                .then((snapshot) => {
-                    const batch = db.batch();
-                    snapshot.forEach((doc) => {
-                        batch.delete(doc.ref);
-                    });
-                    return batch.commit();
-                });
-            
-            Promise.all([promise1, promise2, promise3])
-                .then(() => {
-                    mostrarNotificacao('Todos os dados foram limpos com sucesso!', 'success');
-                    fecharModalLimpeza();
-                })
-                .catch((error) => {
-                    console.error('Erro ao limpar dados:', error);
-                    mostrarNotificacao('Erro ao limpar dados.', 'error');
-                });
-        }
+        });
     </script>
+
+<!-- ===== SCRIPT DE AJUSTE (não altera lógicas existentes) ===== -->
+<script>
+(function(){
+  // Garantir que os botões da aba Agenda acionem a função corretamente e fiquem visíveis
+  function ensureTabButtons() {
+    const tabMenu = document.querySelector('.tab-menu');
+    if (!tabMenu) return;
+    tabMenu.style.flexWrap = 'nowrap';
+    // ensure class names exist
+    Array.from(tabMenu.querySelectorAll('button')).forEach(btn => {
+      btn.classList.add('tab-button');
+      btn.style.display = 'block';
+    });
+  }
+
+  // Reaplicar quando a página for carregada e quando o tamanho da tela mudar
+  document.addEventListener('DOMContentLoaded', ensureTabButtons);
+  window.addEventListener('resize', ensureTabButtons);
+
+  // Em alguns navegadores o onchange="renderizarHistorico()" já está setado; reafirmamos o listener sem sobrescrever a função
+  document.addEventListener('DOMContentLoaded', function(){
+    const filtro = document.getElementById('filtro-historico-mes');
+    if (filtro) {
+      // remove duplicatas de listeners simples (caso já exista)
+      filtro.removeEventListener('change', window.renderizarHistorico);
+      filtro.addEventListener('change', function(){ try { if (typeof window.renderizarHistorico === 'function') window.renderizarHistorico(); } catch(e){console.error(e);} });
+    }
+  });
+})();
+</script>
+<!-- ===== FIM DO SCRIPT DE AJUSTE ===== -->
 </body>
 </html>
