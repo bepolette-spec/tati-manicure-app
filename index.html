@@ -4,18 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tati Manicure - Gerenciamento de Agendamentos</title>
-
-    <!-- Ícone de manicure substituindo Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
     <style>
-        .icone-manicure {
-            width: 48px;
-            height: 48px;
-        }
-    </style>
-</head>
-<body>
-    <!-- Exibição do ícone -->
-
         :root {
             --primary-color: #ff6b8b; /* Rosa mais feminino */
             --secondary-color: #ba68c8; /* Roxo suave */
@@ -1038,215 +1029,168 @@
                                         <select id="pacote-cliente-id" required></select>
                                     </div>
                                     <div class="form-group" style="flex: 2;">
-                                        <label for="pacote-servico-id">Serviço</label>
+                                        <label for="pacote-servico-id">Pacote (Serviços marcados como Pacote)</label>
                                         <select id="pacote-servico-id" required></select>
                                     </div>
                                     <div class="form-group" style="flex: 1;">
-                                        <label for="pacote-quantidade">Quantidade</label>
-                                        <input type="number" id="pacote-quantidade" min="1" value="1" required>
-                                    </div>
-                                    <div class="form-group" style="flex: 1;">
-                                        <label for="pacote-valor">Valor Total</label>
-                                        <input type="number" id="pacote-valor" step="0.01" min="0" required>
+                                        <label for="pacote-data-inicio">Data Início (Geralmente Hoje)</label>
+                                        <input type="date" id="pacote-data-inicio" required>
                                     </div>
                                 </div>
-                                <div class="form-group">
-                                    <label for="pacote-observacoes">Observações</label>
-                                    <textarea id="pacote-observacoes" rows="2" placeholder="Observações sobre o pacote..."></textarea>
+
+                                <div class="flex-container">
+                                    <button type="submit" class="btn-primary">
+                                        <span class="material-icons">add_box</span> Iniciar/Vender Pacote
+                                    </button>
                                 </div>
-                                <button type="submit" class="btn-success">
-                                    <span class="material-icons">playlist_add_check</span> Iniciar Pacote
-                                </button>
                             </form>
-                         </div>
-                         
-                         <div class="card">
-                            <h3>Pacotes Ativos</h3>
-                            <div class="table-responsive">
-                                <table class="data-table" id="tabela-pacotes-ativos">
+                            
+                            <hr style="margin: 20px 0; border-color: var(--border-color);">
+
+                            <h3>Pacotes Ativos e Utilização</h3>
+                            <div style="max-height: 500px; overflow-y: auto;">
+                                <table class="data-table">
                                     <thead>
                                         <tr>
-                                            <th>Cliente</th>
-                                            <th>Serviço</th>
-                                            <th>Procedimentos Restantes</th>
-                                            <th>Valor</th>
-                                            <th>Status</th>
-                                            <th>Data Início</th>
+                                            <th style="width: 20%;">Cliente</th>
+                                            <th style="width: 25%;">Pacote (Total/Usado)</th>
+                                            <th style="width: 15%;">Pagamento</th>
+                                            <th style="width: 15%;">Vencimento</th>
                                             <!-- MELHORIA 1: Removido o cabeçalho "Ações" -->
-                                            <th></th>
+                                            <th style="width: 200px;"></th>
                                         </tr>
                                     </thead>
                                     <tbody id="lista-pacotes-ativos">
-                                        <!-- Os pacotes ativos serão inseridos aqui pelo JavaScript -->
+                                        <tr><td colspan="5" style="text-align: center;">Carregando pacotes ativos...</td></tr>
                                     </tbody>
                                 </table>
                             </div>
-                         </div>
+                        </div>
                     </div>
                     
                     <div id="novo-agendamento-pane" class="tab-pane">
-                         <div class="section-header"><h2>Novo Agendamento</h2></div>
+                        <div class="section-header"><h2>Agendamento de Serviços Individuais (Não-Pacote)</h2></div>
                          <div class="card">
                             <form id="agendamento-form">
-                                <div class="form-row">
-                                    <div class="form-group" style="flex: 2;">
-                                        <label for="agendamento-cliente">Cliente</label>
-                                        <input type="text" id="agendamento-cliente" list="clientes-datalist" required>
-                                    </div>
-                                    <div class="form-group" style="flex: 1;">
-                                        <label for="agendamento-telefone">Telefone</label>
-                                        <input type="tel" id="agendamento-telefone" placeholder="(00) 00000-0000">
-                                    </div>
-                                </div>
-                                
-                                <div class="form-row">
-                                    <div class="form-group" style="flex: 1;">
-                                        <label for="agendamento-data">Data</label>
-                                        <input type="date" id="agendamento-data" required>
-                                    </div>
-                                    <div class="form-group" style="flex: 1;">
-                                        <label for="agendamento-hora">Hora Início</label>
-                                        <input type="time" id="agendamento-hora" required>
-                                    </div>
-                                    <div class="form-group" style="flex: 1;">
-                                        <label for="agendamento-hora-fim">Hora Fim</label>
-                                        <input type="time" id="agendamento-hora-fim" required>
-                                    </div>
-                                </div>
+                                <input type="hidden" id="agendamento-id">
                                 
                                 <div class="form-row">
                                     <div class="form-group" style="flex: 2;">
-                                        <label for="agendamento-servico">Serviço</label>
-                                        <select id="agendamento-servico" required>
-                                            <option value="">Selecione um serviço</option>
-                                        </select>
+                                        <label for="agenda-cliente-id">Cliente</label>
+                                        <select id="agenda-cliente-id" required></select>
+                                    </div>
+                                    <div class="form-group" style="flex: 2;">
+                                        <label for="agenda-servico-id">Serviço Individual/Promoção</label>
+                                        <select id="agenda-servico-id" required></select>
                                     </div>
                                     <div class="form-group" style="flex: 1;">
-                                        <label for="agendamento-valor">Valor</label>
-                                        <input type="number" id="agendamento-valor" step="0.01" min="0" required>
+                                        <label for="agenda-data">Data</label>
+                                        <input type="date" id="agenda-data" required>
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                     <div class="form-group" style="flex: 1;">
+                                        <label for="agenda-hora">Hora Início</label>
+                                        <input type="time" id="agenda-hora" required>
+                                    </div>
+                                    <div class="form-group" style="flex: 1;">
+                                        <label for="agenda-hora-fim">Hora Fim</label>
+                                        <input type="time" id="agenda-hora-fim" required>
                                     </div>
                                 </div>
                                 
                                 <div class="form-group">
-                                    <label for="agendamento-observacoes">Observações</label>
-                                    <textarea id="agendamento-observacoes" rows="3" placeholder="Detalhes do serviço, observações, etc..."></textarea>
+                                    <label for="agenda-observacoes">Observações</label>
+                                    <textarea id="agenda-observacoes" rows="2"></textarea>
                                 </div>
-                                
-                                <div class="form-group">
-                                    <label>
-                                        <input type="checkbox" id="agendamento-pacote"> Usar pacote ativo (se disponível)
-                                    </label>
+
+                                <div class="flex-container">
+                                    <div>
+                                        <button type="submit" class="btn-success" id="btn-salvar-agendamento">
+                                            <span class="material-icons">save</span> Salvar Agendamento
+                                        </button>
+                                        <button type="button" class="btn-secondary" onclick="resetAgendamentoForm()">
+                                            <span class="material-icons">refresh</span> Limpar
+                                        </button>
+                                    </div>
                                 </div>
-                                
-                                <div class="form-group" id="pacote-selecao-container" style="display: none;">
-                                    <label for="agendamento-pacote-id">Selecionar Pacote</label>
-                                    <select id="agendamento-pacote-id">
-                                        <option value="">Selecione um pacote</option>
-                                    </select>
-                                </div>
-                                
-                                <button type="submit" class="btn-success">
-                                    <span class="material-icons">event_available</span> Agendar
-                                </button>
                             </form>
-                         </div>
+                        </div>
                     </div>
-                    
+
                     <div id="lista-agendamentos-pane" class="tab-pane">
-                         <div class="section-header"><h2>Agendamentos Futuros</h2></div>
+                         <div class="section-header">
+                             <h3>Próximos Agendamentos Individuais (Ativos)</h3>
+                         </div>
                          <div class="card">
                             <div class="filter-row">
-                                <div class="form-group">
-                                    <label for="filtro-data">Filtrar por Data</label>
-                                    <input type="date" id="filtro-data">
+                                <div style="flex-grow: 1.5;">
+                                    <label for="filtro-agenda-data">Filtrar por Data</label>
+                                    <input type="date" id="filtro-agenda-data" onchange="carregarAgendamentos()">
                                 </div>
-                                <div class="form-group">
-                                    <label for="filtro-cliente">Filtrar por Cliente</label>
-                                    <input type="text" id="filtro-cliente" list="clientes-datalist">
+                                <div style="flex-grow: 3;">
+                                    <label for="filtro-agenda-cliente">Filtrar por Cliente (Digite ou Selecione)</label>
+                                    <input type="text" id="filtro-agenda-cliente" list="clientes-datalist" placeholder="Digite o nome do cliente..." onkeyup="filtrarAgendamentos()">
                                 </div>
-                                <div class="form-group">
-                                    <button type="button" class="btn-info" id="btn-limpar-filtros">
-                                        <span class="material-icons">clear_all</span> Limpar Filtros
-                                    </button>
-                                </div>
+                                <button class="btn-secondary" onclick="resetFiltroAgenda()"><span class="material-icons">refresh</span> Resetar Filtro</button>
                             </div>
-                            
-                            <div class="table-responsive">
-                                <table class="data-table" id="tabela-agendamentos">
+
+                            <div style="max-height: 500px; overflow-y: auto;">
+                                <table class="data-table">
                                     <thead>
                                         <tr>
-                                            <th>Data</th>
-                                            <th>Hora</th>
-                                            <th>Cliente</th>
-                                            <th>Serviço</th>
-                                            <th>Valor</th>
-                                            <th>Observações</th>
+                                            <th style="width: 15%;">Data/Hora</th>
+                                            <th style="width: 25%;">Cliente</th>
+                                            <th style="width: 25%;">Serviço</th>
+                                            <th>Status</th>
                                             <!-- MELHORIA 1: Removido o cabeçalho "Ações" -->
-                                            <th></th>
+                                            <th style="width: 150px;"></th>
                                         </tr>
                                     </thead>
                                     <tbody id="lista-agendamentos">
-                                        <!-- Os agendamentos serão inseridos aqui pelo JavaScript -->
+                                        <tr><td colspan="5" style="text-align: center;">Carregando agendamentos...</td></tr>
                                     </tbody>
                                 </table>
                             </div>
-                         </div>
+                        </div>
                     </div>
-                    
+
                     <div id="visao-diaria-pane" class="tab-pane">
-                         <div class="section-header"><h2>Visão Diária da Agenda</h2></div>
-                         <div class="card">
+                        <div class="section-header">
+                            <h2>Visão Diária da Agenda</h2>
+                        </div>
+                        <div class="card">
                             <div class="filter-row">
-                                <div class="form-group">
-                                    <label for="visao-data">Selecione a Data</label>
-                                    <input type="date" id="visao-data" required>
+                                <div style="flex-grow: 1;">
+                                    <label for="filtro-visao-diaria-data">Selecione a Data</label>
+                                    <input type="date" id="filtro-visao-diaria-data" onchange="renderizarVisaoDiaria()">
                                 </div>
-                                <div class="form-group">
-                                    <button type="button" class="btn-info" id="btn-hoje">
-                                        <span class="material-icons">today</span> Hoje
-                                    </button>
-                                </div>
+                                <button class="btn-secondary" onclick="renderizarVisaoDiaria(true)"><span class="material-icons">today</span> Ver Hoje</button>
                             </div>
-                            
+
                             <div class="table-responsive">
                                 <table class="data-table" id="tabela-visao-diaria">
                                     <thead>
                                         <tr>
-                                            <th>Horário</th>
-                                            <th>08:00</th>
-                                            <th>09:00</th>
-                                            <th>10:00</th>
-                                            <th>11:00</th>
-                                            <th>12:00</th>
-                                            <th>13:00</th>
-                                            <th>14:00</th>
-                                            <th>15:00</th>
-                                            <th>16:00</th>
-                                            <th>17:00</th>
-                                            <th>18:00</th>
+                                            <th style="width: 100px;">Horário</th>
+                                            <th>Detalhes do Agendamento</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="corpo-visao-diaria">
-                                        <!-- A visão diária será inserida aqui pelo JavaScript -->
+                                    <tbody id="lista-visao-diaria">
+                                        <tr><td colspan="2" style="text-align: center;">Selecione uma data para visualizar.</td></tr>
                                     </tbody>
                                 </table>
                             </div>
-                         </div>
+                        </div>
                     </div>
-                    
+
                 </div>
             </div>
 
             <div id="clientes-section" class="content-section">
-                <div class="section-header">
-                    <h2>Gerenciamento de Clientes</h2>
-                    <button class="btn-primary" id="btn-novo-cliente">
-                        <span class="material-icons">person_add</span> Novo Cliente
-                    </button>
-                </div>
-                
-                <div class="card" id="form-cliente-card" style="display: none;">
-                    <h3 id="form-cliente-titulo">Novo Cliente</h3>
+                <div class="section-header"><h2>Cadastro de Clientes</h2></div>
+                <div class="card">
                     <form id="cliente-form">
                         <input type="hidden" id="cliente-id">
                         <div class="form-row">
@@ -1255,63 +1199,55 @@
                                 <input type="text" id="cliente-nome" required>
                             </div>
                             <div class="form-group" style="flex: 1;">
-                                <label for="cliente-telefone">Telefone</label>
-                                <input type="tel" id="cliente-telefone" placeholder="(00) 00000-0000" required>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group" style="flex: 2;">
-                                <label for="cliente-email">E-mail</label>
-                                <input type="email" id="cliente-email">
-                            </div>
-                            <div class="form-group" style="flex: 1;">
-                                <label for="cliente-aniversario">Data de Nascimento</label>
-                                <input type="date" id="cliente-aniversario">
+                                <label for="cliente-telefone">Telefone (Whatsapp)</label>
+                                <input type="tel" id="cliente-telefone">
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="cliente-observacoes">Observações</label>
-                            <textarea id="cliente-observacoes" rows="3" placeholder="Observações sobre o cliente..."></textarea>
+                            <label for="cliente-email">E-mail (Opcional)</label>
+                            <input type="email" id="cliente-email">
+                        </div>
+                        <div class="form-group">
+                            <label for="cliente-endereco">Endereço (Opcional)</label>
+                            <input type="text" id="cliente-endereco">
+                        </div>
+                        <div class="form-group">
+                            <label for="cliente-observacoes">Observações (Alergias, Preferências)</label>
+                            <textarea id="cliente-observacoes" rows="2"></textarea>
                         </div>
                         <div class="flex-container">
-                            <button type="submit" class="btn-success">
-                                <span class="material-icons">save</span> Salvar Cliente
-                            </button>
-                            <button type="button" class="btn-secondary" id="btn-cancelar-cliente">
-                                <span class="material-icons">cancel</span> Cancelar
-                            </button>
+                            <div>
+                                <button type="submit" class="btn-success" id="btn-salvar-cliente">
+                                    <span class="material-icons">save</span> Salvar Cliente
+                                </button>
+                                <button type="button" class="btn-secondary" onclick="resetClienteForm()">
+                                    <span class="material-icons">refresh</span> Limpar
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>
-                
-                <div class="card">
-                    <div class="filter-row">
-                        <div class="form-group">
-                            <label for="filtro-cliente-nome">Buscar por Nome</label>
-                            <input type="text" id="filtro-cliente-nome" placeholder="Digite o nome do cliente...">
-                        </div>
-                        <div class="form-group">
-                            <button type="button" class="btn-info" id="btn-limpar-filtro-cliente">
-                                <span class="material-icons">clear</span> Limpar
-                            </button>
-                        </div>
+
+                <div class="section-header">
+                    <h3>Lista de Clientes Cadastrados</h3>
+                    <div class="input-group" style="width: 300px;">
+                        <input type="text" id="filtro-clientes" list="clientes-datalist" placeholder="Filtrar por nome, tel ou endereço..." onkeyup="filtrarClientes()">
                     </div>
-                    
-                    <div class="table-responsive">
-                        <table class="data-table" id="tabela-clientes">
+                </div>
+                <div class="card">
+                    <div style="max-height: 500px; overflow-y: auto;">
+                        <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>Nome</th>
-                                    <th>Telefone</th>
-                                    <th>E-mail</th>
-                                    <th>Aniversário</th>
-                                    <th>Observações</th>
+                                    <th style="width: 30%;">Nome</th>
+                                    <th style="width: 20%;">Telefone</th>
+                                    <th style="width: 30%;">Endereço</th>
                                     <!-- MELHORIA 1: Removido o cabeçalho "Ações" -->
-                                    <th></th>
+                                    <th style="width: 150px;"></th>
                                 </tr>
                             </thead>
                             <tbody id="lista-clientes">
-                                <!-- Os clientes serão inseridos aqui pelo JavaScript -->
+                                <tr><td colspan="4" style="text-align: center;">Carregando clientes...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -1319,15 +1255,8 @@
             </div>
 
             <div id="servicos-section" class="content-section">
-                <div class="section-header">
-                    <h2>Gerenciamento de Serviços</h2>
-                    <button class="btn-primary" id="btn-novo-servico">
-                        <span class="material-icons">add_circle</span> Novo Serviço
-                    </button>
-                </div>
-                
-                <div class="card" id="form-servico-card" style="display: none;">
-                    <h3 id="form-servico-titulo">Novo Serviço</h3>
+                <div class="section-header"><h2>Cadastro de Serviços/Pacotes</h2></div>
+                <div class="card">
                     <form id="servico-form">
                         <input type="hidden" id="servico-id">
                         <div class="form-row">
@@ -1336,44 +1265,56 @@
                                 <input type="text" id="servico-nome" required>
                             </div>
                             <div class="form-group" style="flex: 1;">
-                                <label for="servico-duracao">Duração (minutos)</label>
-                                <input type="number" id="servico-duracao" min="1" value="30" required>
+                                <label for="servico-preco">Preço (R$)</label>
+                                <input type="number" id="servico-preco" step="0.01" min="0" required value="0.00">
                             </div>
+                        </div>
+                        <div class="form-row">
                             <div class="form-group" style="flex: 1;">
-                                <label for="servico-valor">Valor (R$)</label>
-                                <input type="number" id="servico-valor" step="0.01" min="0" required>
+                                <label>
+                                    <input type="checkbox" id="servico-isPacote"> É um **Pacote Mensal**?
+                                </label>
+                            </div>
+                            <div class="form-group" id="group-quantidade-total" style="flex: 1; display: none;">
+                                <label for="servico-quantidade-total">Total de Procedimentos no Pacote (ex: 6)</label>
+                                <input type="number" id="servico-quantidade-total" min="1" value="1">
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="servico-descricao">Descrição</label>
-                            <textarea id="servico-descricao" rows="3" placeholder="Descrição detalhada do serviço..."></textarea>
+                            <label for="servico-descricao">Descrição Detalhada (ex: 4 Mãos e 2 Pés)</label>
+                            <textarea id="servico-descricao" rows="2"></textarea>
                         </div>
                         <div class="flex-container">
-                            <button type="submit" class="btn-success">
-                                <span class="material-icons">save</span> Salvar Serviço
-                            </button>
-                            <button type="button" class="btn-secondary" id="btn-cancelar-servico">
-                                <span class="material-icons">cancel</span> Cancelar
-                            </button>
+                            <div>
+                                <button type="submit" class="btn-success" id="btn-salvar-servico">
+                                    <span class="material-icons">save</span> Salvar Serviço
+                                </button>
+                                <button type="button" class="btn-secondary" onclick="resetServicoForm()">
+                                    <span class="material-icons">refresh</span> Limpar
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>
-                
+
+                <div class="section-header">
+                    <h3>Lista de Serviços e Preços</h3>
+                </div>
                 <div class="card">
-                    <div class="table-responsive">
-                        <table class="data-table" id="tabela-servicos">
+                    <div style="max-height: 500px; overflow-y: auto;">
+                        <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>Nome</th>
-                                    <th>Duração</th>
-                                    <th>Valor</th>
-                                    <th>Descrição</th>
+                                    <th style="width: 40%;">Serviço</th>
+                                    <th style="width: 15%;">Tipo</th>
+                                    <th style="width: 15%;">Total Proc.</th>
+                                    <th style="width: 15%;">Preço</th>
                                     <!-- MELHORIA 1: Removido o cabeçalho "Ações" -->
-                                    <th></th>
+                                    <th style="width: 150px;"></th>
                                 </tr>
                             </thead>
                             <tbody id="lista-servicos">
-                                <!-- Os serviços serão inseridos aqui pelo JavaScript -->
+                                <tr><td colspan="5" style="text-align: center;">Carregando serviços...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -1382,88 +1323,60 @@
 
             <div id="historico-section" class="content-section">
                 <div class="section-header">
-                    <h2>Histórico e Relatório de Lucros</h2>
-                    <button class="btn-danger" id="btn-limpeza-dados">
-                        <span class="material-icons">cleaning_services</span> Limpeza de Dados
+                    <h2>Histórico de Agendamentos e Lucros Mensais</h2>
+                    <!-- NOVO: Botão para limpeza de dados -->
+                    <button class="btn-danger" onclick="abrirModalLimpeza()">
+                        <span class="material-icons">delete_sweep</span> Limpeza de Dados
                     </button>
                 </div>
                 
+                <div class="card" style="margin-bottom: 30px;">
+                    <!-- MELHORIA 2: Título dinâmico sem repetição -->
+                    <h3 id="titulo-resumo-lucros">Resumo de Lucros - Todos os Meses</h3>
+                    <table class="data-table" id="tabela-lucros-mensais">
+                        <thead>
+                            <tr>
+                                <th style="width: 25%;">Mês/Ano</th>
+                                <th style="width: 25%;">Total Agendamentos</th>
+                                <!-- MELHORIA 2: Célula para lucro com estilo melhorado -->
+                                <th style="width: 25%; text-align: center;">Lucro Total</th>
+                                <th style="width: 25%;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-lucros-mensais">
+                            <tr><td colspan="4" style="text-align: center;">Carregando resumo financeiro...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="section-header">
+                    <h3>Histórico Completo</h3>
+                </div>
                 <div class="card">
-                    <h3>Filtros de Período</h3>
                     <div class="filter-row">
-                        <div class="form-group">
-                            <label for="filtro-mes">Mês</label>
-                            <select id="filtro-mes">
-                                <option value="1">Janeiro</option>
-                                <option value="2">Fevereiro</option>
-                                <option value="3">Março</option>
-                                <option value="4">Abril</option>
-                                <option value="5">Maio</option>
-                                <option value="6">Junho</option>
-                                <option value="7">Julho</option>
-                                <option value="8">Agosto</option>
-                                <option value="9">Setembro</option>
-                                <option value="10">Outubro</option>
-                                <option value="11">Novembro</option>
-                                <option value="12">Dezembro</option>
-                            </select>
+                        <div style="flex-grow: 1;">
+                            <label for="filtro-historico-mes">Filtrar por Mês</label>
+                            <input type="month" id="filtro-historico-mes" onchange="renderizarHistorico()">
                         </div>
-                        <div class="form-group">
-                            <label for="filtro-ano">Ano</label>
-                            <select id="filtro-ano"></select>
+                        <div style="flex-grow: 2;">
+                            <label for="filtro-historico-cliente">Filtrar Cliente</label>
+                            <input type="text" id="filtro-historico-cliente" list="clientes-datalist" placeholder="Digite o nome do cliente..." onkeyup="filtrarHistoricoTabela()">
                         </div>
-                        <div class="form-group">
-                            <button type="button" class="btn-primary" id="btn-filtrar-historico">
-                                <span class="material-icons">filter_alt</span> Filtrar
-                            </button>
-                        </div>
+                        <button class="btn-secondary" onclick="resetFiltroHistorico()"><span class="material-icons">refresh</span> Resetar Filtro</button>
                     </div>
-                </div>
-                
-                <div class="card">
-                    <h3>Resumo Financeiro</h3>
-                    <div class="form-row">
-                        <div class="form-group" style="flex: 1;">
-                            <label>Total de Serviços Realizados</label>
-                            <div class="card" style="padding: 15px; text-align: center; background: rgba(79, 195, 247, 0.1);">
-                                <h3 id="total-servicos">0</h3>
-                                <p>Serviços</p>
-                            </div>
-                        </div>
-                        <div class="form-group" style="flex: 1;">
-                            <label>Faturamento Bruto</label>
-                            <div class="card" style="padding: 15px; text-align: center; background: rgba(102, 187, 106, 0.1);">
-                                <h3 id="faturamento-bruto">R$ 0,00</h3>
-                                <p>Receita Total</p>
-                            </div>
-                        </div>
-                        <div class="form-group" style="flex: 1;">
-                            <label>Lucro Líquido</label>
-                            <div class="card" style="padding: 15px; text-align: center; background: rgba(255, 183, 77, 0.1);">
-                                <!-- MELHORIA 2: Estilo melhorado para o valor do lucro -->
-                                <div class="lucro-valor" id="lucro-liquido">R$ 0,00</div>
-                                <p>Lucro Real</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="card">
-                    <h3>Histórico de Serviços Realizados</h3>
-                    <div class="table-responsive">
-                        <table class="data-table" id="tabela-historico">
+                    <div style="max-height: 500px; overflow-y: auto;">
+                        <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>Data</th>
-                                    <th>Cliente</th>
-                                    <th>Serviço</th>
-                                    <th>Valor</th>
-                                    <th>Observações</th>
-                                    <th>Tipo</th>
+                                    <th style="width: 15%;">Data/Hora</th>
+                                    <th style="width: 25%;">Cliente</th>
+                                    <th style="width: 25%;">Serviço</th>
+                                    <th style="width: 10%;">Valor (R$)</th>
+                                    <th style="width: 150px;">Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="lista-historico">
-                                <!-- O histórico será inserido aqui pelo JavaScript -->
+                                <tr><td colspan="5" style="text-align: center;">Carregando histórico...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -1503,7 +1416,6 @@
         const agendamentosRef = ref(db, 'agendamentos');
         const pacotesAtivosRef = ref(db, 'pacotes_ativos');
         
-        // CORREÇÃO: Senha original mantida
         const SENHA_UNICA = "tati123";
 
         // Caches de Dados
@@ -1617,7 +1529,7 @@
             }
         }
 
-        // CORREÇÃO: Lógica de Login ORIGINAL - SIMPLES E FUNCIONAL
+        // Lógica de Login - CORRIGIDA
         function showLogin() {
             document.getElementById('app-container').style.display = 'none';
             document.getElementById('login-container').style.display = 'flex';
@@ -3003,4 +2915,3 @@
 <!-- ===== FIM DO SCRIPT DE AJUSTE ===== -->
 </body>
 </html>
-
