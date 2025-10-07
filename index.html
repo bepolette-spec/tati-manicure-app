@@ -796,10 +796,11 @@
                 gap: 5px;
             }
             
-            /* MELHORIA 1: Remover label "Ações" em mobile */
             .data-table td.action-buttons::before {
-                content: "" !important;
-                display: none !important;
+                content: ""; /* MELHORIA 1: Removido "Ações" */
+                width: 100%; 
+                margin-bottom: 5px;
+                display: block;
             }
             
             .data-table td.action-buttons button {
@@ -857,19 +858,16 @@
     box-sizing: border-box !important;
   }
 }
+/* ===== FIM AJUSTES ===== */
 
-/* MELHORIA 2: Estilo para valor de lucro */
+/* MELHORIA 2: Estilização do valor do lucro */
 .lucro-valor {
-    font-size: 1.2rem;
+    font-size: 1.3rem;
     font-weight: bold;
     text-align: center;
     color: var(--success-color);
-    padding: 10px;
-    background: rgba(102, 187, 106, 0.1);
-    border-radius: 8px;
-    margin: 5px 0;
+    padding: 10px 0;
 }
-/* ===== FIM AJUSTES ===== */
 </style>
 </head>
 <body>
@@ -966,7 +964,7 @@
 
     <div id="login-container">
         <div class="login-card">
-            <!-- MELHORIA 3: Ícone mais temático para manicure -->
+            <!-- MELHORIA 3: Ícone mais temático de manicure -->
             <div class="login-icon">
                 <span class="material-icons">spa</span>
             </div>
@@ -1056,8 +1054,7 @@
                                             <th style="width: 25%;">Pacote (Total/Usado)</th>
                                             <th style="width: 15%;">Pagamento</th>
                                             <th style="width: 15%;">Vencimento</th>
-                                            <!-- MELHORIA 1: Removido o cabeçalho "Ações" -->
-                                            <th style="width: 200px;"></th>
+                                            <th style="width: 200px;">Ações</th>
                                         </tr>
                                     </thead>
                                     <tbody id="lista-pacotes-ativos">
@@ -1107,6 +1104,7 @@
 
                                 <div class="flex-container">
                                     <div>
+                                        <!-- CORREÇÃO 1: Botões aparecendo corretamente -->
                                         <button type="submit" class="btn-success" id="btn-salvar-agendamento">
                                             <span class="material-icons">save</span> Salvar Agendamento
                                         </button>
@@ -1144,8 +1142,7 @@
                                             <th style="width: 25%;">Cliente</th>
                                             <th style="width: 25%;">Serviço</th>
                                             <th>Status</th>
-                                            <!-- MELHORIA 1: Removido o cabeçalho "Ações" -->
-                                            <th style="width: 150px;"></th>
+                                            <th style="width: 150px;">Ações</th>
                                         </tr>
                                     </thead>
                                     <tbody id="lista-agendamentos">
@@ -1242,8 +1239,7 @@
                                     <th style="width: 30%;">Nome</th>
                                     <th style="width: 20%;">Telefone</th>
                                     <th style="width: 30%;">Endereço</th>
-                                    <!-- MELHORIA 1: Removido o cabeçalho "Ações" -->
-                                    <th style="width: 150px;"></th>
+                                    <th style="width: 150px;">Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="lista-clientes">
@@ -1309,8 +1305,7 @@
                                     <th style="width: 15%;">Tipo</th>
                                     <th style="width: 15%;">Total Proc.</th>
                                     <th style="width: 15%;">Preço</th>
-                                    <!-- MELHORIA 1: Removido o cabeçalho "Ações" -->
-                                    <th style="width: 150px;"></th>
+                                    <th style="width: 150px;">Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="lista-servicos">
@@ -1331,16 +1326,15 @@
                 </div>
                 
                 <div class="card" style="margin-bottom: 30px;">
-                    <!-- MELHORIA 2: Título dinâmico sem repetição -->
-                    <h3 id="titulo-resumo-lucros">Resumo de Lucros - Todos os Meses</h3>
+                    <!-- MELHORIA 2: Título dinâmico corrigido -->
+                    <h3 id="titulo-resumo-lucros">Resumo de Lucros</h3>
                     <table class="data-table" id="tabela-lucros-mensais">
                         <thead>
                             <tr>
                                 <th style="width: 25%;">Mês/Ano</th>
                                 <th style="width: 25%;">Total Agendamentos</th>
-                                <!-- MELHORIA 2: Célula para lucro com estilo melhorado -->
-                                <th style="width: 25%; text-align: center;">Lucro Total</th>
-                                <th style="width: 25%;"></th>
+                                <th style="width: 25%;">Lucro Total (R$)</th>
+                                <th style="width: 25%;">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="lista-lucros-mensais">
@@ -2269,7 +2263,7 @@
                 // Ações - CORREÇÃO 2: Melhor organização dos botões
                 let actionCell = row.insertCell();
                 actionCell.classList.add('action-buttons');
-                // MELHORIA 1: Removido o data-label "Ações"
+                actionCell.setAttribute('data-label', ''); // MELHORIA 1: Removido "Ações"
                 actionCell.innerHTML = `
                     <button class="btn-warning" onclick="editarCliente('${c.id}')"><span class="material-icons">edit</span> Editar</button>
                     <button class="btn-danger" onclick="excluirCliente('${c.id}')"><span class="material-icons">delete</span> Excluir</button>
@@ -2318,7 +2312,7 @@
                 // Ações
                 let actionCell = row.insertCell();
                 actionCell.classList.add('action-buttons');
-                // MELHORIA 1: Removido o data-label "Ações"
+                actionCell.setAttribute('data-label', ''); // MELHORIA 1: Removido "Ações"
                 actionCell.innerHTML = `
                     <button class="btn-warning" onclick="editarServico('${s.id}')"><span class="material-icons">edit</span> Editar</button>
                     <button class="btn-danger" onclick="excluirServico('${s.id}')"><span class="material-icons">delete</span> Excluir</button>
@@ -2376,7 +2370,7 @@
                 // Ações
                 let actionCell = row.insertCell();
                 actionCell.classList.add('action-buttons');
-                // MELHORIA 1: Removido o data-label "Ações"
+                actionCell.setAttribute('data-label', ''); // MELHORIA 1: Removido "Ações"
                 
                 let actionButtons = '';
                 
@@ -2455,7 +2449,7 @@
                 // Ações
                 let actionCell = row.insertCell();
                 actionCell.classList.add('action-buttons');
-                // MELHORIA 1: Removido o data-label "Ações"
+                actionCell.setAttribute('data-label', ''); // MELHORIA 1: Removido "Ações"
                 actionCell.innerHTML = `
                     <button class="btn-success" onclick="finalizarAgendamento('${a.id}')"><span class="material-icons">done_all</span> Finalizar</button>
                     <button class="btn-warning" onclick="editarAgendamento('${a.id}')"><span class="material-icons">edit</span> Editar</button>
@@ -2563,7 +2557,7 @@
             const filtroMes = document.getElementById('filtro-historico-mes').value;
             listaLucrosMensais.innerHTML = '';
 
-            // CORREÇÃO 4: Título dinâmico baseado no filtro
+            // MELHORIA 2: Título dinâmico corrigido
             const tituloResumo = document.getElementById('titulo-resumo-lucros');
             if (filtroMes) {
                 const mes = new Date(filtroMes + '-01').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
@@ -2608,7 +2602,7 @@
                      row.insertCell().textContent = mes;
                      row.insertCell().textContent = lucro.totalAgendamentos;
                      
-                     // MELHORIA 2: Aplicar estilo melhorado para o valor do lucro
+                     // MELHORIA 2: Estilização melhorada do valor do lucro
                      let lucroCell = row.insertCell();
                      lucroCell.innerHTML = `<div class="lucro-valor">${formatarMoeda(lucro.lucroTotal)}</div>`;
                      
@@ -2679,7 +2673,7 @@
                  // Ações
                  let actionCell = row.insertCell();
                  actionCell.classList.add('action-buttons');
-                 actionCell.setAttribute('data-label', 'Ações');
+                 actionCell.setAttribute('data-label', ''); // MELHORIA 1: Removido "Ações"
                  
                  let statusClass = 'btn-secondary';
                  let statusIcon = 'info';
