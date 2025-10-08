@@ -945,7 +945,7 @@
             <div class="form-group">
                 <p><strong>Atenção:</strong> Esta ação não pode ser desfeita!</p>
                 <label>
-                    <input type="checkbox" id="confirmar-limpeza"> Confirmo que desejo prosseguir com a limpeza
+                    <input type="checkbox" id="confirmar-limpeza"> Confirmo que deseja prosseguir com a limpeza
                 </label>
             </div>
             <div class="flex-container">
@@ -2550,9 +2550,9 @@
             });
         }
         
-        // 5.7. RENDERIZAR HISTÓRICO E LUCROS - CORREÇÃO 4: Título dinâmico do resumo de lucros
+        // 5.7. RENDERIZAR HISTÓRICO E LUCROS - CORREÇÃO PRINCIPAL: Resumo mostra mês selecionado e conta todos os itens
         window.renderizarHistorico = function() {
-            // 5.7.1. Lucros Mensais - CORREÇÃO 4: Título dinâmico baseado no filtro
+            // 5.7.1. Lucros Mensais - CORREÇÃO PRINCIPAL: Mostrar mês selecionado e contar todos os itens
             const listaLucrosMensais = document.getElementById('lista-lucros-mensais');
             const filtroMes = document.getElementById('filtro-historico-mes').value;
             listaLucrosMensais.innerHTML = '';
@@ -2566,12 +2566,19 @@
                 tituloResumo.textContent = 'Resumo de Lucros - Todos os Meses';
             }
             
+            // CORREÇÃO PRINCIPAL: Calcular lucros considerando o filtro de mês selecionado
             const lucrosPorMes = agendamentosHistorico.reduce((acc, a) => {
                 // CORREÇÃO: Incluir pacotes pagos e agendamentos finalizados
                 if ((a.status === 'finalizado' && a.tipo === 'individual') || 
                     (a.tipo === 'pacote_pagamento')) {
                     
                     const mesAno = a.data.substring(0, 7);
+                    
+                    // CORREÇÃO: Aplicar filtro de mês aqui também
+                    if (filtroMes && mesAno !== filtroMes) {
+                        return acc;
+                    }
+                    
                     acc[mesAno] = acc[mesAno] || { totalAgendamentos: 0, lucroTotal: 0 };
                     
                     if (a.tipo === 'pacote_pagamento') {
@@ -2584,11 +2591,8 @@
                 return acc;
             }, {});
 
-            // Aplicar filtro de mês se existir
+            // Aplicar filtro de mês se existir - CORREÇÃO: Já foi aplicado acima
             let mesesParaExibir = Object.keys(lucrosPorMes);
-            if (filtroMes) {
-                mesesParaExibir = mesesParaExibir.filter(mes => mes === filtroMes);
-            }
             
             const mesesOrdenados = mesesParaExibir.sort().reverse();
             
@@ -2600,6 +2604,8 @@
                      const lucro = lucrosPorMes[mesAno];
                      const row = listaLucrosMensais.insertRow();
                      row.insertCell().textContent = mes;
+                     
+                     // CORREÇÃO PRINCIPAL: Contar todos os agendamentos do mês filtrado
                      row.insertCell().textContent = lucro.totalAgendamentos;
                      
                      // MELHORIA 2: Estilização melhorada do valor do lucro
@@ -2627,6 +2633,35 @@
             // Aplicar filtro de cliente
             if (filtroCliente) {
                 historicoFiltrado = historicoFiltrado.filter(a => a.clienteNome.toLowerCase().includes(filtroCliente));
+            }
+            
+            // CORREÇÃO PRINCIPAL: Contar todos os itens do histórico filtrado para o resumo
+            if (filtroMes) {
+                const totalItensHistorico = historicoFiltrado.length;
+                // Atualizar o total de agendamentos no resumo para o mês selecionado
+                const mesResumo = new Date(filtroMes + '-01').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+                tituloResumo.textContent = `Resumo de Lucros - ${mesResumo}`;
+                
+                // Se não encontrou dados no cálculo anterior, cria um registro para o mês
+                if (mesesOrdenados.length === 0 && totalItensHistorico > 0) {
+                    const row = listaLucrosMensais.insertRow();
+                    row.insertCell().textContent = mesResumo;
+                    row.insertCell().textContent = totalItensHistorico;
+                    
+                    // Calcular lucro total para este mês
+                    const lucroTotalMes = historicoFiltrado.reduce((total, a) => {
+                        if ((a.status === 'finalizado' && a.tipo === 'individual') || a.tipo === 'pacote_pagamento') {
+                            return total + (a.valor || 0);
+                        }
+                        return total;
+                    }, 0);
+                    
+                    let lucroCell = row.insertCell();
+                    lucroCell.innerHTML = `<div class="lucro-valor">${formatarMoeda(lucroTotalMes)}</div>`;
+                    
+                    let acoesCell = row.insertCell();
+                    acoesCell.innerHTML = '';
+                }
             }
             
             if (historicoFiltrado.length === 0) {
