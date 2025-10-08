@@ -945,7 +945,7 @@
             <div class="form-group">
                 <p><strong>Atenção:</strong> Esta ação não pode ser desfeita!</p>
                 <label>
-                    <input type="checkbox" id="confirmar-limpeza"> Confirmo que deseja prosseguir com a limpeza
+                    <input type="checkbox" id="confirmar-limpeza"> Confirmo que desejo prosseguir com a limpeza
                 </label>
             </div>
             <div class="flex-container">
@@ -1326,19 +1326,18 @@
                 </div>
                 
                 <div class="card" style="margin-bottom: 30px;">
-                    <!-- MELHORIA 2: Título dinâmico corrigido -->
-                    <h3 id="titulo-resumo-lucros">Resumo de Lucros</h3>
+                    <!-- MELHORIA: Título simplificado -->
+                    <h3>Resumo de Lucros</h3>
                     <table class="data-table" id="tabela-lucros-mensais">
                         <thead>
                             <tr>
-                                <th style="width: 25%;">Mês/Ano</th>
-                                <th style="width: 25%;">Total Agendamentos</th>
-                                <th style="width: 25%;">Lucro Total (R$)</th>
-                                <th style="width: 25%;">Ações</th>
+                                <th style="width: 33%;">Total Agendamentos</th>
+                                <th style="width: 34%;">Lucro Total (R$)</th>
+                                <th style="width: 33%;"></th>
                             </tr>
                         </thead>
                         <tbody id="lista-lucros-mensais">
-                            <tr><td colspan="4" style="text-align: center;">Carregando resumo financeiro...</td></tr>
+                            <tr><td colspan="3" style="text-align: center;">Carregando resumo financeiro...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -1523,7 +1522,7 @@
             }
         }
 
-        // Lógica de Login - CORRIGIDA
+        // Lógica de Login - CORREÇÃO
         function showLogin() {
             document.getElementById('app-container').style.display = 'none';
             document.getElementById('login-container').style.display = 'flex';
@@ -2550,35 +2549,21 @@
             });
         }
         
-        // 5.7. RENDERIZAR HISTÓRICO E LUCROS - CORREÇÃO PRINCIPAL: Resumo mostra mês selecionado e conta todos os itens
+        // 5.7. RENDERIZAR HISTÓRICO E LUCROS - MELHORIA: Título simplificado e cálculo correto de Total Agendamentos
         window.renderizarHistorico = function() {
-            // 5.7.1. Lucros Mensais - CORREÇÃO PRINCIPAL: Mostrar mês selecionado e contar todos os itens
+            // 5.7.1. Lucros Mensais - MELHORIA: Título simplificado
             const listaLucrosMensais = document.getElementById('lista-lucros-mensais');
             const filtroMes = document.getElementById('filtro-historico-mes').value;
             listaLucrosMensais.innerHTML = '';
 
-            // MELHORIA 2: Título dinâmico corrigido
-            const tituloResumo = document.getElementById('titulo-resumo-lucros');
-            if (filtroMes) {
-                const mes = new Date(filtroMes + '-01').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-                tituloResumo.textContent = `Resumo de Lucros - ${mes}`;
-            } else {
-                tituloResumo.textContent = 'Resumo de Lucros - Todos os Meses';
-            }
+            // MELHORIA: Título simplificado (removido mês/ano dinâmico)
             
-            // CORREÇÃO PRINCIPAL: Calcular lucros considerando o filtro de mês selecionado
             const lucrosPorMes = agendamentosHistorico.reduce((acc, a) => {
                 // CORREÇÃO: Incluir pacotes pagos e agendamentos finalizados
                 if ((a.status === 'finalizado' && a.tipo === 'individual') || 
                     (a.tipo === 'pacote_pagamento')) {
                     
                     const mesAno = a.data.substring(0, 7);
-                    
-                    // CORREÇÃO: Aplicar filtro de mês aqui também
-                    if (filtroMes && mesAno !== filtroMes) {
-                        return acc;
-                    }
-                    
                     acc[mesAno] = acc[mesAno] || { totalAgendamentos: 0, lucroTotal: 0 };
                     
                     if (a.tipo === 'pacote_pagamento') {
@@ -2591,30 +2576,31 @@
                 return acc;
             }, {});
 
-            // Aplicar filtro de mês se existir - CORREÇÃO: Já foi aplicado acima
+            // Aplicar filtro de mês se existir
             let mesesParaExibir = Object.keys(lucrosPorMes);
+            if (filtroMes) {
+                mesesParaExibir = mesesParaExibir.filter(mes => mes === filtroMes);
+            }
             
             const mesesOrdenados = mesesParaExibir.sort().reverse();
             
             if (mesesOrdenados.length === 0) {
-                listaLucrosMensais.innerHTML = '<tr><td colspan="4" style="text-align: center;">Nenhum lucro registrado.</td></tr>';
+                listaLucrosMensais.innerHTML = '<tr><td colspan="3" style="text-align: center;">Nenhum lucro registrado.</td></tr>';
             } else {
                  mesesOrdenados.forEach(mesAno => {
-                     const mes = new Date(mesAno + '-01').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
                      const lucro = lucrosPorMes[mesAno];
                      const row = listaLucrosMensais.insertRow();
-                     row.insertCell().textContent = mes;
                      
-                     // CORREÇÃO PRINCIPAL: Contar todos os agendamentos do mês filtrado
-                     row.insertCell().textContent = lucro.totalAgendamentos;
+                     // MELHORIA: Total Agendamentos contando todos os itens
+                     let totalCell = row.insertCell();
+                     totalCell.innerHTML = `<div style="text-align: center; font-weight: bold; font-size: 1.1rem;">${lucro.totalAgendamentos}</div>`;
                      
-                     // MELHORIA 2: Estilização melhorada do valor do lucro
+                     // MELHORIA: Estilização melhorada do valor do lucro
                      let lucroCell = row.insertCell();
                      lucroCell.innerHTML = `<div class="lucro-valor">${formatarMoeda(lucro.lucroTotal)}</div>`;
                      
-                     // REMOVIDO: Botão "Ver Detalhes"
-                     let acoesCell = row.insertCell();
-                     acoesCell.innerHTML = ''; // Vazio
+                     // Célula vazia para manter o layout
+                     row.insertCell();
                  });
             }
 
@@ -2633,35 +2619,6 @@
             // Aplicar filtro de cliente
             if (filtroCliente) {
                 historicoFiltrado = historicoFiltrado.filter(a => a.clienteNome.toLowerCase().includes(filtroCliente));
-            }
-            
-            // CORREÇÃO PRINCIPAL: Contar todos os itens do histórico filtrado para o resumo
-            if (filtroMes) {
-                const totalItensHistorico = historicoFiltrado.length;
-                // Atualizar o total de agendamentos no resumo para o mês selecionado
-                const mesResumo = new Date(filtroMes + '-01').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-                tituloResumo.textContent = `Resumo de Lucros - ${mesResumo}`;
-                
-                // Se não encontrou dados no cálculo anterior, cria um registro para o mês
-                if (mesesOrdenados.length === 0 && totalItensHistorico > 0) {
-                    const row = listaLucrosMensais.insertRow();
-                    row.insertCell().textContent = mesResumo;
-                    row.insertCell().textContent = totalItensHistorico;
-                    
-                    // Calcular lucro total para este mês
-                    const lucroTotalMes = historicoFiltrado.reduce((total, a) => {
-                        if ((a.status === 'finalizado' && a.tipo === 'individual') || a.tipo === 'pacote_pagamento') {
-                            return total + (a.valor || 0);
-                        }
-                        return total;
-                    }, 0);
-                    
-                    let lucroCell = row.insertCell();
-                    lucroCell.innerHTML = `<div class="lucro-valor">${formatarMoeda(lucroTotalMes)}</div>`;
-                    
-                    let acoesCell = row.insertCell();
-                    acoesCell.innerHTML = '';
-                }
             }
             
             if (historicoFiltrado.length === 0) {
