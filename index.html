@@ -966,25 +966,13 @@
         <div class="login-card">
             <!-- MELHORIA 3: Ícone mais temático de manicure -->
             <div class="login-icon">
-                <!-- ícone manicure SVG - elegante frasco de esmalte -->
-                <svg aria-hidden="true" width="84" height="84" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-                  <defs>
-                    <linearGradient id="g1" x1="0" x2="1" y1="0" y2="1">
-                      <stop offset="0" stop-color="#ff9acb"/>
-                      <stop offset="1" stop-color="#e06aa6"/>
-                    </linearGradient>
-                  </defs>
-                  <rect x="22" y="6" width="20" height="10" rx="2" fill="url(#g1)" />
-                  <rect x="20" y="16" width="24" height="34" rx="4" fill="#fff" stroke="#e06aa6" stroke-width="2"/>
-                  <rect x="26" y="22" width="12" height="22" rx="2" fill="url(#g1)"/>
-                  <circle cx="32" cy="46" r="3.5" fill="#e06aa6"/>
-                </svg>
+                <span class="material-icons">spa</span>
             </div>
             <h1>Tati Manicure - Acesso</h1>
             <form id="login-form">
                 <div class="form-group">
-                    <label for="loginSenha">Senha de Acesso</label>
-                    <input type="password" id="loginSenha" required>
+                    <label for="login"> de Acesso</label>
+                    <input type="password" id="login" required>
                 </div>
                 <button type="submit" class="btn-primary" style="width: 100%; margin-top: 10px;">
                     <span class="material-icons">login</span> Entrar
@@ -1359,10 +1347,13 @@
                 </div>
                 <div class="card">
                     <div class="filter-row">
-
+                        <div style="flex-grow: 1;">
+                            <label for="filtro-historico-mes">Filtrar por Mês</label>
+                            <input type="month" id="filtro-historico-mes" onchange="renderizarHistorico()">
+                        </div>
                         <div style="flex-grow: 2;">
                             <label for="filtro-historico-cliente">Filtrar Cliente</label>
-                            <input type="text" id="filtro-historico-cliente" list="clientes-datalist" placeholder="Digite o nome do cliente..." onkeyup="filtrarHistoricoTabela()">
+                            <input type="text" id="filtro-historico-cliente" list="clientes-datalist" placeholder="Digite o nome do cliente..." onkeyup="renderizarHistorico()">
                         </div>
                         <button class="btn-secondary" onclick="resetFiltroHistorico()"><span class="material-icons">refresh</span> Resetar Filtro</button>
                     </div>
@@ -2559,131 +2550,143 @@
         }
         
         // 5.7. RENDERIZAR HISTÓRICO E LUCROS - MELHORIA: Título simplificado e cálculo correto de Total Agendamentos
-        
-window.renderizarHistorico = function() {
-    // Recalculates Resumo de Lucros and Histórico Completo according to the cliente filter only.
-    const listaLucrosMensais = document.getElementById('lista-lucros-mensais');
-    const filtroCliente = (document.getElementById('filtro-historico-cliente') ? document.getElementById('filtro-historico-cliente').value.toLowerCase() : '');
-    listaLucrosMensais.innerHTML = '';
+        window.renderizarHistorico = function() {
+            // 5.7.1. Lucros Mensais - MELHORIA: Título simplificado
+            const listaLucrosMensais = document.getElementById('lista-lucros-mensais');
+            const filtroMes = (document.getElementById('filtro-historico-mes') ? document.getElementById('filtro-historico-mes').value : '');
+            const filtroCliente = (document.getElementById('filtro-historico-cliente') ? document.getElementById('filtro-historico-cliente').value.toLowerCase() : '');
+            listaLucrosMensais.innerHTML = '';
 
-    // Filtrar o histórico por cliente (se houver)
-    let historicoFiltradoParaResumo = agendamentosHistorico.slice();
-    if (filtroCliente) {
-        historicoFiltradoParaResumo = historicoFiltradoParaResumo.filter(a => a.clienteNome && a.clienteNome.toLowerCase().includes(filtroCliente));
-    }
+            // MELHORIA: Título simplificado (removido mês/ano dinâmico)
+            
+            let historicoFiltradoParaResumo = agendamentosHistorico.slice();
+            if (filtroMes) { historicoFiltradoParaResumo = historicoFiltradoParaResumo.filter(a => a.data && a.data.startsWith(filtroMes)); }
+            if (filtroCliente) { historicoFiltradoParaResumo = historicoFiltradoParaResumo.filter(a => a.clienteNome && a.clienteNome.toLowerCase().includes(filtroCliente)); }
+            const lucrosPorMes = historicoFiltradoParaResumo.reduce((acc, a) => {
+                // CORREÇÃO: Incluir pacotes pagos e agendamentos finalizados
+                if ((a.status === 'finalizado' && a.tipo === 'individual') || 
+                    (a.tipo === 'pacote_pagamento')) {
+                    
+                    const mesAno = a.data.substring(0, 7);
+                    acc[mesAno] = acc[mesAno] || { totalAgendamentos: 0, lucroTotal: 0 };
+                    
+                    if (a.tipo === 'pacote_pagamento') {
+                        acc[mesAno].lucroTotal += a.valor || 0;
+                    } else {
+                        acc[mesAno].totalAgendamentos++;
+                        acc[mesAno].lucroTotal += a.valor || 0;
+                    }
+                }
+                return acc;
+            }, {});
 
-    // Agregar sem considerar mês/ano no título (apenas sumarizar por mês-ano internamente)
-    const lucrosPorMes = historicoFiltradoParaResumo.reduce((acc, a) => {
-        // Considerar: agendamentos finalizados (individual e pacote), usos de pacotes finalizados, e registros de pagamento de pacote (tipo 'pacote_pagamento')
-        const statusValido = (a.status === 'finalizado' || a.status === 'pago' || a.tipo === 'pacote_pagamento' || a.tipo === 'pacote' );
-        if (!statusValido && a.tipo !== 'pacote_pagamento') return acc;
-
-        const mesAno = (a.data || '').substring(0, 7) || 'sem-data';
-        acc[mesAno] = acc[mesAno] || { totalAgendamentos: 0, lucroTotal: 0 };
-
-        if (a.tipo === 'pacote_pagamento') {
-            acc[mesAno].totalAgendamentos += 1;
-            acc[mesAno].lucroTotal += parseFloat(a.valor) || 0;
-        } else if (a.tipo === 'pacote') {
-            const qtd = parseInt(a.quantidadeDebitada) || 1;
-            acc[mesAno].totalAgendamentos += qtd;
-            acc[mesAno].lucroTotal += parseFloat(a.valor) || 0;
-        } else {
-            // individual
-            if (a.status === 'finalizado' || a.status === 'pago') {
-                acc[mesAno].totalAgendamentos += 1;
-                acc[mesAno].lucroTotal += parseFloat(a.valor) || 0;
+            // Aplicar filtro de mês se existir
+            let mesesParaExibir = Object.keys(lucrosPorMes);
+            if (filtroMes) {
+                mesesParaExibir = mesesParaExibir.filter(mes => mes === filtroMes);
             }
+            
+            const mesesOrdenados = mesesParaExibir.sort().reverse();
+            
+            if (mesesOrdenados.length === 0) {
+                listaLucrosMensais.innerHTML = '<tr><td colspan="3" style="text-align: center;">Nenhum lucro registrado.</td></tr>';
+            } else {
+                 mesesOrdenados.forEach(mesAno => {
+                     const lucro = lucrosPorMes[mesAno];
+                     const row = listaLucrosMensais.insertRow();
+                     
+                     // MELHORIA: Total Agendamentos contando todos os itens
+                     let totalCell = row.insertCell();
+                     totalCell.innerHTML = `<div style="text-align: center; font-weight: bold; font-size: 1.1rem;">${lucro.totalAgendamentos}</div>`;
+                     
+                     // MELHORIA: Estilização melhorada do valor do lucro
+                     let lucroCell = row.insertCell();
+                     lucroCell.innerHTML = `<div class="lucro-valor">${formatarMoeda(lucro.lucroTotal)}</div>`;
+                     
+                     // Célula vazia para manter o layout
+                     row.insertCell();
+                 });
+            }
+
+            // 5.7.2. Histórico Completo - CORREÇÃO: APLICAR FILTRO DE MÊS TAMBÉM AQUI
+            const listaHistorico = document.getElementById('lista-historico');
+            listaHistorico.innerHTML = '';
+
+            let historicoFiltrado = agendamentosHistorico;
+            
+            // Aplicar filtro de mês
+            if (filtroMes) {
+                 historicoFiltrado = historicoFiltrado.filter(a => a.data.startsWith(filtroMes));
+            }
+            
+            // Aplicar filtro de cliente
+            if (filtroCliente) {
+                historicoFiltrado = historicoFiltrado.filter(a => a.clienteNome.toLowerCase().includes(filtroCliente));
+            }
+            
+            if (historicoFiltrado.length === 0) {
+                 listaHistorico.innerHTML = '<tr><td colspan="5" style="text-align: center;">Nenhum agendamento no histórico.</td></tr>';
+                 return;
+            }
+
+            historicoFiltrado.forEach(a => {
+                 const row = listaHistorico.insertRow();
+                 row.dataset.agendamentoId = a.id; 
+                 row.dataset.clienteNome = a.clienteNome.toLowerCase(); 
+                 
+                 // Data/Hora
+                 let dataHoraCell = row.insertCell();
+                 dataHoraCell.textContent = `${formatarData(a.data)} às ${a.hora}`;
+                 dataHoraCell.setAttribute('data-label', 'Data/Hora');
+                 
+                 // Cliente
+                 let clienteCell = row.insertCell();
+                 clienteCell.textContent = a.clienteNome;
+                 clienteCell.setAttribute('data-label', 'Cliente');
+
+                 // Serviço
+                 let servicoCell = row.insertCell();
+                 let servicoTexto = a.servicoNome;
+                 if (a.tipo === 'pacote') {
+                     servicoTexto += ' (Uso de Pacote)';
+                     if (a.procedimentoRealizado) {
+                         servicoTexto += ` - ${a.procedimentoRealizado}`;
+                     }
+                 } else if (a.tipo === 'pacote_pagamento') {
+                     servicoTexto += ' (Pagamento de Pacote)';
+                 } else if (a.status === 'cancelado') {
+                      servicoTexto += ' (Cancelado)';
+                 }
+                 servicoCell.textContent = servicoTexto;
+                 servicoCell.setAttribute('data-label', 'Serviço');
+
+                 // Valor
+                 let valorCell = row.insertCell();
+                 valorCell.textContent = formatarMoeda(a.valor);
+                 valorCell.setAttribute('data-label', 'Valor (R$)');
+
+                 // Ações
+                 let actionCell = row.insertCell();
+                 actionCell.classList.add('action-buttons');
+                 actionCell.setAttribute('data-label', ''); // MELHORIA 1: Removido "Ações"
+                 
+                 let statusClass = 'btn-secondary';
+                 let statusIcon = 'info';
+
+                 if (a.status === 'finalizado' || a.tipo === 'pacote_pagamento') {
+                     statusClass = 'btn-success';
+                     statusIcon = 'check';
+                 } else if (a.status === 'cancelado') {
+                      statusClass = 'btn-danger';
+                      statusIcon = 'close';
+                 }
+
+                 actionCell.innerHTML = `
+                     <button class="${statusClass}" disabled><span class="material-icons">${statusIcon}</span> ${a.status.toUpperCase()}</button>
+                     <button class="btn-warning" onclick="reverterHistorico('${a.id}')"><span class="material-icons">undo</span> Reverter</button>
+                 `;
+            });
         }
-        return acc;
-    }, {});
-
-    // Somar total geral (após filtro de cliente, sem limitar por mês)
-    const meses = Object.keys(lucrosPorMes);
-    let totalAgendamentosGeral = 0;
-    let lucroTotalGeral = 0;
-    meses.forEach(m => {
-        totalAgendamentosGeral += lucrosPorMes[m].totalAgendamentos || 0;
-        lucroTotalGeral += lucrosPorMes[m].lucroTotal || 0;
-    });
-
-    // Renderizar resumo (um único resumo agregando tudo que passou no filtro)
-    if (meses.length === 0) {
-        listaLucrosMensais.innerHTML = '<tr><td colspan="3" style="text-align: center;">Nenhum lucro registrado.</td></tr>';
-    } else {
-        listaLucrosMensais.innerHTML = '';
-        const row = listaLucrosMensais.insertRow();
-        const totalCell = row.insertCell();
-        totalCell.innerHTML = `<div style="text-align: center; font-weight: bold; font-size: 1.1rem;">${totalAgendamentosGeral}</div>`;
-        const lucroCell = row.insertCell();
-        lucroCell.innerHTML = `<div class="lucro-valor">${formatarMoeda(lucroTotalGeral)}</div>`;
-        row.insertCell();
-    }
-
-    // Histórico Completo - aplicar mesmo filtro de cliente
-    const listaHistorico = document.getElementById('lista-historico');
-    listaHistorico.innerHTML = '';
-    let historicoFiltrado = agendamentosHistorico.slice();
-    if (filtroCliente) {
-        historicoFiltrado = historicoFiltrado.filter(a => a.clienteNome && a.clienteNome.toLowerCase().includes(filtroCliente));
-    }
-
-    if (historicoFiltrado.length === 0) {
-        listaHistorico.innerHTML = '<tr><td colspan="5" style="text-align: center;">Nenhum agendamento no histórico.</td></tr>';
-        return;
-    }
-
-    historicoFiltrado.forEach(a => {
-        const row = listaHistorico.insertRow();
-        row.dataset.agendamentoId = a.id || '';
-        row.dataset.clienteNome = (a.clienteNome || '').toLowerCase();
-
-        let dataHoraCell = row.insertCell();
-        dataHoraCell.textContent = `${formatarData(a.data)} às ${a.hora || ''}`;
-        dataHoraCell.setAttribute('data-label', 'Data/Hora');
-
-        let clienteCell = row.insertCell();
-        clienteCell.textContent = a.clienteNome || '';
-        clienteCell.setAttribute('data-label', 'Cliente');
-
-        let servicoCell = row.insertCell();
-        let servicoTexto = a.servicoNome || '';
-        if (a.tipo === 'pacote') {
-            servicoTexto += ' (Uso de Pacote)';
-            if (a.procedimentoRealizado) servicoTexto += ` - ${a.procedimentoRealizado}`;
-        } else if (a.tipo === 'pacote_pagamento') {
-            servicoTexto += ' (Pagamento de Pacote)';
-        } else if (a.status === 'cancelado') {
-            servicoTexto += ' (Cancelado)';
-        }
-        servicoCell.textContent = servicoTexto;
-        servicoCell.setAttribute('data-label', 'Serviço');
-
-        let valorCell = row.insertCell();
-        valorCell.textContent = formatarMoeda(a.valor);
-        valorCell.setAttribute('data-label', 'Valor (R$)');
-
-        let actionCell = row.insertCell();
-        actionCell.classList.add('action-buttons');
-        actionCell.setAttribute('data-label', '');
-
-        let statusClass = 'btn-secondary';
-        let statusIcon = 'info';
-        if (a.status === 'finalizado' || a.tipo === 'pacote_pagamento' || a.status === 'pago') {
-            statusClass = 'btn-success';
-            statusIcon = 'check';
-        } else if (a.status === 'cancelado') {
-            statusClass = 'btn-danger';
-            statusIcon = 'close';
-        }
-
-        actionCell.innerHTML = `
-            <button class="${statusClass}" disabled><span class="material-icons">${statusIcon}</span> ${ (a.status || '').toUpperCase() }</button>
-            <button class="btn-warning" onclick="reverterHistorico('${a.id || ''}')"><span class="material-icons">undo</span> Reverter</button>
-        `;
-    });
-};
-
         
         // REMOVIDO: função aplicarFiltroHistoricoMes (não é mais necessária)
         
@@ -2744,7 +2747,11 @@ window.renderizarHistorico = function() {
         }
         
         // 6.3. RESETAR FILTRO DO HISTÓRICO - MANTIDO IGUAL
-        window.resetFiltroHistorico = function() { document.getElementById('filtro-historico-cliente').value = ''; renderizarHistorico(); }
+        window.resetFiltroHistorico = function() {
+            document.getElementById('filtro-historico-mes').value = ''; 
+            document.getElementById('filtro-historico-cliente').value = '';
+            renderizarHistorico();
+        }
         
         // =================================================================
         // 7. NOVAS FUNÇÕES: LIMPEZA DE DADOS
@@ -2884,7 +2891,12 @@ window.renderizarHistorico = function() {
   window.addEventListener('resize', ensureTabButtons);
 
   // Em alguns navegadores o onchange="renderizarHistorico()" já está setado; reafirmamos o listener sem sobrescrever a função
-  document.addEventListener('DOMContentLoaded', function(){ /* filtro-historico-mes removed - no binding needed */ });
+  document.addEventListener('DOMContentLoaded', function(){
+    const filtro = document.getElementById('filtro-historico-mes');
+    if (filtro) {
+      // remove duplicatas de listeners simples (caso já exista)
+      filtro.removeEventListener('change', window.renderizarHistorico);
+      filtro.addEventListener('change', function(){ try { if (typeof window.renderizarHistorico === 'function') window.renderizarHistorico(); } catch(e){console.error(e);} });
     }
   });
 })();
