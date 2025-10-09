@@ -971,8 +971,8 @@
             <h1>Tati Manicure - Acesso</h1>
             <form id="login-form">
                 <div class="form-group">
-                    <label for="login"> de Acesso</label>
-                    <input type="password" id="login" required>
+                    <label for="loginSenha">Senha de Acesso</label>
+                    <input type="password" id="loginSenha" required>
                 </div>
                 <button type="submit" class="btn-primary" style="width: 100%; margin-top: 10px;">
                     <span class="material-icons">login</span> Entrar
@@ -1535,21 +1535,39 @@
             showSection('agenda-section');
         }
         
-        document.getElementById('login-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const senha = document.getElementById('loginSenha').value;
-            
-            if (senha === SENHA_UNICA) {
-                 showApp();
-                 showNotification('Login realizado com sucesso!', 'success');
+        // Executa a lógica de login somente quando o DOM estiver pronto e habilita persistência de sessão
+        document.addEventListener('DOMContentLoaded', () => {
+            const loggedIn = localStorage.getItem('loggedIn');
+            if (loggedIn === 'true') {
+                showApp();
             } else {
-                 showNotification('Senha incorreta. Tente novamente.', 'error');
+                showLogin();
             }
-        });
         
-        document.getElementById('logout-button').addEventListener('click', () => {
-            showLogin();
-            showNotification('Sessão encerrada.', 'info');
+            const loginForm = document.getElementById('login-form');
+            if (loginForm) {
+                loginForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const senha = document.getElementById('loginSenha').value;
+        
+                    if (senha === SENHA_UNICA) {
+                        localStorage.setItem('loggedIn', 'true');
+                        showApp();
+                        showNotification('Login realizado com sucesso!', 'success');
+                    } else {
+                        showNotification('Senha incorreta. Tente novamente.', 'error');
+                    }
+                });
+            }
+        
+            const logoutBtn = document.getElementById('logout-button');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', () => {
+                    localStorage.removeItem('loggedIn');
+                    showLogin();
+                    showNotification('Sessão encerrada.', 'info');
+                });
+            }
         });
 
         // =================================================================
